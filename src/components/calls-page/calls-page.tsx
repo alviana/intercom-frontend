@@ -23,6 +23,7 @@ import { useAudioCue } from "../production-line/use-audio-cue";
 import { useGlobalHotkeys } from "../production-line/use-line-hotkeys";
 import { ShareUrlModal } from "../share-url-modal/share-url-modal";
 import { useInitiateProductionCall } from "../../hooks/use-initiate-production-call";
+import { useWakeLock } from "../../hooks/use-wake-lock";
 import { UserSettings } from "../user-settings/user-settings";
 import { ConfirmationModal } from "../verify-decision/confirmation-modal";
 import { HeaderActions } from "./header-actions";
@@ -326,6 +327,7 @@ export const CallsPage = () => {
   }, [pendingCallRefs]);
 
   usePreventPullToRefresh();
+  useWakeLock(!isEmpty);
 
   const nativeRestoreDone = useNativeRestoreDone();
 
