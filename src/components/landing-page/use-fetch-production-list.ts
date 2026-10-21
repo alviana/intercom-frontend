@@ -71,7 +71,7 @@ export const useFetchProductionList = (filter?: GetProductionListFilter) => {
           setError(
             e instanceof Error
               ? e
-              : new Error("Failed to fetch production list.")
+              : new Error("Falha ao carregar a lista de produções.")
           );
         });
     }

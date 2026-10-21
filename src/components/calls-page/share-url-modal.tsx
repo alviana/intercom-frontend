@@ -52,14 +52,14 @@ export const ShareUrlModal = ({ onClose }: ShareUrlModalProps) => {
   };
 
   return (
-    <Modal onClose={onClose} title="Share Calls">
+    <Modal onClose={onClose} title="Compartilhar linhas">
       <InputRow>
         <FormInput readOnly value={url} />
         <CopyBtn type="button" onClick={handleCopy}>
-          {copied ? "Copied!" : "Copy"}
+          {copied ? "Copiado!" : "Copiar"}
         </CopyBtn>
       </InputRow>
-      {copied && <SuccessText>URL copied to clipboard</SuccessText>}
+      {copied && <SuccessText>URL copiada</SuccessText>}
     </Modal>
   );
 };

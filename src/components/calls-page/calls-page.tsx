@@ -461,12 +461,12 @@ export const CallsPage = () => {
         />
       )}
       <PageHeader
-        title={!isEmpty ? "Calls" : ""}
+        title={!isEmpty ? "Linhas" : ""}
         titleAdornment={
           !isEmpty ? (
             <ShareAdornment>
               <CopyIconWrapper
-                title="Share lines URL"
+                title="Compartilhar URL das linhas"
                 isCopied={false}
                 onClick={handleShare}
                 style={{ padding: 0 }}
@@ -487,16 +487,16 @@ export const CallsPage = () => {
       >
         {confirmExitModalOpen && (
           <ConfirmationModal
-            title="Confirm"
-            description="Are you sure you want to leave all calls?"
-            confirmationText="This will leave all calls and return to the home page."
+            title="Confirmar"
+            description="Tem certeza de que deseja sair de todas as linhas?"
+            confirmationText="Você sairá de todas as linhas e voltará para a página inicial."
             onCancel={() => setConfirmExitModalOpen(false)}
             onConfirm={runExitAllCalls}
           />
         )}
 
         {showSettings && (
-          <Modal onClose={() => setShowSettings(false)} title="Settings">
+          <Modal onClose={() => setShowSettings(false)} title="Configurações">
             {isMobileApp() ? (
               <MobileSettingsPage
                 isModal
@@ -505,7 +505,7 @@ export const CallsPage = () => {
               />
             ) : (
               <UserSettings
-                buttonText="Save"
+                buttonText="Salvar"
                 needsConfirmation
                 onSave={() => setShowSettings(false)}
                 hideTitle
@@ -518,7 +518,7 @@ export const CallsPage = () => {
           <ShareUrlModal
             path={buildCallsUrl(shareCallRefs)}
             companionUrl={activeCompanionUrl}
-            title="Share Current Configuration"
+            title="Compartilhar configuração atual"
             onClose={() => setShareModalOpen(false)}
           />
         )}

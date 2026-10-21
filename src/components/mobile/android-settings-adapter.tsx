@@ -212,7 +212,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
         }
       }}
     >
-      {tone.ctx ? "Stop" : "Test Tone"}
+      {tone.ctx ? "Parar" : "Testar som"}
     </PrimaryButton>
   );
 
@@ -230,17 +230,21 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
   };
 
   return {
-    inputLabel: "Microphone",
+    inputLabel: "Microfone",
     formatDeviceLabel: formatMediaDeviceLabel,
     renderDeviceOutputOverride: () => (
       <MobileAudioRouteSelect
-        label="Speaker output"
+        label="Saída de áudio"
         trailingAction={testToneButton}
       />
     ),
     renderExtraFields: ({ errors, register }) => (
       <>
-        <FormItem label="Backend URL" fieldName="backendUrl" errors={errors}>
+        <FormItem
+          label="URL do servidor"
+          fieldName="backendUrl"
+          errors={errors}
+        >
           <FormInput
             // eslint-disable-next-line
             {...register(`backendUrl` as any, {
@@ -251,7 +255,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
                   void parsed.href;
                   return true;
                 } catch {
-                  return "Enter a valid URL (e.g., https://host/)";
+                  return "Informe uma URL válida (ex.: https://host/)";
                 }
               },
             })}
@@ -259,7 +263,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
           />
         </FormItem>
         <FormItem
-          label="Backend API Key"
+          label="Chave de API do servidor"
           fieldName="backendApiKey"
           errors={errors}
         >
@@ -267,7 +271,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
             // eslint-disable-next-line
             {...register(`backendApiKey` as any)}
             type="password"
-            placeholder="Optional service access token"
+            placeholder="Token de acesso opcional"
           />
         </FormItem>
         <FormItem label="Companion (Stream Deck)">
@@ -289,7 +293,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
               </span>
               <FormInput
                 style={{ paddingLeft: "5.6rem", marginBottom: 0 }}
-                aria-label="WebSocket host and port"
+                aria-label="Host e porta do WebSocket"
                 type="text"
                 placeholder="host:port"
                 value={hostPort}
@@ -321,22 +325,22 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
                   {isWSReconnecting ? (
                     <Spinner className="companion-loader" />
                   ) : (
-                    "Connect"
+                    "Conectar"
                   )}
                 </PrimaryButton>
               ) : (
                 <PrimaryButton type="button" onClick={wsDisconnect}>
-                  Disconnect
+                  Desconectar
                 </PrimaryButton>
               )}
               <div style={{ opacity: 0.85 }}>
                 Status:{" "}
                 {isWSConnected
-                  ? "connected"
+                  ? "conectado"
                   : isWSReconnecting
-                    ? "reconnecting"
-                    : "disconnected"}
-                {isConnectionConflict ? " • conflict" : ""}
+                    ? "reconectando"
+                    : "desconectado"}
+                {isConnectionConflict ? " • conflito" : ""}
               </div>
             </div>
           </div>
@@ -345,13 +349,15 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
     ),
     renderSettingsStatusFields: () =>
       showFloatingControlsDebug ? (
-        <FormItem label="Floating Controls">
+        <FormItem label="Controles flutuantes">
           <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
             <PrimaryButton
               type="button"
               onClick={() => setShowDebug((value) => !value)}
             >
-              {showDebug ? "Hide Debug Info" : "Show Debug Info"}
+              {showDebug
+                ? "Ocultar informações de depuração"
+                : "Mostrar informações de depuração"}
             </PrimaryButton>
             {showDebug && (
               <div style={{ width: "100%", marginTop: 8 }}>

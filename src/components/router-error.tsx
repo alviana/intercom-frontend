@@ -8,18 +8,18 @@ export const ErrorPage = () => {
   if (error instanceof Error) {
     return (
       <div id="error-page">
-        <h1>Oops!</h1>
-        <p>Sorry, an unexpected error has occurred.</p>
+        <h1>Ops!</h1>
+        <p>Desculpe, ocorreu um erro inesperado.</p>
         <p>
-          <i>{error.message || "An unexpected error occurred"}</i>
+          <i>{error.message || "Ocorreu um erro inesperado"}</i>
         </p>
       </div>
     );
   }
   return (
     <div>
-      <h1>Oops!</h1>
-      <p>An unexpected error occurred.</p>
+      <h1>Ops!</h1>
+      <p>Ocorreu um erro inesperado.</p>
     </div>
   );
 };

@@ -62,11 +62,11 @@ export const buildOverlayRowState = (
       return { label: jp.lineName, source: "joinProductionOptions.lineName" };
     if (jp.lineId)
       return {
-        label: `Line ${jp.lineId}`,
+        label: `Linha ${jp.lineId}`,
         source: "joinProductionOptions.lineId",
       };
-    if (id) return { label: `Call ${shortCallId(id)}`, source: "callId" };
-    return { label: `Call ${index + 1}`, source: "fallback" };
+    if (id) return { label: `Linha ${shortCallId(id)}`, source: "callId" };
+    return { label: `Linha ${index + 1}`, source: "fallback" };
   });
   const labels = labelRows.map((row) => row.label);
   const labelSources = labelRows.map((row) => row.source);

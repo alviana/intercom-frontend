@@ -45,7 +45,7 @@ export const VerifyDecision = ({
         className={loader ? "submit" : ""}
         onClick={() => abort()}
       >
-        Cancel
+        Cancelar
         {loader && <Spinner className="manage-production" />}
       </CancelButton>
       <RemoveButton
@@ -55,7 +55,7 @@ export const VerifyDecision = ({
         onClick={() => confirm()}
         shouldSubmitOnEnter={shouldSubmitOnEnter}
       >
-        Yes
+        Sim
         {loader && <Spinner className="manage-production" />}
       </RemoveButton>
     </VerifyButtons>

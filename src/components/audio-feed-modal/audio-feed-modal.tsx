@@ -38,24 +38,24 @@ export const AudioFeedModal = ({
     <Modal onClose={onClose}>
       <ContentWrapper>
         <p>
-          This is a line for audio feed. Do you wish to join the line as the
-          audio feed or as a listener?
+          Esta é uma linha de feed de áudio. Deseja entrar na linha como feed de
+          áudio ou como ouvinte?
         </p>
         <CheckboxWrapper>
           <Checkbox
-            label="Listener"
+            label="Ouvinte"
             checked={!isProgramUser}
             onChange={() => setIsProgramUser(false)}
           />
           <Checkbox
-            label="Audio feed"
+            label="Feed de áudio"
             checked={isProgramUser}
             onChange={() => setIsProgramUser(true)}
           />
         </CheckboxWrapper>
       </ContentWrapper>
       <ButtonWrapper>
-        <PrimaryButton onClick={onJoin}>Join</PrimaryButton>
+        <PrimaryButton onClick={onJoin}>Entrar</PrimaryButton>
       </ButtonWrapper>
     </Modal>
   );

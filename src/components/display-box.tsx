@@ -54,7 +54,7 @@ export const DisplayWarning = ({
   text,
   title,
   btn,
-  btnLabel = "Continue Anyway",
+  btnLabel = "Continuar mesmo assim",
 }: TDisplayWarning) => {
   return (
     <DisplayBox>

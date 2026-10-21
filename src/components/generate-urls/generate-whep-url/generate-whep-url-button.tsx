@@ -19,7 +19,7 @@ export const GenerateWhepUrlButton = ({
       }
       return "WHEP URL";
     }
-    return "Get WHEP URL";
+    return "Obter URL WHEP";
   };
 
   const renderModalContent = useCallback(

@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.eyevinn.intercom"
+        applicationId = "br.com.ac24horas.intercom"
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
         versionCode 1

@@ -193,6 +193,6 @@ describe("UserSettingsForm — lineId auto-selection fix", () => {
 
     expect(screen.getByText("Backend URL")).toBeInTheDocument();
     expect(screen.getByText("Android output route")).toBeInTheDocument();
-    expect(screen.queryByText("Output")).not.toBeInTheDocument();
+    expect(screen.queryByText("Saída")).not.toBeInTheDocument();
   });
 });

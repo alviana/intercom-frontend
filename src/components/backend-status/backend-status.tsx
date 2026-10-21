@@ -100,9 +100,9 @@ export const BackendStatus = () => {
   if (!mobile) return null;
 
   return (
-    <Wrapper aria-label="Backend connectivity status">
+    <Wrapper aria-label="Status da conexão com o servidor">
       <Dot status={status} />
-      <Label>Backend</Label>
+      <Label>Servidor</Label>
     </Wrapper>
   );
 };

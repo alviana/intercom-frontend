@@ -90,7 +90,7 @@ export const ReloadDevicesButton = () => {
     <>
       <RefreshIconButton
         type="button"
-        title="Refresh devices"
+        title="Atualizar dispositivos"
         onClick={() => reloadDevices()}
         isRefreshing={deviceRefresh}
       >
@@ -100,11 +100,12 @@ export const ReloadDevicesButton = () => {
       {firefoxWarningModalOpen && (
         <Modal
           onClose={() => setFirefoxWarningModalOpen(false)}
-          title="Reset permissions"
+          title="Redefinir permissões"
         >
           <p>
-            To reload devices Firefox needs the permission to be manually reset,
-            please remove permission and reload page instead.
+            Para recarregar os dispositivos, o Firefox exige que a permissão
+            seja redefinida manualmente. Remova a permissão e recarregue a
+            página.
           </p>
         </Modal>
       )}

@@ -67,7 +67,7 @@ const NotFound = () => {
         <ButtonWrapper>
           <NavigateToRootButton />
         </ButtonWrapper>
-        Page not found.
+        Página não encontrada.
       </DisplayContainerHeader>
     </DisplayContainer>
   );
@@ -117,8 +117,8 @@ const AppRouterShell = ({
             text={
               <>
                 <p>
-                  To use this application it is recommended to use one of the
-                  following browsers:
+                  Para usar este aplicativo, recomendamos um dos seguintes
+                  navegadores:
                 </p>
                 <ul>
                   <li>Chrome 115+</li>
@@ -129,12 +129,12 @@ const AppRouterShell = ({
                   <li>Opera 101+</li>
                 </ul>
                 <p>
-                  If you are using one of the recommended browsers, then it is
-                  an older version and should be updated before continuing.
+                  Se você já usa um dos navegadores recomendados, a versão é
+                  antiga e deve ser atualizada antes de continuar.
                 </p>
               </>
             }
-            title="Browser not supported"
+            title="Navegador não suportado"
             btn={() => setUnsupportedContinue(true)}
           />
         </DisplayBoxPositioningContainer>
@@ -144,17 +144,16 @@ const AppRouterShell = ({
           {denied && (
             <DisplayBoxPositioningContainer>
               <DisplayWarning
-                text="To use this application it has to be granted access to audio devices. Reload browser and/or reset permissions to try
-            again."
-                title="Permissions have been denied"
+                text="Para usar este aplicativo, é preciso permitir o acesso aos dispositivos de áudio. Recarregue o navegador e/ou redefina as permissões para tentar novamente."
+                title="Permissões negadas"
               />
             </DisplayBoxPositioningContainer>
           )}
           {!permission && !denied && (
             <DisplayBoxPositioningContainer>
               <DisplayWarning
-                text="To use this application it has to be granted access to audio devices."
-                title="Waiting for device permissions"
+                text="Para usar este aplicativo, é preciso permitir o acesso aos dispositivos de áudio."
+                title="Aguardando permissão dos dispositivos"
               />
             </DisplayBoxPositioningContainer>
           )}
@@ -163,12 +162,12 @@ const AppRouterShell = ({
               <DisplayWarning
                 text={
                   isMobileApp()
-                    ? "The server is not available. Open settings, check the backend URL, and save — the app will return home and reload the production list."
-                    : "The server is not available. Reload page to try again."
+                    ? "O servidor não está disponível. Abra as configurações, verifique a URL do servidor e salve — o app voltará à tela inicial e recarregará a lista de produções."
+                    : "O servidor não está disponível. Recarregue a página para tentar novamente."
                 }
-                title="Server not available"
+                title="Servidor indisponível"
                 btn={openMobileSettings}
-                btnLabel={isMobileApp() ? "Open settings" : undefined}
+                btnLabel={isMobileApp() ? "Abrir configurações" : undefined}
               />
             </DisplayBoxPositioningContainer>
           )}

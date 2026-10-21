@@ -16,20 +16,20 @@ import {
 const DEFAULT_MOBILE_ROUTES: AudioRouteItem[] = [
   {
     id: "speaker",
-    label: "Phone speaker",
+    label: "Alto-falante do celular",
     available: true,
     type: "speaker",
   },
   {
     id: "earpiece",
-    label: "Phone earpiece",
+    label: "Auricular do celular",
     available: true,
     type: "earpiece",
   },
 ];
 
 export const MobileAudioRouteSelect = ({
-  label = "Speaker output",
+  label = "Saída de áudio",
   trailingAction,
 }: {
   label?: string;
@@ -44,10 +44,13 @@ export const MobileAudioRouteSelect = ({
       return;
     }
     try {
-      const { routes: nativeRoutes, active } = await AudioRoute.getAvailableRoutes();
-      const nextRoutes = nativeRoutes.length > 0 ? nativeRoutes : DEFAULT_MOBILE_ROUTES;
+      const { routes: nativeRoutes, active } =
+        await AudioRoute.getAvailableRoutes();
+      const nextRoutes =
+        nativeRoutes.length > 0 ? nativeRoutes : DEFAULT_MOBILE_ROUTES;
       setRoutes(nextRoutes);
-      const resolved = resolveAudioRouteToApply(nextRoutes, active) ?? "speaker";
+      const resolved =
+        resolveAudioRouteToApply(nextRoutes, active) ?? "speaker";
       if (resolved) {
         setSelected(resolved);
         if (resolved !== active) {

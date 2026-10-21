@@ -121,21 +121,21 @@ export const ProductionsListContainer = () => {
 
   const managementButtons = isMobileApp() ? (
     <>
-      <ManageButton onClick={goToManage} title="Manage productions">
+      <ManageButton onClick={goToManage} title="Gerenciar produções">
         <EditIcon />
       </ManageButton>
-      <HeaderButton onClick={goToCreate} title="Create production">
+      <HeaderButton onClick={goToCreate} title="Criar produção">
         <AddIcon />
       </HeaderButton>
     </>
   ) : (
     <>
       <ManageButton onClick={goToManage}>
-        <HeaderButtonText>Manage</HeaderButtonText>
+        <HeaderButtonText>Gerenciar</HeaderButtonText>
         <EditIcon />
       </ManageButton>
       <HeaderButton onClick={goToCreate}>
-        <HeaderButtonText>Create</HeaderButtonText>
+        <HeaderButtonText>Criar</HeaderButtonText>
         <AddIcon />
       </HeaderButton>
     </>
@@ -144,12 +144,12 @@ export const ProductionsListContainer = () => {
   return (
     <>
       <PageHeader
-        title="Productions"
+        title="Produções"
         loading={showRefreshing}
         titleAdornment={
           <InfoTooltip>
-            A <strong>production</strong> is a named group of communication
-            lines
+            Uma <strong>produção</strong> é um grupo nomeado de linhas de
+            comunicação
           </InfoTooltip>
         }
       >
@@ -163,9 +163,9 @@ export const ProductionsListContainer = () => {
       {productions && !productions.productions.length && (
         <EmptyState>
           <HeadsetIcon />
-          <EmptyStateText>No productions yet</EmptyStateText>
+          <EmptyStateText>Nenhuma produção ainda</EmptyStateText>
           <EmptyStateButton onClick={goToCreate}>
-            Create your first production
+            Crie sua primeira produção
           </EmptyStateButton>
         </EmptyState>
       )}

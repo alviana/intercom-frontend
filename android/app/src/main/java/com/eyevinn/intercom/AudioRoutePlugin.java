@@ -130,10 +130,10 @@ public class AudioRoutePlugin extends Plugin {
             }
             addFirstRouteForType(routes, devices, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, "speaker", true);
         } else {
-            routes.put(routeObj("headset", "Wired headset", isWiredHeadsetOn(), "headset"));
-            routes.put(routeObj("earpiece", "Phone earpiece", hasEarpiece(), "earpiece"));
-            routes.put(routeObj("bluetooth", "Bluetooth audio", isBluetoothOn(), "bluetooth"));
-            routes.put(routeObj("speaker", "Phone speaker", true, "speaker"));
+            routes.put(routeObj("headset", "Fone com fio", isWiredHeadsetOn(), "headset"));
+            routes.put(routeObj("earpiece", "Receptor do telefone", hasEarpiece(), "earpiece"));
+            routes.put(routeObj("bluetooth", "Áudio Bluetooth", isBluetoothOn(), "bluetooth"));
+            routes.put(routeObj("speaker", "Alto-falante do telefone", true, "speaker"));
         }
 
         ret.put("routes", routes);
@@ -194,11 +194,11 @@ public class AudioRoutePlugin extends Plugin {
 
     private String routeLabelPrefix(int androidType) {
         String type = routeType(androidType);
-        if ("bluetooth".equals(type)) return "Bluetooth audio";
-        if ("speaker".equals(type)) return "Phone speaker";
-        if ("headset".equals(type)) return "Wired headset";
-        if ("earpiece".equals(type)) return "Phone earpiece";
-        return "Audio output";
+        if ("bluetooth".equals(type)) return "Áudio Bluetooth";
+        if ("speaker".equals(type)) return "Alto-falante do telefone";
+        if ("headset".equals(type)) return "Fone com fio";
+        if ("earpiece".equals(type)) return "Receptor do telefone";
+        return "Saída de áudio";
     }
 
     private boolean addFirstRouteForType(JSArray routes, AudioDeviceInfo[] devices, int androidType, String fallbackId, boolean available) {

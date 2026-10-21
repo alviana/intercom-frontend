@@ -5,6 +5,6 @@ export const useDeleteProduction = (id: string | null) => {
   return useRequest<string, string>({
     params: id,
     apiCall: API.deleteProduction,
-    errorMessage: () => "Failed to delete production",
+    errorMessage: () => "Falha ao excluir a produção",
   });
 };

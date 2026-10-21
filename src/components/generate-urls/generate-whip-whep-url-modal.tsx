@@ -79,14 +79,14 @@ export const GenerateWhipWhepUrlModal = ({
   return (
     <Modal onClose={onClose} title="WebRTC">
       <Description>
-        Enter a username to generate copy links for WHIP and WHEP connections.
+        Informe um nome de usuário para gerar links de conexão WHIP e WHEP.
       </Description>
       <UsernameField>
-        <DecorativeLabel>Username</DecorativeLabel>
+        <DecorativeLabel>Nome de usuário</DecorativeLabel>
         <FormInput
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="username"
+          placeholder="nome de usuário"
         />
       </UsernameField>
       <ButtonGroup>
@@ -96,7 +96,7 @@ export const GenerateWhipWhepUrlModal = ({
           disabled={!whipUrl}
           onClick={() => handleCopy(whipUrl, setWhipCopied)}
         >
-          {whipCopied ? "✓ WHIP link copied!" : "Copy WHIP link"}
+          {whipCopied ? "✓ Link WHIP copiado!" : "Copiar link WHIP"}
         </CopyButton>
         <CopyButton
           type="button"
@@ -104,7 +104,7 @@ export const GenerateWhipWhepUrlModal = ({
           disabled={!whepUrl}
           onClick={() => handleCopy(whepUrl, setWhepCopied)}
         >
-          {whepCopied ? "✓ WHEP link copied!" : "Copy WHEP link"}
+          {whepCopied ? "✓ Link WHEP copiado!" : "Copiar link WHEP"}
         </CopyButton>
       </ButtonGroup>
     </Modal>

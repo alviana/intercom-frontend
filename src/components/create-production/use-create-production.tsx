@@ -32,6 +32,6 @@ export const useCreateProduction = ({
         }
       : null,
     apiCall: API.createProduction,
-    errorMessage: (p) => `Failed to create production: ${p.name}`,
+    errorMessage: (p) => `Falha ao criar a produção: ${p.name}`,
   });
 };

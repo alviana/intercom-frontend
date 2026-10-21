@@ -106,7 +106,7 @@ export const SettingsModal = ({
             : false;
 
           if (isGlobalStateDuplicate) {
-            acc[field] = "This key is used in another connected call.";
+            acc[field] = "Esta tecla já é usada em outra linha conectada.";
           } else {
             acc[field] = "";
           }
@@ -129,8 +129,7 @@ export const SettingsModal = ({
       .filter(([k]) => k !== key)
       .map(([, v]) => v);
     return (
-      !otherValues.includes(value) ||
-      `The hotkey "${value}" is already assigned.`
+      !otherValues.includes(value) || `O atalho "${value}" já está atribuído.`
     );
   };
 
@@ -183,7 +182,7 @@ export const SettingsModal = ({
       Object.entries(currentValues).some(
         ([k, v]) => k !== field && v === currentValue
       )
-        ? `The hotkey "${currentValue}" is already assigned.`
+        ? `O atalho "${currentValue}" já está atribuído.`
         : "";
     const activeWarning =
       validationError ||
@@ -205,7 +204,7 @@ export const SettingsModal = ({
         <HotkeyInput
           // eslint-disable-next-line
           {...register(field, {
-            required: "Hotkey is required",
+            required: "O atalho é obrigatório",
             minLength: 1,
             validate: (value) => {
               return validateFieldsLocally(value, field);
@@ -216,7 +215,7 @@ export const SettingsModal = ({
               updateFieldErrors(field, e.target.value);
             },
           })}
-          placeholder="Key"
+          placeholder="Tecla"
         />
       </HotkeyRow>
     );
@@ -224,14 +223,14 @@ export const SettingsModal = ({
 
   return (
     <Modal
-      title={`Hotkey settings${lineName ? ` for call: ${lineName}` : ""}`}
+      title={`Configurações de atalhos${lineName ? ` da linha: ${lineName}` : ""}`}
       onClose={onClose}
     >
       <FormContainer>
         {(programOutPutLine ? isProgramUser : !isProgramUser) &&
           renderFormInput(
             "muteHotkey",
-            "Toggle mute",
+            "Mutar/ativar microfone",
             !errors.muteHotkey,
             warning.muteHotkey
           )}
@@ -239,7 +238,7 @@ export const SettingsModal = ({
           <>
             {renderFormInput(
               "speakerHotkey",
-              "Toggle speaker",
+              "Silenciar/ativar alto-falante",
               !errors.speakerHotkey,
               warning.speakerHotkey
             )}
@@ -247,21 +246,21 @@ export const SettingsModal = ({
             {!programOutPutLine &&
               renderFormInput(
                 "pushToTalkHotkey",
-                "Toggle push to talk",
+                "Apertar para falar",
                 !errors.pushToTalkHotkey,
                 warning.pushToTalkHotkey
               )}
 
             {renderFormInput(
               "increaseVolumeHotkey",
-              "Increase volume",
+              "Aumentar volume",
               !errors.increaseVolumeHotkey,
               warning.increaseVolumeHotkey
             )}
 
             {renderFormInput(
               "decreaseVolumeHotkey",
-              "Decrease volume",
+              "Diminuir volume",
               !errors.decreaseVolumeHotkey,
               warning.decreaseVolumeHotkey
             )}
@@ -270,16 +269,16 @@ export const SettingsModal = ({
         {!programOutPutLine &&
           renderFormInput(
             "globalMuteHotkey",
-            "Toggle mute all microphones",
+            "Mutar/ativar todos os microfones",
             !errors.globalMuteHotkey,
             warning.globalMuteHotkey
           )}
         <ButtonDiv>
           <CancelButton type="button" onClick={onClose}>
-            Cancel
+            Cancelar
           </CancelButton>
           <PrimaryButton type="button" onClick={handleSubmit(onSubmit)}>
-            Save hotkeys
+            Salvar atalhos
           </PrimaryButton>
         </ButtonDiv>
       </FormContainer>

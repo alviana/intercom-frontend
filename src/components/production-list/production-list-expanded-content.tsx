@@ -139,7 +139,7 @@ export const ProductionListExpandedContent = ({
 
   const confirmationText =
     affectedPresets.length > 0
-      ? `This line is in ${affectedPresets.length} saved configuration${affectedPresets.length > 1 ? "s" : ""}: ${affectedPresets.map((g) => g.name).join(", ")}. It will be removed from ${affectedPresets.length > 1 ? "those saved configurations" : "that saved configuration"}.`
+      ? `Esta linha está em ${affectedPresets.length} ${affectedPresets.length > 1 ? "configurações salvas" : "configuração salva"}: ${affectedPresets.map((g) => g.name).join(", ")}. Ela será removida ${affectedPresets.length > 1 ? "dessas configurações salvas" : "dessa configuração salva"}.`
       : undefined;
 
   return (
@@ -170,7 +170,7 @@ export const ProductionListExpandedContent = ({
               disabled={!!l.participants.length}
               onClick={() => setSelectedLine(l)}
             >
-              Delete
+              Excluir
               {deleteLineLoading && (
                 <SpinnerWrapper>
                   <Spinner className="production-list" />
@@ -195,7 +195,7 @@ export const ProductionListExpandedContent = ({
                 }
               }}
             >
-              Join
+              Entrar
             </SecondaryButton>
           )}
         </Lineblock>
@@ -213,8 +213,8 @@ export const ProductionListExpandedContent = ({
       )}
       {selectedLine && (
         <ConfirmationModal
-          title="Delete Line"
-          description={`You are about to delete the line: ${selectedLine.name}. Are you sure?`}
+          title="Excluir linha"
+          description={`Você está prestes a excluir a linha: ${selectedLine.name}. Tem certeza?`}
           confirmationText={confirmationText}
           onCancel={() => setSelectedLine(null)}
           onConfirm={() => {

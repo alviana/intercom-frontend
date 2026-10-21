@@ -119,7 +119,7 @@ export const HeaderActions = ({
             onClick={handleToggleGlobalMute}
             className={isMasterInputMuted ? "mute" : ""}
           >
-            {isMasterInputMuted ? "Unmute All" : "Mute All"}
+            {isMasterInputMuted ? "Ativar todos" : "Mutar todos"}
             {isMasterInputMuted ? <MicMuted /> : <MicUnmuted />}
           </MuteAllCallsBtn>
         )}
@@ -137,7 +137,7 @@ export const HeaderActions = ({
         )}
         {!isEmpty && (
           <SavePresetBtn type="button" onClick={() => setShowPresetModal(true)}>
-            {isMobile ? "Save" : "Save as Configuration"}
+            {isMobile ? "Salvar" : "Salvar configuração"}
           </SavePresetBtn>
         )}
         {!isEmpty && (
@@ -146,7 +146,7 @@ export const HeaderActions = ({
               type="button"
               onClick={() => setAddCallActive(!addCallActive)}
             >
-              Add Call
+              Adicionar linha
             </SecondaryButton>
           </AddCallContainer>
         )}

@@ -12,6 +12,6 @@ export const useEditProductionName = (
   return useRequest<EditProductionNameParams, TBasicProductionResponse>({
     params,
     apiCall: API.updateProductionName,
-    errorMessage: (p) => `Failed to edit production name: ${p.name}`,
+    errorMessage: (p) => `Falha ao editar o nome da produção: ${p.name}`,
   });
 };

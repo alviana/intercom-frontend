@@ -176,7 +176,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
     if (!value?.trim()) return true;
 
     return hasDuplicateWithExistingLines
-      ? "Line name must be unique within this production."
+      ? "O nome da linha deve ser único nesta produção."
       : true;
   };
 
@@ -185,7 +185,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
       {addLineOpen && (
         <AddLineSectionForm>
           <AddLineHeader>
-            <span>Line Name</span>
+            <span>Nome da linha</span>
             <RemoveIconWrapper onClick={() => setAddLineOpen(false)}>
               <RemoveIcon />
             </RemoveIconWrapper>
@@ -195,11 +195,11 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
               <FormInput
                 // eslint-disable-next-line
                 {...register("name", {
-                  required: "Line name is required",
+                  required: "O nome da linha é obrigatório",
                   minLength: 1,
                   validate: validateUniqueLineName,
                 })}
-                placeholder="Line Name"
+                placeholder="Nome da linha"
               />
             </FormLabel>
             <CheckboxWrapper>
@@ -208,7 +208,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
                 control={control}
                 render={({ field: controllerField }) => (
                   <Checkbox
-                    label="Audio Feed"
+                    label="Feed de áudio"
                     checked={controllerField.value || false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       controllerField.onChange(e.target.checked)
@@ -217,8 +217,9 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
                 )}
               />
               <InfoTooltip>
-                In an <strong>Audio Feed</strong> line, listeners are not able
-                to talk. Only the <strong>Audio Feed</strong> will be heard.
+                Em uma linha de <strong>Feed de áudio</strong>, os ouvintes não
+                podem falar. Apenas o <strong>Feed de áudio</strong> será
+                ouvido.
               </InfoTooltip>
             </CheckboxWrapper>
           </ManageLineInputRow>
@@ -231,7 +232,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
             onClick={handleSubmit(onSubmit)}
             disabled={hasDuplicateWithExistingLines}
           >
-            Create
+            Criar
             {createLineLoading && (
               <SpinnerWrapper>
                 <Spinner className="production-list" />
@@ -242,7 +243,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
       )}
       {showLineConfirmation && lastCreatedLineName && (
         <LineConfirmation>
-          The line <strong>{lastCreatedLineName}</strong> has been created.
+          A linha <strong>{lastCreatedLineName}</strong> foi criada.
         </LineConfirmation>
       )}
       <ButtonsWrapper>
@@ -252,7 +253,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
             type="button"
             onClick={handleAddLineOpen}
           >
-            Add Line
+            Adicionar linha
           </SecondaryButton>
         )}
         <DeleteButton
@@ -260,7 +261,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
           disabled={isDeleteProductionDisabled}
           onClick={() => setDisplayConfirmationModal(true)}
         >
-          Delete Production
+          Excluir produção
           {deleteProductionLoading && (
             <SpinnerWrapper>
               <Spinner className="production-list" />
@@ -275,12 +276,12 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
           );
           const confirmationText =
             affected.length > 0
-              ? `This production has lines in ${affected.length} saved configuration${affected.length > 1 ? "s" : ""}: ${affected.map((g) => g.name).join(", ")}. Deleting it will remove those lines from ${affected.length > 1 ? "those saved configurations" : "that saved configuration"}.`
+              ? `Esta produção tem linhas em ${affected.length} ${affected.length > 1 ? "configurações salvas" : "configuração salva"}: ${affected.map((g) => g.name).join(", ")}. Excluí-la removerá essas linhas ${affected.length > 1 ? "dessas configurações salvas" : "dessa configuração salva"}.`
               : undefined;
           return (
             <ConfirmationModal
-              title="Delete Production"
-              description={`You are about to delete the production: ${production.name}. Are you sure?`}
+              title="Excluir produção"
+              description={`Você está prestes a excluir a produção: ${production.name}. Tem certeza?`}
               confirmationText={confirmationText}
               onCancel={() => setDisplayConfirmationModal(false)}
               onConfirm={() => {

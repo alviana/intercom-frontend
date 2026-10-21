@@ -70,7 +70,7 @@ export const useEstablishSession = ({
               error:
                 e instanceof Error
                   ? e
-                  : new Error("Failed to establish audio session."),
+                  : new Error("Falha ao estabelecer a sessão de áudio."),
             },
           });
         }

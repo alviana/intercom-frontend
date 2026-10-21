@@ -14,7 +14,7 @@ export const ManageProductionButton = () => {
   return (
     <ButtonWrapper>
       <SecondaryButton type="button" onClick={() => navigate("/manage")}>
-        Manage Productions
+        Gerenciar produções
       </SecondaryButton>
     </ButtonWrapper>
   );

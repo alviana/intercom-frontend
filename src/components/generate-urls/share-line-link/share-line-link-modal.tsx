@@ -190,30 +190,30 @@ export const ShareLineLinkModal = ({
   };
 
   const singleLineLabel = () => {
-    if (copied) return "✓ Link copied!";
-    if (isLoading) return "Generating link…";
-    return "Copy link";
+    if (copied) return "✓ Link copiado!";
+    if (isLoading) return "Gerando link…";
+    return "Copiar link";
   };
 
   const rowLabel = (index: number) => {
-    if (copiedRows[index]) return "✓ Copied!";
-    if (isLoading) return "Generating link…";
-    return "Copy link";
+    if (copiedRows[index]) return "✓ Copiado!";
+    if (isLoading) return "Gerando link…";
+    return "Copiar link";
   };
 
   return (
     <Modal
       onClose={onClose}
-      title={`Share ${isCopyProduction ? "Calls" : "Call URL"}`}
+      title={`Compartilhar ${isCopyProduction ? "linhas" : "URL da linha"}`}
     >
       <Description>
         {isCopyProduction
-          ? "Share these links to invite others to each call."
-          : "Anyone with this link can join the call."}
+          ? "Compartilhe estes links para convidar outras pessoas para cada linha."
+          : "Qualquer pessoa com este link pode entrar na linha."}
       </Description>
       <Note>
-        Each link can only be used once. A fresh link is generated automatically
-        when copying.
+        Cada link só pode ser usado uma vez. Um novo link é gerado
+        automaticamente ao copiar.
       </Note>
       {isCopyProduction ? (
         <RowsContainer>

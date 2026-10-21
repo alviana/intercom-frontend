@@ -59,7 +59,7 @@ export const CopyLink = ({
   return (
     <>
       <CopyIconWrapper
-        title="Get share link"
+        title="Obter link de compartilhamento"
         onClick={handleClick}
         className="production-list-item"
       >

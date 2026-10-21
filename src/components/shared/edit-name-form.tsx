@@ -231,7 +231,7 @@ export const EditNameForm = <T extends ProductionItem>({
     );
 
     if (hasDuplicate) {
-      return "Line name must be unique within this production";
+      return "O nome da linha deve ser único nesta produção";
     }
     return true;
   };
@@ -260,7 +260,7 @@ export const EditNameForm = <T extends ProductionItem>({
             {...register(formSubmitType, {
               validate: validateLineName,
             })}
-            placeholder="New Name"
+            placeholder="Novo nome"
             className={`name-edit-button edit-name ${className}`}
             autoFocus
             autoComplete="off"

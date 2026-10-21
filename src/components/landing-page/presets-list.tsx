@@ -228,7 +228,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
       </ParticipantCountWrapper>
       {preset.calls.length > 0 && (
         <CopyIconWrapper
-          title="Share saved configuration URL"
+          title="Compartilhar URL da configuração salva"
           onClick={handleShare}
           className="production-list-item"
           isCopied={false}
@@ -244,7 +244,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
         onClick={handleJoin}
         style={{ visibility: preset.calls.length === 0 ? "hidden" : "visible" }}
       >
-        Join
+        Entrar
       </JoinButton>
     </>
   );
@@ -254,10 +254,10 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
       {preset.calls.length === 0 && (
         <li>
           <EmptyPresetText>
-            No lines in this saved configuration
+            Nenhuma linha nesta configuração salva
             <InfoTooltip>
-              Lines may have been deleted. You can add new lines from the Manage
-              page or delete this saved configuration.
+              As linhas podem ter sido excluídas. Você pode adicionar novas
+              linhas na página Gerenciar ou excluir esta configuração salva.
             </InfoTooltip>
           </EmptyPresetText>
         </li>
@@ -266,7 +266,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
         const { production, line } = resolveCall(call);
         const lineName = line
           ? line.name
-          : `Production ${call.productionId} / Line ${call.lineId}`;
+          : `Produção ${call.productionId} / Linha ${call.lineId}`;
         const productionName = production?.name ?? null;
         const participantCount =
           line?.participants.filter((p) => !p.isWhip).length ?? 0;
@@ -285,7 +285,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
                   <LineName>{lineName}</LineName>
                   {call.lineUsedForProgramOutput && (
                     <RoleBadge>
-                      {call.isProgramUser ? "Audio feed" : "Listener"}
+                      {call.isProgramUser ? "Feed de áudio" : "Ouvinte"}
                     </RoleBadge>
                   )}
                 </LineNameRow>
@@ -332,7 +332,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
             }))
           )}
           companionUrl={preset.companionUrl}
-          title="Share Saved Configuration"
+          title="Compartilhar configuração salva"
           onClose={() => setShareModalOpen(false)}
         />
       )}
@@ -353,14 +353,14 @@ export const PresetList = ({ productions }: PresetListProps) => {
   return (
     <>
       <PageHeader
-        title="Saved Configurations"
+        title="Configurações salvas"
         titleAdornment={
           <InfoTooltip>
-            A <strong>saved configuration</strong> is a saved combination of
-            lines you can join with one click. Attach a{" "}
-            <strong>companion URL</strong> to automatically open a companion
-            connection when the configuration is opened. Deleting a line removes
-            it from any saved configurations it belongs to.
+            Uma <strong>configuração salva</strong> é uma combinação de linhas
+            em que você entra com um clique. Anexe uma{" "}
+            <strong>URL do Companion</strong> para abrir automaticamente uma
+            conexão com o Companion ao abrir a configuração. Excluir uma linha a
+            remove de todas as configurações salvas em que ela está.
           </InfoTooltip>
         }
       >
@@ -368,7 +368,7 @@ export const PresetList = ({ productions }: PresetListProps) => {
           <ManagePresetsButton
             type="button"
             onClick={() => navigate("/manage")}
-            title="Manage saved configurations"
+            title="Gerenciar configurações salvas"
           >
             <EditIcon />
           </ManagePresetsButton>

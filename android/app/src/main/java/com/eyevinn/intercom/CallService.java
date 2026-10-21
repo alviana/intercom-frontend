@@ -51,12 +51,12 @@ public class CallService extends Service {
         android.app.PendingIntent exitPI = android.app.PendingIntent.getActivity(this, 2002, exitIntent, flags);
 
         notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Intercom running")
+                .setContentTitle("Intercom ac24horas ativo")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setOngoing(true)
                 .setContentIntent(openPI)
-                .addAction(0, "Open", openPI)
-                .addAction(0, "Exit", exitPI)
+                .addAction(0, "Abrir", openPI)
+                .addAction(0, "Sair", exitPI)
                 .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .build();
 
@@ -121,7 +121,7 @@ public class CallService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel ch = new NotificationChannel(
                     CHANNEL_ID,
-                    "Intercom Calls",
+                    "Linhas do intercom",
                     NotificationManager.IMPORTANCE_LOW
             );
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

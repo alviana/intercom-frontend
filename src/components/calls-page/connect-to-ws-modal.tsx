@@ -105,7 +105,7 @@ export const ConnectToWsModal = ({
   return (
     <Modal
       onClose={onClose}
-      title="Connect to Companion WebSocket"
+      title="Conectar ao WebSocket do Companion"
       titleExtra={
         <InfoTooltip>
           <a
@@ -113,18 +113,18 @@ export const ConnectToWsModal = ({
             target="_blank"
             rel="noopener noreferrer"
           >
-            View user guide
+            Ver guia do usuário
           </a>
         </InfoTooltip>
       }
     >
       <ModalText>
-        To connect to the WebSocket server, please enter it&apos;s address:
+        Para conectar ao servidor WebSocket, informe o endereço:
       </ModalText>
       <InputGroup>
         <Prefix aria-hidden="true">{PROTOCOL}</Prefix>
         <HostPortInput
-          aria-label="WebSocket host and port"
+          aria-label="Host e porta do WebSocket"
           type="text"
           placeholder="localhost:12345"
           value={hostPort}
@@ -133,12 +133,12 @@ export const ConnectToWsModal = ({
         />
       </InputGroup>
       <ButtonWrapper>
-        <SecondaryButton onClick={onClose}>Cancel</SecondaryButton>
+        <SecondaryButton onClick={onClose}>Cancelar</SecondaryButton>
         <PrimaryButton
           onClick={submit}
           disabled={!hostPort || !isValidHostPort(hostPort)}
         >
-          Connect
+          Conectar
         </PrimaryButton>
       </ButtonWrapper>
     </Modal>

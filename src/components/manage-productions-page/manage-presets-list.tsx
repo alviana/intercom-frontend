@@ -525,7 +525,7 @@ const ManagePresetCard = ({
     );
 
     if (alreadyExists) {
-      setAddCallError("This line is already in the saved configuration.");
+      setAddCallError("Esta linha já está na configuração salva.");
       return;
     }
 
@@ -602,7 +602,7 @@ const ManagePresetCard = ({
                 e.preventDefault();
                 handleSaveName();
               }}
-              title="Save name"
+              title="Salvar nome"
             >
               <SaveIcon />
             </IconButton>
@@ -614,7 +614,7 @@ const ManagePresetCard = ({
               className="edit"
               type="button"
               onClick={handleEditNameClick}
-              title="Edit name"
+              title="Editar nome"
             >
               <EditIcon />
             </IconButton>
@@ -639,17 +639,17 @@ const ManagePresetCard = ({
         {preset.calls.length === 0 && (
           <li>
             <EmptyPresetText>
-              No lines in this saved configuration
+              Nenhuma linha nesta configuração salva
               <InfoTooltip>
-                Lines may have been deleted. You can add new lines below or
-                delete this saved configuration.
+                As linhas podem ter sido excluídas. Você pode adicionar novas
+                linhas abaixo ou excluir esta configuração salva.
               </InfoTooltip>
             </EmptyPresetText>
           </li>
         )}
         {preset.calls.map((call, idx) => {
           const { production, line } = resolveCall(call);
-          const lineName = line ? line.name : `Line ${call.lineId}`;
+          const lineName = line ? line.name : `Linha ${call.lineId}`;
           const productionName = production?.name ?? call.productionId;
 
           return (
@@ -679,7 +679,7 @@ const ManagePresetCard = ({
                         }
                       >
                         <RoleDot active={!call.isProgramUser} />
-                        Listener
+                        Ouvinte
                       </RoleOption>
                       <RoleOption
                         type="button"
@@ -694,14 +694,14 @@ const ManagePresetCard = ({
                         }
                       >
                         <RoleDot active={!!call.isProgramUser} />
-                        Audio feed
+                        Feed de áudio
                       </RoleOption>
                       <InfoTooltip>
-                        <strong>Listener</strong> can hear the audio feed but
-                        cannot talk back.
-                        <br />
-                        <strong>Audio feed</strong> is the source — their audio
-                        is broadcast to all listeners on this line.
+                        O <strong>ouvinte</strong> escuta o feed de áudio, mas
+                        não pode responder.
+                        <br />O <strong>feed de áudio</strong> é a fonte — o
+                        áudio dele é transmitido para todos os ouvintes desta
+                        linha.
                       </InfoTooltip>
                     </RoleSelector>
                   )}
@@ -713,7 +713,7 @@ const ManagePresetCard = ({
                     handleRemoveCall(call.productionId, call.lineId)
                   }
                 >
-                  Remove
+                  Remover
                 </DeleteButton>
               </Lineblock>
             </li>
@@ -724,7 +724,7 @@ const ManagePresetCard = ({
       {showAddCall && (
         <SpacedAddCallForm onSubmit={(e) => e.preventDefault()}>
           <AddLineHeader>
-            <span>Add Line</span>
+            <span>Adicionar linha</span>
             <RemoveIconWrapper
               onClick={() => {
                 setShowAddCall(false);
@@ -741,7 +741,7 @@ const ManagePresetCard = ({
               value={selectedProductionId}
               onChange={handleProductionChange}
             >
-              <option value="">Select production…</option>
+              <option value="">Selecione a produção…</option>
               {productions.map((p) => (
                 <option key={p.productionId} value={p.productionId}>
                   {p.name}
@@ -759,7 +759,7 @@ const ManagePresetCard = ({
               }}
               disabled={!selectedProduction}
             >
-              <option value="">Select line…</option>
+              <option value="">Selecione a linha…</option>
               {selectedProduction?.lines.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -775,7 +775,7 @@ const ManagePresetCard = ({
                 onClick={() => setSelectedIsProgramUser(false)}
               >
                 <RoleDot active={!selectedIsProgramUser} />
-                Listener
+                Ouvinte
               </RoleOption>
               <RoleOption
                 type="button"
@@ -783,14 +783,13 @@ const ManagePresetCard = ({
                 onClick={() => setSelectedIsProgramUser(true)}
               >
                 <RoleDot active={selectedIsProgramUser} />
-                Audio feed
+                Feed de áudio
               </RoleOption>
               <InfoTooltip>
-                <strong>Listener</strong> can hear the audio feed but cannot
-                talk back.
-                <br />
-                <strong>Audio feed</strong> is the source — their audio is
-                broadcast to all listeners on this line.
+                O <strong>ouvinte</strong> escuta o feed de áudio, mas não pode
+                responder.
+                <br />O <strong>feed de áudio</strong> é a fonte — o áudio dele
+                é transmitido para todos os ouvintes desta linha.
               </InfoTooltip>
             </RoleSelector>
           )}
@@ -805,7 +804,7 @@ const ManagePresetCard = ({
             onClick={handleAddCall}
             style={{ marginTop: "0.5rem" }}
           >
-            Add
+            Adicionar
           </CreateLineButton>
         </SpacedAddCallForm>
       )}
@@ -814,10 +813,11 @@ const ManagePresetCard = ({
         <CompanionEditRow>
           <CompanionLabel>Companion</CompanionLabel>
           <InfoTooltip>
-            Automatically connect to <strong>Bitfocus Companion</strong> when
-            joining this saved configuration. Companion lets you control your{" "}
-            <strong>Stream Deck</strong> and other button panels via WebSocket.
-            Enter your local Companion server address to enable this.
+            Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
+            entrar nesta configuração salva. O Companion permite controlar seu{" "}
+            <strong>Stream Deck</strong> e outros painéis de botões via
+            WebSocket. Informe o endereço do seu servidor Companion local para
+            ativar.
           </InfoTooltip>
           {isEditingCompanion ? (
             <>
@@ -838,14 +838,14 @@ const ManagePresetCard = ({
                 type="button"
                 disabled={savingCompanion || !isEditCompanionValid}
                 onClick={handleSaveCompanion}
-                title="Save"
+                title="Salvar"
               >
                 <SaveIcon />
               </CompanionIconButton>
               <CompanionIconButton
                 type="button"
                 onClick={() => setIsEditingCompanion(false)}
-                title="Cancel"
+                title="Cancelar"
               >
                 <RemoveIcon />
               </CompanionIconButton>
@@ -855,7 +855,7 @@ const ManagePresetCard = ({
               <CompanionUrl>
                 {preset.companionUrl ?? (
                   <span style={{ opacity: 0.4, fontStyle: "italic" }}>
-                    Not set
+                    Não definido
                   </span>
                 )}
               </CompanionUrl>
@@ -863,7 +863,7 @@ const ManagePresetCard = ({
                 className="edit"
                 type="button"
                 onClick={handleEditCompanionClick}
-                title="Edit companion URL"
+                title="Editar URL do Companion"
               >
                 <EditIcon />
               </IconButton>
@@ -872,7 +872,7 @@ const ManagePresetCard = ({
         </CompanionEditRow>
         {isEditingCompanion && !isEditCompanionValid && (
           <StyledWarningMessage role="alert">
-            Enter a valid host:port (e.g. localhost:12345)
+            Informe um host:porta válido (ex.: localhost:12345)
           </StyledWarningMessage>
         )}
       </CompanionSection>
@@ -882,7 +882,7 @@ const ManagePresetCard = ({
           type="button"
           onClick={() => setShowAddCall((prev) => !prev)}
         >
-          Add Line
+          Adicionar linha
         </AddCallToggleButton>
         <NoMarginButtonsWrapper>
           <DeleteButton
@@ -890,15 +890,15 @@ const ManagePresetCard = ({
             disabled={updating}
             onClick={() => setShowDeleteConfirm(true)}
           >
-            Delete Saved Configuration
+            Excluir configuração salva
           </DeleteButton>
         </NoMarginButtonsWrapper>
       </ActionBar>
 
       {showDeleteConfirm && (
         <ConfirmationModal
-          title="Delete Saved Configuration"
-          description={`You are about to delete the saved configuration: ${preset.name}. Are you sure?`}
+          title="Excluir configuração salva"
+          description={`Você está prestes a excluir a configuração salva: ${preset.name}. Tem certeza?`}
           onCancel={() => setShowDeleteConfirm(false)}
           // eslint-disable-next-line no-underscore-dangle
           onConfirm={() => onDelete(preset._id)}
@@ -950,11 +950,11 @@ export const ManagePresetsList = ({ productions }: ManagePresetsListProps) => {
   return (
     <>
       <SectionHeader>
-        Saved Configurations
+        Configurações salvas
         <InfoTooltip>
-          A <strong>saved configuration</strong> is a saved combination of lines
-          you can join with one click. Deleting a line removes it from any saved
-          configurations it belongs to.
+          Uma <strong>configuração salva</strong> é uma combinação de linhas em
+          que você pode entrar com um clique. Excluir uma linha a remove de
+          todas as configurações salvas das quais ela faz parte.
         </InfoTooltip>
       </SectionHeader>
       <ListWrapper>

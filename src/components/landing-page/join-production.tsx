@@ -69,7 +69,7 @@ export const JoinProduction = ({
       className={`${isMobile ? "" : "desktop"} ${className}`}
     >
       <HeaderWrapper>
-        <HeaderText>Join Call</HeaderText>
+        <HeaderText>Entrar na linha</HeaderText>
         {closeAddCallView && (
           <HeaderExitButton onClick={() => closeAddCallView()}>
             <RemoveIcon />
@@ -83,7 +83,7 @@ export const JoinProduction = ({
           addAdditionalCallId={addAdditionalCallId}
           prefetchedProduction={prefetchedProduction}
           prefetchedProductionList={prefetchedProductionList}
-          buttonText="Join"
+          buttonText="Entrar"
           defaultValues={defaultValues}
           setJoinProductionOptions={setJoinProductionOptions}
           customGlobalMute={customGlobalMute}

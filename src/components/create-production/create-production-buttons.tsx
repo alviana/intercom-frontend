@@ -25,7 +25,7 @@ export const CreateProductionButtons = ({
           onClick={handleAddLine}
           disabled={isAddLineDisabled}
         >
-          Add Line
+          Adicionar linha
         </SecondaryButton>
       </ButtonWrapper>
       <ButtonWrapper>
@@ -35,7 +35,7 @@ export const CreateProductionButtons = ({
           onClick={handleSubmit}
           disabled={isCreateDisabled}
         >
-          Create Production
+          Criar produção
           {loading && <Spinner className="create-production" />}
         </PrimaryButton>
       </ButtonWrapper>

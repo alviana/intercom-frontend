@@ -91,7 +91,7 @@ public class OverlayService extends Service {
         String channelId = "intercom_bubble_channel";
         NotificationChannel channel = new NotificationChannel(
                 channelId,
-                "Intercom Floating Controls",
+                "Controles flutuantes do intercom",
                 NotificationManager.IMPORTANCE_MIN
         );
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -111,12 +111,12 @@ public class OverlayService extends Service {
         android.app.PendingIntent exitPI = android.app.PendingIntent.getActivity(this, 2102, exitIntent, flags);
 
         Notification notification = new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Intercom controls active")
+                .setContentTitle("Controles do intercom ativos")
                 .setSmallIcon(android.R.drawable.ic_media_play)
                 .setOngoing(true)
                 .setContentIntent(openPI)
-                .addAction(0, "Open", openPI)
-                .addAction(0, "Exit", exitPI)
+                .addAction(0, "Abrir", openPI)
+                .addAction(0, "Sair", exitPI)
                 .build();
         startForeground(1, notification);
     }
@@ -189,12 +189,12 @@ public class OverlayService extends Service {
         header.addView(spacer);
 
         ImageView openBtn = buildHeaderIcon(android.R.drawable.ic_menu_call);
-        openBtn.setContentDescription("Open app");
+        openBtn.setContentDescription("Abrir app");
         openBtn.setOnClickListener(v -> openMainActivity());
         header.addView(openBtn);
 
         ImageView collapseBtn = buildHeaderIcon(android.R.drawable.ic_menu_agenda);
-        collapseBtn.setContentDescription(expanded ? "Collapse" : "Expand");
+        collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
         collapseBtn.setOnClickListener(v -> toggleControls(collapseBtn));
         header.addView(collapseBtn);
 
@@ -228,7 +228,7 @@ public class OverlayService extends Service {
             scrollContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
         }
         if (collapseBtn != null) {
-            collapseBtn.setContentDescription(expanded ? "Collapse" : "Expand");
+            collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
         }
     }
 
@@ -340,7 +340,7 @@ public class OverlayService extends Service {
 
     private String[] defaultLabels(int count) {
         String[] labels = new String[count];
-        for (int i = 0; i < count; i++) labels[i] = "Call " + (i + 1);
+        for (int i = 0; i < count; i++) labels[i] = "Linha " + (i + 1);
         return labels;
     }
 
@@ -413,7 +413,7 @@ public class OverlayService extends Service {
         LinearLayout header = (LinearLayout) tile.getChildAt(0);
         if (header.getChildCount() > 0) {
             TextView nameView = (TextView) header.getChildAt(0);
-            String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Call " + (idx + 1));
+            String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
             nameView.setText(label);
             header.setBackgroundColor(tileHeaderColor(idx));
             if (header.getChildCount() > 1) {
@@ -486,7 +486,7 @@ public class OverlayService extends Service {
         header.setPadding(headerPad, dp(6), headerPad, dp(6));
 
         TextView nameView = new TextView(this);
-        String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Call " + (idx + 1));
+        String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
         nameView.setText(label);
         nameView.setTextColor(0xFF111111);
         nameView.setTextSize(12);
@@ -518,7 +518,7 @@ public class OverlayService extends Service {
         );
         listenLp.topMargin = dp(2);
         listenBtn.setLayoutParams(listenLp);
-        listenBtn.setContentDescription("Listen");
+        listenBtn.setContentDescription("Ouvir");
         listenBtn.setOnClickListener(v -> sendAction("listen", idx));
 
         LinearLayout micRow = new LinearLayout(this);
@@ -536,7 +536,7 @@ public class OverlayService extends Service {
         micIcon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         micIcon.setImageResource(R.drawable.ic_mic_off);
         micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(28), dp(28)));
-        micRow.setContentDescription("Talk (tap to latch, hold for PTT)");
+        micRow.setContentDescription("Falar (toque para travar, segure para PTT)");
         attachDualMicControl(micRow, micIcon, idx);
 
         tile.addView(header);

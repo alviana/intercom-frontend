@@ -3,14 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>pt-BR</string>
 	<key>CFBundleDisplayName</key>
-        <string>Intercom</string>
+        <string>Intercom ac24horas</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.eyevinn.intercom.overlay</string>
+			<string>br.com.ac24horas.intercom.overlay</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>intercom-control</string>

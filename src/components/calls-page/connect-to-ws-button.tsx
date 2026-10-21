@@ -105,7 +105,7 @@ export const ConnectToWSButton = ({
   const handleWsError = useCallback(
     (message: string) => {
       setIsConnecting(false);
-      const errorMessage = `Could not connect to Companion: ${message}`;
+      const errorMessage = `Não foi possível conectar ao Companion: ${message}`;
       if (isManualConnectRef.current) {
         dispatch({
           type: "ERROR",
@@ -216,8 +216,8 @@ export const ConnectToWSButton = ({
   const renderButtonContent = () => {
     if (isWSConnected) return "Companion";
     if (isConnecting || isWSReconnecting)
-      return everConnectedRef.current ? "Reconnecting..." : "Connecting...";
-    return "Connect to Companion";
+      return everConnectedRef.current ? "Reconectando..." : "Conectando...";
+    return "Conectar ao Companion";
   };
 
   return (
@@ -231,7 +231,9 @@ export const ConnectToWSButton = ({
           )}
         </ConnectButton>
 
-        {isWSConnected && <TooltipText id="disconnect">Disconnect</TooltipText>}
+        {isWSConnected && (
+          <TooltipText id="disconnect">Desconectar</TooltipText>
+        )}
       </TooltipWrapper>
 
       <ConnectToWsModal

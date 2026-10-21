@@ -62,7 +62,7 @@ export const CollapsableSection: FC<CollapsableSectionProps> = (props) => {
     <SectionWrapper>
       <SectionHeader onClick={() => setOpen(!open)}>
         <SectionTitle>{title}</SectionTitle>
-        {title === "Devices" && open && (
+        {title === "Dispositivos" && open && (
           <FirefoxWarning type="collapsable-header" />
         )}
         <SectionCollapser>

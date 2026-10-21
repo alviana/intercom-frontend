@@ -69,7 +69,9 @@ export const useAudioInput: TUseAudioInput = ({ audioInputId, dispatch }) => {
           dispatch({
             type: "ERROR",
             payload: {
-              error: new Error("Selected devices are not available"),
+              error: new Error(
+                "Os dispositivos selecionados não estão disponíveis"
+              ),
             },
           });
         });

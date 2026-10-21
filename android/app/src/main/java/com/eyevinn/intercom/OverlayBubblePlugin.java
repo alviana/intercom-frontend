@@ -124,7 +124,7 @@ public class OverlayBubblePlugin extends Plugin {
                     labels[i] = null;
                 }
                 if (labels[i] == null || labels[i].trim().isEmpty()) {
-                    labels[i] = "Call " + (i + 1);
+                    labels[i] = "Linha " + (i + 1);
                 }
             }
             Intent intent = new Intent("com.eyevinn.intercom.BUBBLE_UPDATE");

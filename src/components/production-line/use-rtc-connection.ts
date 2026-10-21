@@ -94,7 +94,9 @@ const establishConnection = ({
         type: "ERROR",
         payload: {
           callId,
-          error: new Error("Stream-error: No MediaStreamTracks avaliable"),
+          error: new Error(
+            "Erro de stream: nenhuma MediaStreamTrack disponível"
+          ),
         },
       });
     } else {
@@ -103,7 +105,7 @@ const establishConnection = ({
         type: "ERROR",
         payload: {
           callId,
-          error: new Error("Stream-error: No MediaStream avaliable"),
+          error: new Error("Erro de stream: nenhum MediaStream disponível"),
         },
       });
     }

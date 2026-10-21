@@ -84,7 +84,7 @@ export const Modal = ({ onClose, title, titleExtra, children }: ModalProps) => {
         <ModalHeader>
           {title && <ModalTitle>{title}</ModalTitle>}
           {titleExtra}
-          <CloseButton onClick={onClose} aria-label="Close dialog">
+          <CloseButton onClick={onClose} aria-label="Fechar janela">
             <RemoveIcon />
           </CloseButton>
         </ModalHeader>

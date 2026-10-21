@@ -241,8 +241,8 @@ export const CallHeaderComponent = ({
           <MobileOnly>
             <ShareButton
               role="button"
-              aria-label="Share line link"
-              title="Share line link"
+              aria-label="Compartilhar link da linha"
+              title="Compartilhar link da linha"
               onClick={handleShareClick}
             >
               <ShareIcon />
@@ -252,14 +252,16 @@ export const CallHeaderComponent = ({
       </HeaderActionsRow>
       <ChevronButton
         role="button"
-        aria-label={open ? "Collapse line details" : "Expand line details"}
+        aria-label={
+          open ? "Recolher detalhes da linha" : "Expandir detalhes da linha"
+        }
       >
         {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
       </ChevronButton>
       {line?.programOutputLine && open && (
         <AudioFeedIcon open={open}>
           <TVIcon />
-          Audio feed
+          Feed de áudio
         </AudioFeedIcon>
       )}
       {shareModalOpen && (

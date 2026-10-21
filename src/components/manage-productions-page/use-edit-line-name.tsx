@@ -11,6 +11,6 @@ export const useEditLineName = (params: EditLineNameParams | null) => {
   return useRequest<EditLineNameParams, TBasicProductionResponse>({
     params,
     apiCall: API.updateLineName,
-    errorMessage: (p) => `Failed to edit line name: ${p.name}`,
+    errorMessage: (p) => `Falha ao editar o nome da linha: ${p.name}`,
   });
 };

@@ -43,7 +43,7 @@ export const handleFetchRequest = async <T>(
     ) {
       err = new Error(String((json as { message: string }).message));
     } else {
-      err = new Error(response.statusText || "Unknown error");
+      err = new Error(response.statusText || "Erro desconhecido");
     }
     (err as Error & { status?: number }).status = status;
     throw err;

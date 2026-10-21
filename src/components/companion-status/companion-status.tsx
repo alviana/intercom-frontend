@@ -85,7 +85,7 @@ export const CompanionStatus = () => {
   if (!mobile) return null;
 
   return (
-    <Wrapper aria-label="Companion connectivity status">
+    <Wrapper aria-label="Status da conexão com o Companion">
       <Dot status={status} />
       <Label>Companion</Label>
     </Wrapper>

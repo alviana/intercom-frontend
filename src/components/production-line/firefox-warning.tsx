@@ -10,9 +10,9 @@ export const FirefoxWarning = ({
     <Tooltip
       tooltipText={
         <p>
-          If a new device has been added Firefox needs the permission to be
-          manually reset. If your device is missing, please remove the
-          permission and reload page.
+          Se um novo dispositivo foi adicionado, o Firefox precisa que a
+          permissão seja redefinida manualmente. Se o seu dispositivo não
+          aparecer, remova a permissão e recarregue a página.
         </p>
       }
       type={type}

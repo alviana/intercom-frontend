@@ -155,11 +155,11 @@ export const SavePresetModal = ({
     onBlur: nameOnBlur,
     name: nameAttr,
   } = register("name", {
-    required: "Name is required",
-    minLength: { value: 1, message: "Name is required" },
+    required: "O nome é obrigatório",
+    minLength: { value: 1, message: "O nome é obrigatório" },
     maxLength: {
       value: 200,
-      message: "Name must be 200 characters or fewer",
+      message: "O nome deve ter no máximo 200 caracteres",
     },
   });
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -212,7 +212,7 @@ export const SavePresetModal = ({
       onClose();
     } catch (e) {
       setSaveError(
-        e instanceof Error ? e.message : "Failed to save configuration"
+        e instanceof Error ? e.message : "Falha ao salvar a configuração"
       );
     }
   };
@@ -220,12 +220,12 @@ export const SavePresetModal = ({
   return (
     <Modal
       onClose={onClose}
-      title="Save as Configuration"
+      title="Salvar configuração"
       titleExtra={
         <InfoTooltip>
-          A <strong>saved configuration</strong> is a saved combination of lines
-          you can join with one click. Deleting a line removes it from any saved
-          configurations it belongs to.
+          Uma <strong>configuração salva</strong> é uma combinação de linhas em
+          que você pode entrar com um clique. Excluir uma linha a remove de
+          todas as configurações salvas das quais ela faz parte.
         </InfoTooltip>
       }
     >
@@ -237,7 +237,7 @@ export const SavePresetModal = ({
             onClick={() => setIsLocal(false)}
           >
             <RadioDot active={!isLocal} />
-            Public
+            Pública
           </RadioOption>
           <RadioOption
             type="button"
@@ -248,12 +248,12 @@ export const SavePresetModal = ({
             Local
           </RadioOption>
           <InfoTooltip>
-            <strong>Public</strong> saved configurations are stored on the
-            server and visible to everyone.
+            Configurações salvas <strong>públicas</strong> ficam armazenadas no
+            servidor e são visíveis para todos.
             <br />
-            <strong>Local</strong> saved configurations are stored in your
-            browser only — not visible to others, but can still be shared via
-            URL.
+            Configurações salvas <strong>locais</strong> ficam armazenadas
+            apenas no seu navegador — não são visíveis para outros, mas podem
+            ser compartilhadas via URL.
           </InfoTooltip>
         </VisibilityRow>
         {showCompanion && (
@@ -265,11 +265,12 @@ export const SavePresetModal = ({
                 onClick={() => setIncludeCompanion((v) => !v)}
               >
                 <RadioDot active={includeCompanion} />
-                Include Companion URL
+                Incluir URL do Companion
               </RadioOption>
               <InfoTooltip>
-                If included, joining this saved configuration will automatically
-                connect to your Bitfocus Companion WebSocket server.
+                Se incluída, ao entrar nesta configuração salva você será
+                conectado automaticamente ao seu servidor WebSocket do Bitfocus
+                Companion.
               </InfoTooltip>
             </CompanionToggleRow>
             {includeCompanion && (
@@ -297,10 +298,10 @@ export const SavePresetModal = ({
         )}
         <FormRow>
           <FormLabel htmlFor="preset-name">
-            <DecorativeLabel>Configuration name</DecorativeLabel>
+            <DecorativeLabel>Nome da configuração</DecorativeLabel>
             <FormInput
               id="preset-name"
-              placeholder="e.g. Morning show setup"
+              placeholder="ex.: Configuração do jornal da manhã"
               ref={nameRef}
               onChange={nameOnChange}
               onBlur={nameOnBlur}
@@ -315,7 +316,7 @@ export const SavePresetModal = ({
         </FormRow>
         {saveError && <ErrorText role="alert">{saveError}</ErrorText>}
         <SubmitBtn type="submit" disabled={isSubmitting || !isCompanionValid}>
-          {isSubmitting ? "Saving..." : "Save configuration"}
+          {isSubmitting ? "Salvando..." : "Salvar configuração"}
         </SubmitBtn>
       </form>
     </Modal>

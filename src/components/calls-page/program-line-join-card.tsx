@@ -137,16 +137,17 @@ export const ProgramLineJoinCard = ({
         </CardTitleWrapper>
       </CardHeader>
       <RoleLabel>
-        This is a line for audio feed. Join as listener or audio feed?
+        Esta é uma linha de feed de áudio. Entrar como ouvinte ou como feed de
+        áudio?
       </RoleLabel>
       <CheckboxWrapper>
         <Checkbox
-          label="Listener"
+          label="Ouvinte"
           checked={!isProgramUser}
           onChange={() => setIsProgramUser(false)}
         />
         <Checkbox
-          label="Audio feed"
+          label="Feed de áudio"
           checked={isProgramUser}
           onChange={() => setIsProgramUser(true)}
         />
@@ -157,7 +158,7 @@ export const ProgramLineJoinCard = ({
           onClick={handleJoin}
           disabled={!userSettings?.username}
         >
-          Join
+          Entrar
         </JoinBtn>
       </ButtonRow>
     </CardContainer>

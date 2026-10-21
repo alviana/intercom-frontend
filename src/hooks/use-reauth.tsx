@@ -91,7 +91,7 @@ export const useSetupTokenRefresh = () => {
           type: "ERROR",
           payload: {
             error: new Error(
-              `Failed to reauth after ${REAUTH_MAX_ATTEMPTS} attempts - ${codePart}`
+              `Falha ao renovar a autenticação após ${REAUTH_MAX_ATTEMPTS} tentativas - ${codePart}`
             ),
           },
         });

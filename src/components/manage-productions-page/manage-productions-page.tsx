@@ -65,14 +65,18 @@ export const ManageProductionsPage = () => {
 
   return (
     <>
-      <PageHeader title="Manage" loading={showRefreshing} hasNavigateToRoot />
+      <PageHeader
+        title="Gerenciar"
+        loading={showRefreshing}
+        hasNavigateToRoot
+      />
       {!!productions?.productions.length && (
         <>
           <SectionHeader>
-            Productions
+            Produções
             <InfoTooltip>
-              A <strong>production</strong> is a named group of communication
-              lines
+              Uma <strong>produção</strong> é um grupo nomeado de linhas de
+              comunicação
             </InfoTooltip>
           </SectionHeader>
           <ProductionsList

@@ -45,11 +45,16 @@ export const LineBlock = ({
         {line.participants.length > 4 && (
           <ParticipantExpandBtn
             type="button"
-            title={showFullUserList ? "Hide users" : "Show all users"}
+            title={
+              showFullUserList
+                ? "Ocultar usuários"
+                : "Mostrar todos os usuários"
+            }
             onClick={() => setShowFullUserList(!showFullUserList)}
           >
             <PersonText>
-              {showFullUserList ? "hide" : "show"} {isMobile ? "" : "full list"}
+              {showFullUserList ? "ocultar" : "mostrar"}{" "}
+              {isMobile ? "" : "lista completa"}
             </PersonText>
             {showFullUserList ? <ChevronUpIcon /> : <ChevronDownIcon />}
           </ParticipantExpandBtn>
@@ -71,7 +76,7 @@ export const LineBlock = ({
         {line.participants.length > 4 && !showFullUserList && (
           <LineBlockParticipant>
             <UsersIcon />
-            <PersonText>{`+${line.participants.length - 4} other user${line.participants.length - 4 > 1 ? "s" : ""}`}</PersonText>
+            <PersonText>{`+${line.participants.length - 4} ${line.participants.length - 4 > 1 ? "outros usuários" : "outro usuário"}`}</PersonText>
           </LineBlockParticipant>
         )}
       </LineBlockParticipants>

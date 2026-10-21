@@ -19,7 +19,7 @@ export const GenerateWhipUrlButton = ({
       }
       return "WHIP URL";
     }
-    return "Get WHIP URL";
+    return "Obter URL WHIP";
   };
 
   const renderModalContent = useCallback(

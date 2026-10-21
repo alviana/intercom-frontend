@@ -307,7 +307,7 @@ export const UserSettingsForm = ({
   const formatDeviceLabel =
     settingsAdapter?.formatDeviceLabel ??
     ((device: MediaDeviceInfo) => device.label);
-  const inputLabel = settingsAdapter?.inputLabel ?? "Input";
+  const inputLabel = settingsAdapter?.inputLabel ?? "Entrada";
   const outputOverride = settingsAdapter?.renderDeviceOutputOverride?.();
   const renderContext = {
     errors,
@@ -317,7 +317,7 @@ export const UserSettingsForm = ({
   return (
     <div style={{ minWidth: updateUserSettings ? "min(40rem, 100%)" : "" }}>
       {!preSelected && isJoinProduction && productions && (
-        <FormItem label="Production Name" errors={errors}>
+        <FormItem label="Nome da produção" errors={errors}>
           <FormSelect
             // eslint-disable-next-line
             {...register(`productionId`)}
@@ -337,7 +337,7 @@ export const UserSettingsForm = ({
           </FormSelect>
           {productionListFetchError && (
             <FetchErrorMessage>
-              The production list could not be fetched.
+              Não foi possível carregar a lista de produções.
               {productionListFetchError.name} {productionListFetchError.message}
               .
             </FetchErrorMessage>
@@ -347,11 +347,11 @@ export const UserSettingsForm = ({
       {!preSelected &&
         isJoinProduction &&
         (addAdditionalCallId ? !!production : !!productions) && (
-          <FormItem label="Line">
+          <FormItem label="Linha">
             <FormSelect
               // eslint-disable-next-line
               {...register(`lineId`, {
-                required: "Line id is required",
+                required: "O ID da linha é obrigatório",
                 minLength: 1,
               })}
               style={{
@@ -368,25 +368,27 @@ export const UserSettingsForm = ({
             </FormSelect>
             {!production && (
               <StyledWarningMessage>
-                Please enter a production id
+                Informe o ID da produção
               </StyledWarningMessage>
             )}
             {isAlreadyJoined && (
               <StyledWarningMessage style={{ marginTop: "0.5rem" }}>
-                You have already joined this line
+                Você já entrou nesta linha
               </StyledWarningMessage>
             )}
           </FormItem>
         )}
       {!hideUsername && (
-        <FormItem label="Username" fieldName="username" errors={errors}>
+        <FormItem label="Nome de usuário" fieldName="username" errors={errors}>
           <FormInput
             // eslint-disable-next-line
             {...register(`username`, {
-              required: !hideUsername ? "Username is required" : false,
+              required: !hideUsername
+                ? "O nome de usuário é obrigatório"
+                : false,
               minLength: 1,
             })}
-            placeholder="Username"
+            placeholder="Nome de usuário"
           />
         </FormItem>
       )}
@@ -394,7 +396,7 @@ export const UserSettingsForm = ({
         <>
           <DevicesSection>
             <SectionTitle>
-              {isBrowserSafari ? "Device" : "Devices"}
+              {isBrowserSafari ? "Dispositivo" : "Dispositivos"}
               <ReloadDevicesButton />
               {isBrowserFirefox && <FirefoxWarning type="firefox-warning" />}
             </SectionTitle>
@@ -411,7 +413,9 @@ export const UserSettingsForm = ({
                 <>
                   {settingsAdapter &&
                     !devices.input.some((d) => d.deviceId === "default") && (
-                      <option value="default">System default microphone</option>
+                      <option value="default">
+                        Microfone padrão do sistema
+                      </option>
                     )}
                   {devices.input.map((device, idx) => (
                     <option key={device.deviceId} value={device.deviceId}>
@@ -420,13 +424,13 @@ export const UserSettingsForm = ({
                   ))}
                 </>
               ) : (
-                <option value="no-device">No device available</option>
+                <option value="no-device">Nenhum dispositivo disponível</option>
               )}
             </FormSelect>
           </FormItem>
           {outputOverride}
           {!outputOverride && !isBrowserSafari && (
-            <FormItem label="Output">
+            <FormItem label="Saída">
               {devices.output && devices.output.length > 0 ? (
                 <FormSelect
                   // eslint-disable-next-line
@@ -440,7 +444,9 @@ export const UserSettingsForm = ({
                 >
                   {settingsAdapter &&
                     !devices.output.some((d) => d.deviceId === "default") && (
-                      <option value="default">System default speaker</option>
+                      <option value="default">
+                        Alto-falante padrão do sistema
+                      </option>
                     )}
                   {devices.output.map((device, idx) => (
                     <option key={device.deviceId} value={device.deviceId}>
@@ -450,7 +456,7 @@ export const UserSettingsForm = ({
                 </FormSelect>
               ) : (
                 <StyledWarningMessage>
-                  Controlled by operating system
+                  Controlado pelo sistema operacional
                 </StyledWarningMessage>
               )}
             </FormItem>
@@ -462,12 +468,12 @@ export const UserSettingsForm = ({
       {isProgramOutputLine && isJoinProduction && (
         <CheckboxWrapper>
           <Checkbox
-            label="Listener"
+            label="Ouvinte"
             checked={!isProgramUser}
             onChange={() => setIsProgramUser?.(false)}
           />
           <Checkbox
-            label="Audio feed"
+            label="Feed de áudio"
             checked={!!isProgramUser}
             onChange={() => setIsProgramUser?.(true)}
           />
@@ -490,9 +496,9 @@ export const UserSettingsForm = ({
 
       {confirmModalOpen && (
         <ConfirmationModal
-          title="Confirm"
-          description="Are you sure you want to update your settings?"
-          confirmationText="This will update the devices for all current lines."
+          title="Confirmar"
+          description="Tem certeza de que deseja atualizar suas configurações?"
+          confirmationText="Isso atualizará os dispositivos de todas as linhas atuais."
           onConfirm={confirmAndSave}
           onCancel={() => setConfirmModalOpen(false)}
           shouldSubmitOnEnter

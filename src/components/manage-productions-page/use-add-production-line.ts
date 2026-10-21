@@ -23,6 +23,6 @@ export const useAddProductionLine = (
     apiCall: async (p) => {
       await API.addProductionLine(p.productionId, p.name, p.programOutputLine);
     },
-    errorMessage: (p) => `Failed to add production line: ${p.name}`,
+    errorMessage: (p) => `Falha ao adicionar a linha: ${p.name}`,
   });
 };

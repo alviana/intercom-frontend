@@ -45,14 +45,18 @@ export const UserSettings: FC<UserSettingsProps> = (props) => {
         (hasBackButton ? (
           <HeaderWrapper>
             <NavigateToRootButton onNavigate={onBack} />
-            <DisplayContainerHeader>User Settings</DisplayContainerHeader>
+            <DisplayContainerHeader>
+              Configurações do usuário
+            </DisplayContainerHeader>
           </HeaderWrapper>
         ) : (
-          <DisplayContainerHeader>User Settings</DisplayContainerHeader>
+          <DisplayContainerHeader>
+            Configurações do usuário
+          </DisplayContainerHeader>
         ))}
       {devices && (
         <UserSettingsForm
-          buttonText={buttonText || "Save"}
+          buttonText={buttonText || "Salvar"}
           defaultValues={defaultValues}
           onSave={onSave}
           updateUserSettings

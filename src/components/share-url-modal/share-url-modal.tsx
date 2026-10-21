@@ -211,18 +211,20 @@ export const ShareUrlModal = ({
   };
 
   const buttonLabel = () => {
-    if (copied) return "✓ Link copied!";
-    if (isLoading) return "Generating link…";
-    if (isError) return "Failed to generate link";
-    return "Copy link";
+    if (copied) return "✓ Link copiado!";
+    if (isLoading) return "Gerando link…";
+    if (isError) return "Falha ao gerar o link";
+    return "Copiar link";
   };
 
   return (
     <Modal onClose={onClose} title={title}>
-      <Description>Anyone with this link can join the session.</Description>
+      <Description>
+        Qualquer pessoa com este link pode entrar na sessão.
+      </Description>
       <Note>
-        Each link can only be used once. A fresh link is generated automatically
-        when copying.
+        Cada link só pode ser usado uma vez. Um novo link é gerado
+        automaticamente ao copiar.
       </Note>
       <CopyButton
         type="button"
@@ -241,7 +243,7 @@ export const ShareUrlModal = ({
             checked={includeCompanion}
             onChange={(e) => handleCompanionToggle(e.target.checked)}
           />
-          Include companion URL
+          Incluir URL do Companion
         </CheckboxRow>
       )}
     </Modal>

@@ -29,7 +29,9 @@ export const useHeartbeat = ({ sessionId }: TProps) => {
               type: "HEARTBEAT_ERROR",
               payload: {
                 sessionId,
-                error: new Error("Stopped heartbeat after 3 retries."),
+                error: new Error(
+                  "Conexão com o servidor interrompida após 3 tentativas sem resposta."
+                ),
               },
             });
             window.clearInterval(interval);

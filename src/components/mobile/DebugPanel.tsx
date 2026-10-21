@@ -122,7 +122,7 @@ export const DebugPanel = () => {
       }}
     >
       <div>
-        <strong>Platform:</strong> {status.platform}
+        <strong>Plataforma:</strong> {status.platform}
       </div>
       <div>
         <strong>Plugins:</strong> OverlayBubble={String(status.overlayPlugin)} •
@@ -179,12 +179,12 @@ export const DebugPanel = () => {
       {/* AudioRoute disabled */}
       {status.error && (
         <div style={{ color: "#f88" }}>
-          <strong>Error:</strong> {status.error}
+          <strong>Erro:</strong> {status.error}
         </div>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" disabled={busy} onClick={refresh}>
-          Refresh
+          Atualizar
         </button>
         <button
           type="button"
@@ -195,7 +195,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Open Overlay Settings
+          Abrir configurações de sobreposição
         </button>
         <button
           type="button"
@@ -206,7 +206,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Show Bubble
+          Mostrar bolha
         </button>
         <button
           type="button"
@@ -220,7 +220,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Test Debug Activity
+          Testar atividade de depuração
         </button>
         <button
           type="button"
@@ -231,7 +231,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Hide Bubble
+          Ocultar bolha
         </button>
         <button
           type="button"
@@ -242,7 +242,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Grant Notification
+          Permitir notificações
         </button>
         <button
           type="button"
@@ -253,7 +253,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Start Call Service
+          Iniciar serviço de chamada
         </button>
         <button
           type="button"
@@ -264,7 +264,7 @@ export const DebugPanel = () => {
             } catch (e) {}
           }}
         >
-          Stop Call Service
+          Parar serviço de chamada
         </button>
         {/* AudioRoute disabled: no Apply Saved Route */}
       </div>

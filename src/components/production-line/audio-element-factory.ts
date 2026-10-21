@@ -28,7 +28,7 @@ export const createAudioElement = ({
   audioElement.onerror = () => {
     onError(
       new Error(
-        `Audio Error: ${audioElement.error?.code} - ${audioElement.error?.message}`
+        `Erro de áudio: ${audioElement.error?.code} - ${audioElement.error?.message}`
       )
     );
   };
@@ -38,7 +38,7 @@ export const createAudioElement = ({
   if (audiooutput && (!isBrowserSafari || !isMobile || !isIpad)) {
     audioElement.setSinkId(audiooutput).catch((e) => {
       onSinkError(
-        e instanceof Error ? e : new Error("Error assigning audio sink.")
+        e instanceof Error ? e : new Error("Erro ao definir a saída de áudio.")
       );
     });
   }

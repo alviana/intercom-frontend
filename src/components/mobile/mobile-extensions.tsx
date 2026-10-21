@@ -50,7 +50,7 @@ export const MobileSettingsModal = ({
   if (!isMobileApp() || !backgroundLocation || !mobileOnSettings) return null;
 
   return (
-    <Modal onClose={() => navigate(-1)} title="Settings">
+    <Modal onClose={() => navigate(-1)} title="Configurações">
       <MobileSettingsPage
         isModal
         onClose={() => navigate(-1)}

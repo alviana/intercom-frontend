@@ -53,7 +53,7 @@ export const HotkeysComponent = ({
       {(isProgramOutputLine ? isProgramUser : !isProgramUser) && (
         <TempDiv>
           <strong>{(savedHotkeys?.muteHotkey || "").toUpperCase()}: </strong>
-          Toggle Input Mute
+          Mutar/ativar microfone
         </TempDiv>
       )}
       {!(isProgramOutputLine && isProgramUser) && (
@@ -62,27 +62,27 @@ export const HotkeysComponent = ({
             <strong>
               {(savedHotkeys?.speakerHotkey || "").toUpperCase()}:{" "}
             </strong>
-            Toggle Output Mute
+            Silenciar/ativar alto-falante
           </TempDiv>
           {!isProgramOutputLine && (
             <TempDiv>
               <strong>
                 {(savedHotkeys?.pushToTalkHotkey || "").toUpperCase()}:{" "}
               </strong>
-              Push to Talk
+              Apertar para falar
             </TempDiv>
           )}
           <TempDiv>
             <strong>
               {savedHotkeys?.increaseVolumeHotkey.toUpperCase()}:{" "}
             </strong>
-            Increase Volume
+            Aumentar volume
           </TempDiv>
           <TempDiv>
             <strong>
               {savedHotkeys?.decreaseVolumeHotkey.toUpperCase()}:{" "}
             </strong>
-            Decrease Volume
+            Diminuir volume
           </TempDiv>
         </>
       )}
@@ -91,11 +91,11 @@ export const HotkeysComponent = ({
           <strong>
             {(savedHotkeys?.globalMuteHotkey || "").toUpperCase()}:{" "}
           </strong>
-          Toggle Mute All Inputs
+          Mutar/ativar todos os microfones
         </TempDiv>
       )}
       <HotkeyDiv>
-        <SettingsBtn title="Modify hotkeys" onClick={handleSettingsClick}>
+        <SettingsBtn title="Editar atalhos" onClick={handleSettingsClick}>
           <SettingsIcon />
         </SettingsBtn>
       </HotkeyDiv>

@@ -39,7 +39,7 @@ export function useWebSocket({
       socketRef.current = ws;
 
       const connectionErrorMessage =
-        "Could not connect to the WebSocket server";
+        "Não foi possível conectar ao servidor WebSocket";
       const dispatchConnectionError = () => {
         if (onError) {
           onError(connectionErrorMessage);
@@ -70,7 +70,7 @@ export function useWebSocket({
           const data = JSON.parse(event.data);
           if (data?.type === "error" && data?.statusCode === 409) {
             if (onConflict) onConflict(data?.message);
-            const err = new Error(data?.message || "Connection conflict");
+            const err = new Error(data?.message || "Conflito de conexão");
             dispatch({
               type: "ERROR",
               payload: { error: err },

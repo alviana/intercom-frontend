@@ -86,7 +86,7 @@ describe("useSetupTokenRefresh", () => {
       payload: {
         error: expect.objectContaining({
           message: expect.stringContaining(
-            "Failed to reauth after 3 attempts - 403"
+            "Falha ao renovar a autenticação após 3 tentativas - 403"
           ),
         }),
       },

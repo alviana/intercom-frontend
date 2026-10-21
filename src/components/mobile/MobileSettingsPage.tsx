@@ -30,7 +30,7 @@ export const MobileSettingsPage: FC<{
 
   const form = devices ? (
     <UserSettingsForm
-      buttonText="Save"
+      buttonText="Salvar"
       defaultValues={defaultValues}
       updateUserSettings
       needsConfirmation
@@ -47,7 +47,7 @@ export const MobileSettingsPage: FC<{
     <ResponsiveFormContainer>
       <HeaderWrapper>
         <NavigateToRootButton onNavigate={onClose ?? (() => navigate("/"))} />
-        <DisplayContainerHeader>Settings</DisplayContainerHeader>
+        <DisplayContainerHeader>Configurações</DisplayContainerHeader>
       </HeaderWrapper>
       {form}
     </ResponsiveFormContainer>

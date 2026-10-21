@@ -174,7 +174,7 @@ export const CreateProductionPage = () => {
   const lines = useWatch({ control, name: "lines" });
 
   const lineNameRequiredValidation = {
-    required: "Line name is required",
+    required: "O nome da linha é obrigatório",
     minLength: 1,
   };
 
@@ -190,14 +190,14 @@ export const CreateProductionPage = () => {
 
       const normalizedDefault = normalizeLineName(defaultLine);
       if (normalizedDefault && normalized === normalizedDefault) {
-        return "Line name must be unique within this production";
+        return "O nome da linha deve ser único nesta produção";
       }
 
       const hasDuplicateInLines = lines?.some(
         (line, i) => i !== index && normalizeLineName(line.name) === normalized
       );
       if (hasDuplicateInLines) {
-        return "Line name must be unique within this production";
+        return "O nome da linha deve ser único nesta produção";
       }
 
       return true;
@@ -339,9 +339,7 @@ export const CreateProductionPage = () => {
         other.productionId === currentProductionId &&
         other.lineId === lineId
     );
-    return isDuplicate
-      ? "This line is already in the saved configuration."
-      : true;
+    return isDuplicate ? "Esta linha já está na configuração salva." : true;
   };
 
   useEffect(() => {
@@ -412,13 +410,14 @@ export const CreateProductionPage = () => {
   const productionForm = (
     <>
       <SectionHeader>
-        Production
+        Produção
         <InfoTooltip>
-          A <strong>production</strong> is a named group of communication lines
+          Uma <strong>produção</strong> é um grupo nomeado de linhas de
+          comunicação
         </InfoTooltip>
       </SectionHeader>
       <FormItem
-        label="Name"
+        label="Nome"
         fieldName="productionName"
         errors={errors}
         errorStyle={{ marginTop: "5px", marginBottom: 0 }}
@@ -426,17 +425,17 @@ export const CreateProductionPage = () => {
         <FormInput
           // eslint-disable-next-line
           {...register(`productionName`, {
-            required: "Production name is required",
+            required: "O nome da produção é obrigatório",
             minLength: 1,
           })}
           autoComplete="off"
-          placeholder="Production Name"
+          placeholder="Nome da produção"
           style={{ marginBottom: 0 }}
         />
       </FormItem>
       <LineCard style={{ marginTop: "1.5rem" }}>
         <LineCardHeader>
-          <LineNumber>Line 1</LineNumber>
+          <LineNumber>Linha 1</LineNumber>
         </LineCardHeader>
         <LineInputRow>
           <FormItem>
@@ -444,7 +443,7 @@ export const CreateProductionPage = () => {
               // eslint-disable-next-line
               {...register(`defaultLine`, lineNameRequiredValidation)}
               autoComplete="off"
-              placeholder="Line Name"
+              placeholder="Nome da linha"
             />
           </FormItem>
           <Controller
@@ -453,15 +452,16 @@ export const CreateProductionPage = () => {
             render={({ field }) => (
               <CheckboxWrapper>
                 <Checkbox
-                  label="Audio Feed"
+                  label="Feed de áudio"
                   checked={field.value || false}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     field.onChange(e.target.checked)
                   }
                 />
                 <InfoTooltip>
-                  In an <strong>Audio Feed</strong> line, listeners are not able
-                  to talk. Only the <strong>Audio Feed</strong> will be heard.
+                  Em uma linha de <strong>feed de áudio</strong>, os ouvintes
+                  não podem falar. Somente o <strong>feed de áudio</strong> será
+                  ouvido.
                 </InfoTooltip>
               </CheckboxWrapper>
             )}
@@ -476,7 +476,7 @@ export const CreateProductionPage = () => {
       {fields.map((field, index) => (
         <LineCard key={field.id}>
           <LineCardHeader>
-            <LineNumber>Line {index + 2}</LineNumber>
+            <LineNumber>Linha {index + 2}</LineNumber>
             <RemoveLineButton removeLine={() => remove(index)} />
           </LineCardHeader>
           <LineInputRow>
@@ -488,7 +488,7 @@ export const CreateProductionPage = () => {
                   validate: validateLineNameUniqueness(index),
                 })}
                 autoComplete="off"
-                placeholder="Line Name"
+                placeholder="Nome da linha"
               />
             </FormItem>
             <Controller
@@ -497,16 +497,16 @@ export const CreateProductionPage = () => {
               render={({ field: controllerField }) => (
                 <CheckboxWrapper>
                   <Checkbox
-                    label="Audio Feed"
+                    label="Feed de áudio"
                     checked={controllerField.value || false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       controllerField.onChange(e.target.checked)
                     }
                   />
                   <InfoTooltip>
-                    In an <strong>Audio Feed</strong> line, listeners are not
-                    able to talk. Only the <strong>Audio Feed</strong> will be
-                    heard.
+                    Em uma linha de <strong>feed de áudio</strong>, os ouvintes
+                    não podem falar. Somente o <strong>feed de áudio</strong>{" "}
+                    será ouvido.
                   </InfoTooltip>
                 </CheckboxWrapper>
               )}
@@ -525,18 +525,18 @@ export const CreateProductionPage = () => {
         disabled={hasDuplicateWithDefaultLine}
       >
         <AddIcon />
-        Add Line
+        Adicionar linha
       </AddLineCard>
       {showConfirmation && data?.name && (
         <>
           <ProductionConfirmation>
-            The production <strong>{data.name}</strong> has been created.
+            A produção <strong>{data.name}</strong> foi criada.
           </ProductionConfirmation>
 
           {productionFetchError && (
             <FetchErrorMessage>
-              The production information could not be fetched, not able to copy
-              to clipboard.
+              Não foi possível obter as informações da produção nem copiá-las
+              para a área de transferência.
             </FetchErrorMessage>
           )}
         </>
@@ -548,7 +548,7 @@ export const CreateProductionPage = () => {
           onClick={handleSubmit(onSubmit)}
           disabled={hasDuplicateWithDefaultLine}
         >
-          Create Production
+          Criar produção
           {loading && <Spinner className="create-production" />}
         </PrimaryButton>
       </CreateButtonWrapper>
@@ -558,11 +558,11 @@ export const CreateProductionPage = () => {
   const presetForm = (
     <>
       <SectionHeader>
-        Saved Configuration
+        Configuração salva
         <InfoTooltip>
-          A <strong>saved configuration</strong> is a saved combination of lines
-          you can join with one click. Deleting a line removes it from any saved
-          configurations it belongs to.
+          Uma <strong>configuração salva</strong> é uma combinação de linhas em
+          que você pode entrar com um clique. Excluir uma linha a remove de
+          todas as configurações salvas das quais ela faz parte.
         </InfoTooltip>
       </SectionHeader>
       <VisibilityRow>
@@ -572,7 +572,7 @@ export const CreateProductionPage = () => {
           onClick={() => setIsLocalPreset(false)}
         >
           <RadioDot active={!isLocalPreset} />
-          Public
+          Pública
         </RadioOption>
         <RadioOption
           type="button"
@@ -583,11 +583,12 @@ export const CreateProductionPage = () => {
           Local
         </RadioOption>
         <InfoTooltip>
-          <strong>Public</strong> saved configurations are stored on the server
-          and visible to everyone.
+          Configurações salvas <strong>públicas</strong> ficam armazenadas no
+          servidor e são visíveis para todos.
           <br />
-          <strong>Local</strong> saved configurations are stored in your browser
-          only — not visible to others, but can still be shared via URL.
+          Configurações salvas <strong>locais</strong> ficam armazenadas apenas
+          no seu navegador — não são visíveis para outros, mas podem ser
+          compartilhadas via URL.
         </InfoTooltip>
       </VisibilityRow>
       <VisibilityRow>
@@ -600,13 +601,13 @@ export const CreateProductionPage = () => {
           }}
         >
           <RadioDot active={companionEnabled} />
-          Auto-connect to Companion
+          Conectar automaticamente ao Companion
         </RadioOption>
         <InfoTooltip>
-          Automatically connect to <strong>Bitfocus Companion</strong> when
-          joining this saved configuration. Companion lets you control your{" "}
-          <strong>Stream Deck</strong> and other button panels via WebSocket.
-          Enter your local Companion server address to enable this.
+          Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
+          entrar nesta configuração salva. O Companion permite controlar seu{" "}
+          <strong>Stream Deck</strong> e outros painéis de botões via WebSocket.
+          Informe o endereço do seu servidor Companion local para ativar.
         </InfoTooltip>
       </VisibilityRow>
       {companionEnabled && (
@@ -615,7 +616,7 @@ export const CreateProductionPage = () => {
             <CompanionPrefix aria-hidden="true">ws://</CompanionPrefix>
             <CompanionHostPortInput
               id="create-companion-url"
-              aria-label="Companion WebSocket host and port"
+              aria-label="Host e porta do WebSocket do Companion"
               type="text"
               placeholder="localhost:12345"
               value={companionHostPort}
@@ -624,13 +625,13 @@ export const CreateProductionPage = () => {
           </CompanionInputGroup>
           {companionHostPort !== "" && !isValidHostPort(companionHostPort) && (
             <StyledWarningMessage role="alert">
-              Enter a valid host:port (e.g. localhost:12345)
+              Informe um host:porta válido (ex.: localhost:12345)
             </StyledWarningMessage>
           )}
         </>
       )}
       <FormItem
-        label="Name"
+        label="Nome"
         fieldName="presetName"
         errors={presetErrors}
         errorStyle={{ marginTop: "5px", marginBottom: 0 }}
@@ -638,18 +639,18 @@ export const CreateProductionPage = () => {
         <FormInput
           // eslint-disable-next-line
           {...registerPreset("presetName", {
-            required: "Configuration name is required",
+            required: "O nome da configuração é obrigatório",
             minLength: 1,
           })}
           autoComplete="off"
-          placeholder="Configuration name"
+          placeholder="Nome da configuração"
           style={{ marginBottom: 0 }}
         />
       </FormItem>
       {callFields.map((field, index) => (
         <LineCard key={field.id} style={{ marginTop: "1.5rem" }}>
           <LineCardHeader>
-            <LineNumber>Line {index + 1}</LineNumber>
+            <LineNumber>Linha {index + 1}</LineNumber>
             {index > 0 && (
               <RemoveLineButton removeLine={() => removeCall(index)} />
             )}
@@ -657,10 +658,10 @@ export const CreateProductionPage = () => {
           <SelectInput
             // eslint-disable-next-line
             {...registerPreset(`calls.${index}.productionId`, {
-              required: "Production is required",
+              required: "A produção é obrigatória",
             })}
           >
-            <option value="">Select production…</option>
+            <option value="">Selecione a produção…</option>
             {productionList?.productions.map((p) => (
               <option key={p.productionId} value={p.productionId}>
                 {p.name}
@@ -675,13 +676,13 @@ export const CreateProductionPage = () => {
           <SelectInput
             // eslint-disable-next-line
             {...registerPreset(`calls.${index}.lineId`, {
-              required: "Line is required",
+              required: "A linha é obrigatória",
               validate: validateNoDuplicateCall(index),
             })}
             disabled={!presetCalls?.[index]?.productionId}
             style={{ marginBottom: 0 }}
           >
-            <option value="">Select line…</option>
+            <option value="">Selecione a linha…</option>
             {productionList?.productions
               .find(
                 (p) => p.productionId === presetCalls?.[index]?.productionId
@@ -712,7 +713,7 @@ export const CreateProductionPage = () => {
                 rules={{
                   validate: (v) =>
                     v !== undefined ||
-                    "Please select a role for this program output line",
+                    "Selecione uma função para esta linha de saída de programa",
                 }}
                 render={({ field: roleField }) => (
                   <>
@@ -723,7 +724,7 @@ export const CreateProductionPage = () => {
                         onClick={() => roleField.onChange(false)}
                       >
                         <RadioDot active={roleField.value === false} />
-                        Listener
+                        Ouvinte
                       </RadioOption>
                       <RadioOption
                         type="button"
@@ -731,14 +732,14 @@ export const CreateProductionPage = () => {
                         onClick={() => roleField.onChange(true)}
                       >
                         <RadioDot active={roleField.value === true} />
-                        Audio feed
+                        Feed de áudio
                       </RadioOption>
                       <InfoTooltip>
-                        <strong>Listener</strong> can hear the audio feed but
-                        cannot talk back.
-                        <br />
-                        <strong>Audio feed</strong> is the source — their audio
-                        is broadcast to all listeners on this line.
+                        O <strong>ouvinte</strong> escuta o feed de áudio, mas
+                        não pode responder.
+                        <br />O <strong>feed de áudio</strong> é a fonte — o
+                        áudio dele é transmitido para todos os ouvintes desta
+                        linha.
                       </InfoTooltip>
                     </RoleSelector>
                     {presetErrors.calls?.[index]?.isProgramUser && (
@@ -761,11 +762,11 @@ export const CreateProductionPage = () => {
         disabled={hasDuplicateCall}
       >
         <AddIcon />
-        Add Line
+        Adicionar linha
       </AddLineCard>
       {showPresetConfirmation && (
         <ProductionConfirmation>
-          Saved configuration has been created.
+          A configuração salva foi criada.
         </ProductionConfirmation>
       )}
       <CreateButtonWrapper>
@@ -775,7 +776,7 @@ export const CreateProductionPage = () => {
           onClick={handleSubmitPreset(onSubmitPreset)}
           disabled={presetLoading || hasDuplicateCall || !isCompanionValid}
         >
-          Create saved configuration
+          Criar configuração salva
           {presetLoading && <Spinner className="create-preset" />}
         </PrimaryButton>
       </CreateButtonWrapper>
@@ -785,7 +786,7 @@ export const CreateProductionPage = () => {
   if (isMobile) {
     return (
       <>
-        <PageHeader title="Create" hasNavigateToRoot />
+        <PageHeader title="Criar" hasNavigateToRoot />
         <div style={{ padding: "0 2rem" }}>
           {productionForm}
           <SectionDivider />
@@ -797,7 +798,7 @@ export const CreateProductionPage = () => {
 
   return (
     <>
-      <PageHeader title="Create" hasNavigateToRoot />
+      <PageHeader title="Criar" hasNavigateToRoot />
       <TwoColumnLayout>
         <div>{productionForm}</div>
         <div>{presetForm}</div>

@@ -41,9 +41,9 @@ const AppTitle = styled.div`
 export const Header: FC = () => {
   return (
     <HeaderWrapper>
-      <AppTitle aria-label="Open Intercom">
+      <AppTitle aria-label="Intercom ac24horas">
         <HeadsetIcon />
-        Open Intercom
+        Intercom ac24horas
       </AppTitle>
     </HeaderWrapper>
   );

@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<
           }}
         >
           <h1 style={{ fontSize: "2.4rem", marginBottom: "1rem" }}>
-            Something went wrong
+            Algo deu errado
           </h1>
           <p
             style={{
@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<
               marginBottom: "2rem",
             }}
           >
-            An unexpected error occurred. Please reload the page.
+            Ocorreu um erro inesperado. Recarregue a página.
           </p>
           <button
             type="button"
@@ -71,7 +71,7 @@ export class ErrorBoundary extends Component<
               fontWeight: 600,
             }}
           >
-            Reload Page
+            Recarregar página
           </button>
         </div>
       );

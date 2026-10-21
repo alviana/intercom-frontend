@@ -7,12 +7,12 @@ import logger from "../utils/logger";
 const formatErrorMessage = (
   error: (Error & { status?: number }) | null | undefined
 ): string => {
-  if (!error) return "An unexpected error occurred";
-  const message = error.message || "An unexpected error occurred";
+  if (!error) return "Ocorreu um erro inesperado";
+  const message = error.message || "Ocorreu um erro inesperado";
   if (error.status) {
-    return `Error: ${error.status} - ${message}`;
+    return `Erro: ${error.status} - ${message}`;
   }
-  return `Error: ${message}`;
+  return `Erro: ${message}`;
 };
 
 const formatCallErrorMessage = (
@@ -20,9 +20,9 @@ const formatCallErrorMessage = (
   error: (Error & { status?: number }) | null | undefined
 ): string => {
   if (error?.status) {
-    return `Error: ${error.status} - ${message}`;
+    return `Erro: ${error.status} - ${message}`;
   }
-  return `Error: ${message}`;
+  return `Erro: ${message}`;
 };
 
 const ErrorDisplay = styled.div`
@@ -108,7 +108,7 @@ export const ErrorBanner: FC = () => {
         <WarningDisplay>
           {error.globalWarning}
           <CloseErrorButton type="button" onClick={dismissWarning}>
-            close
+            fechar
           </CloseErrorButton>
         </WarningDisplay>
       )}
@@ -124,7 +124,7 @@ export const ErrorBanner: FC = () => {
               })
             }
           >
-            close
+            fechar
           </CloseErrorButton>
         </ErrorDisplay>
       )}
@@ -134,7 +134,7 @@ export const ErrorBanner: FC = () => {
           <ErrorDisplay key={uniqueErrors}>
             {uniqueErrors}{" "}
             <CloseErrorButton type="button" onClick={() => resetError()}>
-              close
+              fechar
             </CloseErrorButton>
           </ErrorDisplay>
         ))}

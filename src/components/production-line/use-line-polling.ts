@@ -38,7 +38,7 @@ export const useLinePolling = ({ callId, joinProductionOptions }: TProps) => {
               payload: {
                 callId,
                 error: new Error(
-                  `Could not fetch production line ${productionId}/${lineId}. For call-id: ${callId}`
+                  `Não foi possível buscar a linha ${productionId}/${lineId}. ID da chamada: ${callId}`
                 ),
               },
             });
@@ -49,7 +49,7 @@ export const useLinePolling = ({ callId, joinProductionOptions }: TProps) => {
               payload: {
                 callId,
                 error: new Error(
-                  "Line polling stopped after 10 consecutive failures."
+                  "A atualização da linha foi interrompida após 10 falhas consecutivas."
                 ),
               },
             });

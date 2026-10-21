@@ -408,7 +408,7 @@ export const ProductionLine = ({
         error:
           fetchProductionError instanceof Error
             ? fetchProductionError
-            : new Error("Error fetching production."),
+            : new Error("Erro ao buscar a produção."),
       },
     });
   }, [dispatch, fetchProductionError]);
@@ -463,8 +463,8 @@ export const ProductionLine = ({
         ) : (
           <ConnectionErrorWrapper>
             <DisplayWarning
-              text="Please return to previous page and try to join again."
-              title="Connection failed"
+              text="Volte à página anterior e tente entrar novamente."
+              title="Falha na conexão"
             />
           </ConnectionErrorWrapper>
         ))}
@@ -547,7 +547,7 @@ export const ProductionLine = ({
                           </LongPressWrapper>
                         )}
                       {isBrowserFirefox && (
-                        <CollapsableSection title="Devices">
+                        <CollapsableSection title="Dispositivos">
                           <SelectDevices
                             line={line}
                             joinProductionOptions={joinProductionOptions}
@@ -562,7 +562,7 @@ export const ProductionLine = ({
                           />
                         </CollapsableSection>
                       )}
-                      <CollapsableSection title="Participants" startOpen>
+                      <CollapsableSection title="Participantes" startOpen>
                         {line && (
                           <UserList
                             sessionId={sessionId}
@@ -583,8 +583,8 @@ export const ProductionLine = ({
                           />
                           {confirmExitModalOpen && (
                             <ConfirmationModal
-                              title="Confirm"
-                              description={`Are you sure you want to leave ${line?.name}?`}
+                              title="Confirmar"
+                              description={`Tem certeza de que deseja sair de ${line?.name}?`}
                               onCancel={() => setConfirmExitModalOpen(false)}
                               onConfirm={exit}
                             />
@@ -596,16 +596,16 @@ export const ProductionLine = ({
                   <ListWrapper>
                     {confirmModalOpen && (
                       <ConfirmationModal
-                        title="Confirm"
+                        title="Confirmar"
                         description={
                           muteError
-                            ? "Something went wrong, Please try again"
-                            : `Are you sure you want to mute ${userName}?`
+                            ? "Algo deu errado. Tente novamente"
+                            : `Tem certeza de que deseja mutar ${userName}?`
                         }
                         confirmationText={
                           muteError
                             ? ""
-                            : `This will mute ${userName} for everyone in the line.`
+                            : `${userName} será mutado para todos na linha.`
                         }
                         onConfirm={muteParticipant}
                         onCancel={() => setConfirmModalOpen(false)}

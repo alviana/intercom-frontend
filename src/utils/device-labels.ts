@@ -6,24 +6,25 @@ export const formatMediaDeviceLabel = (
   if (explicitLabel) {
     if (device.kind === "audioinput") {
       const normalized = explicitLabel.toLowerCase();
-      if (normalized === "speakerphone") return "Phone microphone";
-      if (normalized === "headset earpiece") return "Earpiece microphone";
+      if (normalized === "speakerphone") return "Microfone do celular";
+      if (normalized === "headset earpiece")
+        return "Microfone do fone de ouvido";
     }
     if (device.kind === "audiooutput") {
       const normalized = explicitLabel.toLowerCase();
-      if (normalized === "speakerphone") return "Phone speaker";
-      if (normalized === "headset earpiece") return "Phone earpiece";
+      if (normalized === "speakerphone") return "Alto-falante do celular";
+      if (normalized === "headset earpiece") return "Auricular do celular";
     }
     return explicitLabel;
   }
 
   if (device.deviceId === "default" && device.kind === "audioinput") {
-    return "System default microphone";
+    return "Microfone padrão do sistema";
   }
   if (device.deviceId === "default" && device.kind === "audiooutput") {
-    return "System default speaker";
+    return "Alto-falante padrão do sistema";
   }
-  if (device.kind === "audioinput") return `Microphone ${index + 1}`;
-  if (device.kind === "audiooutput") return `Speaker ${index + 1}`;
-  return `Device ${index + 1}`;
+  if (device.kind === "audioinput") return `Microfone ${index + 1}`;
+  if (device.kind === "audiooutput") return `Alto-falante ${index + 1}`;
+  return `Dispositivo ${index + 1}`;
 };

@@ -160,7 +160,7 @@ export const StartupPermissions = () => {
     return (
       <Bar>
         <span>
-          To enable floating controls, allow &quot;Display over other
+          Para ativar os controles flutuantes, permita &quot;Sobrepor a outros
           apps&quot;.
         </span>
         <Button
@@ -173,7 +173,7 @@ export const StartupPermissions = () => {
             setBusy(false);
           }}
         >
-          Open settings
+          Abrir configurações
         </Button>
       </Bar>
     );
@@ -182,7 +182,7 @@ export const StartupPermissions = () => {
   if (step === "microphone") {
     return (
       <Bar>
-        <span>Allow microphone access to talk and listen.</span>
+        <span>Permita o acesso ao microfone para falar e ouvir.</span>
         <Button
           disabled={busy}
           onClick={async () => {
@@ -199,7 +199,7 @@ export const StartupPermissions = () => {
             await evaluate();
           }}
         >
-          Allow microphone
+          Permitir microfone
         </Button>
       </Bar>
     );
@@ -209,7 +209,7 @@ export const StartupPermissions = () => {
   if (step === "notifications" && isAndroid) {
     return (
       <Bar>
-        <span>Allow notifications for background services.</span>
+        <span>Permita notificações para os serviços em segundo plano.</span>
         <Button
           disabled={busy}
           onClick={async () => {
@@ -224,7 +224,7 @@ export const StartupPermissions = () => {
             await evaluate();
           }}
         >
-          Allow notifications
+          Permitir notificações
         </Button>
       </Bar>
     );

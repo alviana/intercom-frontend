@@ -126,7 +126,7 @@ export const SelectDevices = ({
           ? joinProductionOptions.isProgramUser
           : !joinProductionOptions.isProgramUser) && (
           <FormLabel>
-            <DecorativeLabel>Microphone</DecorativeLabel>
+            <DecorativeLabel>Microfone</DecorativeLabel>
             <FormSelect
               // eslint-disable-next-line
               {...register(`audioinput`)}
@@ -144,20 +144,20 @@ export const SelectDevices = ({
                   </option>
                 ))
               ) : (
-                <option value="no-device">No device available</option>
+                <option value="no-device">Nenhum dispositivo disponível</option>
               )}
             </FormSelect>
           </FormLabel>
         )}
       {isMobileApp() &&
         !(line?.programOutputLine && joinProductionOptions.isProgramUser) && (
-          <MobileAudioRouteSelect label="Speaker output" />
+          <MobileAudioRouteSelect label="Saída do alto-falante" />
         )}
       {!isMobileApp() &&
         !isBrowserSafari &&
         !(line?.programOutputLine && joinProductionOptions.isProgramUser) && (
           <FormLabel>
-            <DecorativeLabel>Speaker output</DecorativeLabel>
+            <DecorativeLabel>Saída do alto-falante</DecorativeLabel>
             {devices.output && devices.output.length > 0 ? (
               <FormSelect
                 // eslint-disable-next-line
@@ -172,7 +172,7 @@ export const SelectDevices = ({
               </FormSelect>
             ) : (
               <StyledWarningMessage>
-                Controlled by operating system
+                Controlado pelo sistema operacional
               </StyledWarningMessage>
             )}
           </FormLabel>
@@ -185,7 +185,7 @@ export const SelectDevices = ({
           disabled={audioNotChanged || !isValid}
           onClick={handleSubmit(onSubmit)}
         >
-          Save
+          Salvar
         </PrimaryButton>
       </DeviceButtonWrapper>
     </FormContainer>

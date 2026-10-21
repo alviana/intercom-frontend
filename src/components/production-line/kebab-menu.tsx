@@ -159,10 +159,10 @@ export const KebabMenu = ({
         ref={buttonRef}
         type="button"
         onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
-        aria-label="More options"
+        aria-label="Mais opções"
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        title="More options"
+        title="Mais opções"
       >
         ⋮
       </KebabButton>
@@ -183,7 +183,7 @@ export const KebabMenu = ({
                   setIsOpen(false);
                 }}
               >
-                Hotkeys
+                Atalhos
               </DropdownItem>
             )}
             <DropdownItem
@@ -191,7 +191,7 @@ export const KebabMenu = ({
               role="menuitem"
               onClick={handleShareClick}
             >
-              Share
+              Compartilhar
             </DropdownItem>
             <DropdownItem
               type="button"

@@ -29,7 +29,7 @@ export const LandingPage = () => {
       {settingsLoaded &&
         (showInlineWebSettings ? (
           <UserSettings
-            buttonText={showSettings ? "Save" : "Next"}
+            buttonText={showSettings ? "Salvar" : "Próximo"}
             className={isMobile ? "" : "desktop"}
             onSave={() => setShowSettings(false)}
             showBackButton={showSettings}
