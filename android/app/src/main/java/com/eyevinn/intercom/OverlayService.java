@@ -385,46 +385,61 @@ public class OverlayService extends Service {
         return TILE_HEADER_COLORS[idx % TILE_HEADER_COLORS.length];
     }
 
+    /** Views of one line, shared by the card layout and the compact list row. */
+    private static final class LineViews {
+        LinearLayout header;
+        TextView name;
+        LinearLayout meter;
+        ImageView listen;
+        LinearLayout mic;
+        ImageView micIcon;
+    }
+
+    private static final int CARD_WIDTH_DP = 132;
+    private static final int LIST_ROW_HEIGHT_DP = 64;
+    private static final int LIST_ROW_GAP_DP = 6;
+    private static final int LIST_VISIBLE_ROWS = 4;
+
+    // 1-2 lines: cards side by side. 3+ lines, or cards wider than the screen: compact
+    // vertical list (a sideways scroll would hide lines and fight with press-and-hold PTT).
+    private boolean useListLayout() {
+        int cardsWidth = rowCount * dp(CARD_WIDTH_DP + 4) + dp(16 + 4 + 24);
+        return rowCount >= 3 || cardsWidth > getResources().getDisplayMetrics().widthPixels;
+    }
+
     private void refreshRows() {
         if (controlsContainer == null) return;
         if (controlsContainer.getChildCount() == rowCount) {
             for (int i = 0; i < rowCount; i++) {
-                updateTileInPlace((LinearLayout) controlsContainer.getChildAt(i), i);
+                updateTileInPlace(controlsContainer.getChildAt(i), i);
             }
             return;
         }
         buildRows();
     }
 
-    private void updateTileInPlace(LinearLayout tile, int idx) {
-        if (tile.getChildCount() < 3) return;
+    private void updateTileInPlace(View tile, int idx) {
+        Object tag = tile.getTag();
+        if (!(tag instanceof LineViews)) return;
+        LineViews v = (LineViews) tag;
 
-        LinearLayout header = (LinearLayout) tile.getChildAt(0);
-        if (header.getChildCount() > 0) {
-            TextView nameView = (TextView) header.getChildAt(0);
-            String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
-            nameView.setText(label);
-            header.setBackground(rounded(tileHeaderColor(idx), 10));
-            if (header.getChildCount() > 1) {
-                updateActivityMeter((LinearLayout) header.getChildAt(1), idx);
-            }
-        }
+        String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
+        v.name.setText(label);
+        v.header.setBackground(rounded(tileHeaderColor(idx), 10));
+        updateActivityMeter(v.meter, idx);
 
-        ImageView listenBtn = (ImageView) tile.getChildAt(1);
         boolean listenOn = rowListen != null && rowListen.length > idx && rowListen[idx];
-        listenBtn.setImageResource(listenOn ? R.drawable.ic_volume_on : R.drawable.ic_volume_off);
-        listenBtn.setColorFilter(listenOn ? COLOR_ENABLED : COLOR_DISABLED);
+        v.listen.setImageResource(listenOn ? R.drawable.ic_volume_on : R.drawable.ic_volume_off);
+        v.listen.setColorFilter(listenOn ? COLOR_ENABLED : COLOR_DISABLED);
 
-        LinearLayout micRow = (LinearLayout) tile.getChildAt(2);
-        ImageView micIcon = (ImageView) micRow.getChildAt(0);
-        updateMicVisual(idx, micRow, micIcon);
+        updateMicVisual(idx, v.mic, v.micIcon);
 
         boolean micAllowedRow = rowAllowed != null && rowAllowed.length > idx && rowAllowed[idx];
         boolean listenAllowedRow = rowListenAllowed != null && rowListenAllowed.length > idx && rowListenAllowed[idx];
-        listenBtn.setEnabled(listenAllowedRow);
-        micRow.setEnabled(micAllowedRow);
-        listenBtn.setAlpha(listenAllowedRow ? 1.0f : 0.4f);
-        micRow.setAlpha(micAllowedRow ? 1.0f : 0.4f);
+        v.listen.setEnabled(listenAllowedRow);
+        v.mic.setEnabled(micAllowedRow);
+        v.listen.setAlpha(listenAllowedRow ? 1.0f : 0.4f);
+        v.mic.setAlpha(micAllowedRow ? 1.0f : 0.4f);
     }
 
     private void updateMicVisual(int idx, LinearLayout micRow, ImageView micIcon) {
@@ -445,9 +460,20 @@ public class OverlayService extends Service {
         if (controlsContainer == null) return;
         cancelAllLongPressCallbacks();
         controlsContainer.removeAllViews();
+        boolean list = useListLayout();
+        controlsContainer.setOrientation(list ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+        int listWidth = Math.min(dp(300), getResources().getDisplayMetrics().widthPixels - dp(48));
         for (int i = 0; i < rowCount; i++) {
-            controlsContainer.addView(buildTile(i));
+            controlsContainer.addView(list ? buildListRow(i, listWidth) : buildTile(i));
         }
+        // Show at most LIST_VISIBLE_ROWS rows and scroll vertically for the rest.
+        boolean scrolls = list && rowCount > LIST_VISIBLE_ROWS;
+        LinearLayout.LayoutParams scrollLp = (LinearLayout.LayoutParams) scrollContainer.getLayoutParams();
+        scrollLp.height = scrolls
+                ? dp(LIST_VISIBLE_ROWS * LIST_ROW_HEIGHT_DP + (LIST_VISIBLE_ROWS - 1) * LIST_ROW_GAP_DP)
+                : LinearLayout.LayoutParams.WRAP_CONTENT;
+        scrollContainer.setLayoutParams(scrollLp);
+        scrollContainer.setScrollbarFadingEnabled(!scrolls); // keep the scrollbar visible as a hint
     }
 
     private void cancelAllLongPressCallbacks() {
@@ -459,92 +485,128 @@ public class OverlayService extends Service {
         }
     }
 
+    /** Card layout (1-2 lines): name chip, listen button, tall talk button. */
     private LinearLayout buildTile(final int idx) {
         LinearLayout tile = new LinearLayout(this);
         tile.setOrientation(LinearLayout.VERTICAL);
-        int tileWidth = dp(132);
-        LinearLayout.LayoutParams tileLp = new LinearLayout.LayoutParams(tileWidth, LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams tileLp = new LinearLayout.LayoutParams(dp(CARD_WIDTH_DP), LinearLayout.LayoutParams.WRAP_CONTENT);
         tileLp.setMargins(dp(2), 0, dp(2), 0);
         tile.setLayoutParams(tileLp);
         tile.setBackground(rounded(COLOR_CARD, 14));
         tile.setPadding(dp(6), dp(6), dp(6), dp(6));
 
+        LineViews v = new LineViews();
+        tile.addView(buildLineHeader(idx, v, 12, 6));
+
+        LinearLayout.LayoutParams listenLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(44));
+        listenLp.topMargin = dp(6);
+        tile.addView(buildListenButton(idx, v, 10), listenLp);
+
+        LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(96)); // large touch target for PTT
+        micLp.topMargin = dp(6);
+        tile.addView(buildMicButton(idx, v, LinearLayout.VERTICAL, 34), micLp);
+
+        tile.setTag(v);
+        updateTileInPlace(tile, idx);
+        return tile;
+    }
+
+    /** Compact list row (3+ lines): [name chip / listen] [wide talk button]. */
+    private LinearLayout buildListRow(final int idx, int width) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setBackground(rounded(COLOR_CARD, 14));
+        row.setPadding(dp(6), dp(6), dp(6), dp(6));
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(width, dp(LIST_ROW_HEIGHT_DP));
+        if (idx > 0) rowLp.topMargin = dp(LIST_ROW_GAP_DP);
+        row.setLayoutParams(rowLp);
+
+        LineViews v = new LineViews();
+        LinearLayout left = new LinearLayout(this);
+        left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(buildLineHeader(idx, v, 11, 3), new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams listenLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        listenLp.topMargin = dp(4);
+        left.addView(buildListenButton(idx, v, 4), listenLp);
+        row.addView(left, new LinearLayout.LayoutParams(dp(104), LinearLayout.LayoutParams.MATCH_PARENT));
+
+        LinearLayout.LayoutParams micLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        micLp.leftMargin = dp(6);
+        row.addView(buildMicButton(idx, v, LinearLayout.HORIZONTAL, 24), micLp);
+
+        row.setTag(v);
+        updateTileInPlace(row, idx);
+        return row;
+    }
+
+    private LinearLayout buildLineHeader(int idx, LineViews v, int textSp, int padVdp) {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER);
         header.setBackground(rounded(tileHeaderColor(idx), 10));
-        int headerPad = dp(8);
-        header.setPadding(headerPad, dp(6), headerPad, dp(6));
+        header.setPadding(dp(8), dp(padVdp), dp(8), dp(padVdp));
 
         TextView nameView = new TextView(this);
-        String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
-        nameView.setText(label);
         nameView.setTextColor(0xFF111111);
-        nameView.setTextSize(12);
+        nameView.setTextSize(textSp);
         nameView.setTypeface(Typeface.DEFAULT_BOLD);
         nameView.setMaxLines(1);
         nameView.setEllipsize(TextUtils.TruncateAt.END);
         nameView.setGravity(Gravity.CENTER);
         // Tapping the line name is a shortcut back to the app (lands on the lines screen).
-        nameView.setOnClickListener(v -> openMainActivity());
-        header.addView(nameView, new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-        ));
+        nameView.setOnClickListener(view -> openMainActivity());
+        header.addView(nameView, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         LinearLayout meter = buildActivityMeter();
-        LinearLayout.LayoutParams meterLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                dp(18)
-        );
+        LinearLayout.LayoutParams meterLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(textSp + 6));
         meterLp.leftMargin = dp(6);
         header.addView(meter, meterLp);
 
+        v.header = header;
+        v.name = nameView;
+        v.meter = meter;
+        return header;
+    }
+
+    private ImageView buildListenButton(final int idx, LineViews v, int padDp) {
         ImageView listenBtn = new ImageView(this);
         listenBtn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         listenBtn.setBackground(rounded(COLOR_ROW, 12));
-        listenBtn.setPadding(dp(10), dp(10), dp(10), dp(10));
-        LinearLayout.LayoutParams listenLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(44)
-        );
-        listenLp.topMargin = dp(6);
-        listenBtn.setLayoutParams(listenLp);
+        listenBtn.setPadding(dp(padDp), dp(padDp), dp(padDp), dp(padDp));
         listenBtn.setContentDescription("Ouvir");
-        listenBtn.setOnClickListener(v -> sendAction("listen", idx));
+        listenBtn.setOnClickListener(view -> sendAction("listen", idx));
+        v.listen = listenBtn;
+        return listenBtn;
+    }
 
+    private LinearLayout buildMicButton(final int idx, LineViews v, int orientation, int iconDp) {
         LinearLayout micRow = new LinearLayout(this);
-        micRow.setOrientation(LinearLayout.VERTICAL);
+        micRow.setOrientation(orientation);
         micRow.setGravity(Gravity.CENTER);
         micRow.setBackground(rounded(COLOR_ROW, 14));
-        LinearLayout.LayoutParams micRowLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(96) // large touch target for PTT
-        );
-        micRowLp.topMargin = dp(6);
-        micRow.setLayoutParams(micRowLp);
 
         ImageView micIcon = new ImageView(this);
         micIcon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         micIcon.setImageResource(R.drawable.ic_mic_off);
-        micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(iconDp), dp(iconDp)));
+
         TextView micLabel = new TextView(this);
         micLabel.setTextSize(13);
         micLabel.setTypeface(Typeface.DEFAULT_BOLD);
         micLabel.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams micLabelLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        micLabelLp.topMargin = dp(4);
+        if (orientation == LinearLayout.VERTICAL) micLabelLp.topMargin = dp(4);
+        else micLabelLp.leftMargin = dp(8);
         micRow.addView(micLabel, micLabelLp);
+
         micRow.setContentDescription("Falar (toque para travar, segure para falar)");
         attachDualMicControl(micRow, micIcon, idx);
-
-        tile.addView(header);
-        tile.addView(listenBtn);
-        tile.addView(micRow);
-        updateTileInPlace(tile, idx);
-        return tile;
+        v.mic = micRow;
+        v.micIcon = micIcon;
+        return micRow;
     }
 
     private LinearLayout buildActivityMeter() {
