@@ -1,4 +1,5 @@
 import { getCallState, getCallOverlayLabel } from "./action-handlers";
+import { HEADSET_LABEL_PREFIX, resolveHeadsetCallId } from "./headset-target";
 
 /** Stable row order for overlay indices (Object.keys order is not guaranteed). */
 export const getSortedCallIds = (
@@ -14,6 +15,21 @@ export const resolveCallIdAtIndex = (
     return undefined;
   }
   return ids[index];
+};
+
+/** Program-output lines are listen-only for non-program users. */
+export const canTalkOnCall = (
+  call:
+    | {
+        joinProductionOptions?: {
+          lineUsedForProgramOutput?: boolean;
+          isProgramUser?: boolean;
+        } | null;
+      }
+    | undefined
+): boolean => {
+  const jp = call?.joinProductionOptions;
+  return !(jp?.lineUsedForProgramOutput && !jp?.isProgramUser);
 };
 
 export type OverlayRowState = {
@@ -47,12 +63,7 @@ export const buildOverlayRowState = (
     if (!els || els.length === 0) return true;
     return els.some((el) => !el.muted);
   });
-  const micAllowed = ids.map((id) => {
-    const jp = calls[id]?.joinProductionOptions || {};
-    const isPgm = !!jp?.lineUsedForProgramOutput;
-    const isProgramUser = !!jp?.isProgramUser;
-    return !(isPgm && !isProgramUser);
-  });
+  const micAllowed = ids.map((id) => canTalkOnCall(calls[id]));
   const listenAllowed = ids.map(() => true);
   const labelRows = ids.map((id, index) => {
     const named = getCallOverlayLabel(id)?.trim();
@@ -68,7 +79,10 @@ export const buildOverlayRowState = (
     if (id) return { label: `Linha ${shortCallId(id)}`, source: "callId" };
     return { label: `Linha ${index + 1}`, source: "fallback" };
   });
-  const labels = labelRows.map((row) => row.label);
+  const target = resolveHeadsetCallId(ids, (id) => canTalkOnCall(calls[id]));
+  const labels = labelRows.map((row, i) =>
+    ids[i] === target ? HEADSET_LABEL_PREFIX + row.label : row.label
+  );
   const labelSources = labelRows.map((row) => row.source);
   const activity = ids.map((id) => !!calls[id]?.audioLevelAboveThreshold);
   return {

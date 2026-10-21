@@ -4,6 +4,7 @@ import {
   setCallOverlayLabel as registerCallOverlayLabel,
   setCallStateGetter,
 } from "./action-handlers";
+import { markLastTalkedCall } from "./headset-target";
 
 export const registerHandler = (
   callId: string,
@@ -19,6 +20,7 @@ export const syncCallState = (
   isOutputMuted: boolean
 ): void => {
   setCallStateGetter(callId, () => ({ isInputMuted, isOutputMuted }));
+  if (!isInputMuted) markLastTalkedCall(callId);
 };
 
 export const detachCall = (callId: string): void => {
