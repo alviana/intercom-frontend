@@ -26,6 +26,44 @@ public class CallService extends Service {
     private Notification notification;
     private PowerManager.WakeLock wakeLock;
     private WifiManager.WifiLock wifiLock;
+    private java.util.concurrent.ScheduledExecutorService heartbeats;
+
+    // Sessions the app is in. They are heartbeated from here because with the screen
+    // off the WebView's timers are throttled and the JS heartbeat stops reaching the
+    // server, which then drops the user from the participant list (see CallServiceManager.tsx).
+    private static final java.util.Set<String> sessionIds =
+            java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+    private static volatile String apiBaseUrl;
+    private static volatile String apiKey;
+
+    static void setSessions(String baseUrl, String key, java.util.List<String> ids) {
+        apiBaseUrl = baseUrl;
+        apiKey = key;
+        sessionIds.retainAll(ids);
+        sessionIds.addAll(ids);
+    }
+
+    private static void sendHeartbeats() {
+        String base = apiBaseUrl;
+        if (base == null || base.isEmpty()) return;
+        if (!base.endsWith("/")) base = base + "/";
+        for (String id : sessionIds) {
+            java.net.HttpURLConnection c = null;
+            try {
+                c = (java.net.HttpURLConnection) new java.net.URL(
+                        base + "heartbeat/" + java.net.URLEncoder.encode(id, "UTF-8")).openConnection();
+                c.setConnectTimeout(5000);
+                c.setReadTimeout(5000);
+                String key = apiKey;
+                if (key != null && !key.isEmpty()) c.setRequestProperty("Authorization", "Bearer " + key);
+                if (c.getResponseCode() == 410) sessionIds.remove(id); // session ended on the server
+            } catch (Exception ignored) {
+                // Offline or server unreachable: retry on the next tick.
+            } finally {
+                if (c != null) c.disconnect();
+            }
+        }
+    }
 
     @Override
     public IBinder onBind(Intent intent) { return null; }
@@ -72,6 +110,10 @@ public class CallService extends Service {
             wifiLock = wm.createWifiLock(mode, "intercom:call");
             wifiLock.acquire();
         }
+
+        heartbeats = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        heartbeats.scheduleWithFixedDelay(CallService::sendHeartbeats, 10, 10,
+                java.util.concurrent.TimeUnit.SECONDS);
     }
 
     @Override
@@ -103,6 +145,7 @@ public class CallService extends Service {
         super.onDestroy();
         AudioRoutePlugin.releaseAppAudioRouting(this);
         running = false;
+        if (heartbeats != null) heartbeats.shutdownNow();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         if (wifiLock != null && wifiLock.isHeld()) wifiLock.release();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

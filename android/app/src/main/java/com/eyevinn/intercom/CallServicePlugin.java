@@ -8,6 +8,7 @@ import android.os.Build;
 
 import androidx.core.app.ActivityCompat;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -58,6 +59,19 @@ public class CallServicePlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("running", false);
         call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void setSessions(PluginCall call) {
+        java.util.List<String> ids = new java.util.ArrayList<>();
+        JSArray arr = call.getArray("sessionIds");
+        try {
+            if (arr != null) ids = arr.toList();
+        } catch (org.json.JSONException ignored) {
+            // keep the empty list
+        }
+        CallService.setSessions(call.getString("baseUrl"), call.getString("apiKey"), ids);
+        call.resolve();
     }
 
     @PluginMethod

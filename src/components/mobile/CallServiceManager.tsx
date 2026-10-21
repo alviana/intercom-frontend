@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { isAndroidApp } from "../../platform";
 import { useGlobalState } from "../../global-state/context-provider";
 import { CallService } from "../../mobile-overlay/call-service";
+import { getApiBaseUrl, getApiKey } from "../../config";
 
 export const CallServiceManager = () => {
   const [state] = useGlobalState();
@@ -38,6 +39,23 @@ export const CallServiceManager = () => {
       return;
     CallService.start().catch(() => {});
   }, [inCall]);
+
+  // With the screen off the WebView's timers are throttled and the JS heartbeat
+  // stops reaching the server (user drops out of the participant list while
+  // audio continues), so the native service sends heartbeats for these sessions too.
+  const sessionIdsKey = Object.values(state.calls)
+    .map((call) => call.sessionId)
+    .filter((id): id is string => !!id)
+    .sort()
+    .join(",");
+  useEffect(() => {
+    if (!isAndroidApp() || !Capacitor.isPluginAvailable("CallService")) return;
+    CallService.setSessions({
+      baseUrl: getApiBaseUrl(),
+      apiKey: getApiKey() ?? "",
+      sessionIds: sessionIdsKey ? sessionIdsKey.split(",") : [],
+    }).catch(() => {});
+  }, [sessionIdsKey]);
 
   return null;
 };
