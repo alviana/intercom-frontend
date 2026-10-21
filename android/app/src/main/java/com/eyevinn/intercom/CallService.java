@@ -74,6 +74,7 @@ public class CallService extends Service {
             public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
                 KeyEvent ev = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
                 if (ev == null) return false;
+                if (ev.getRepeatCount() > 0) return true; // swallow auto-repeat of a held key
                 String name;
                 switch (ev.getKeyCode()) {
                     case KeyEvent.KEYCODE_HEADSETHOOK: name = "HEADSETHOOK"; break;
