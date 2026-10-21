@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { isAndroidApp } from "../../platform";
+import { isAndroidApp, isIOSApp } from "../../platform";
 import { useGlobalState } from "../../global-state/context-provider";
 import { CallService } from "../../mobile-overlay/call-service";
 import { getApiBaseUrl, getApiKey } from "../../config";
@@ -38,6 +38,17 @@ export const CallServiceManager = () => {
     )
       return;
     CallService.start().catch(() => {});
+  }, [inCall]);
+
+  // iOS: hold a CallKit call while in a line (keeps audio/mic when locked);
+  // the cleanup ends it on leaving the last line and on unmount.
+  useEffect(() => {
+    if (!inCall || !isIOSApp() || !Capacitor.isPluginAvailable("CallService"))
+      return;
+    CallService.start().catch(() => {});
+    return () => {
+      CallService.stop().catch(() => {});
+    };
   }, [inCall]);
 
   // With the screen off the WebView's timers are throttled and the JS heartbeat

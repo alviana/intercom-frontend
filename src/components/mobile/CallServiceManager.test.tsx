@@ -8,7 +8,11 @@ vi.mock("@capacitor/core", () => ({
   Capacitor: { isPluginAvailable: () => true },
 }));
 
-vi.mock("../../platform", () => ({ isAndroidApp: () => true }));
+const platform = vi.hoisted(() => ({ ios: false }));
+vi.mock("../../platform", () => ({
+  isAndroidApp: () => !platform.ios,
+  isIOSApp: () => platform.ios,
+}));
 
 vi.mock("../../config", () => ({
   getApiBaseUrl: () => "https://intercom.example/manager/api/v1/",
@@ -32,7 +36,10 @@ const withCalls = (calls: Record<string, { sessionId: string | null }>) =>
   vi.mocked(useGlobalState).mockReturnValue([{ calls }, vi.fn()] as never);
 
 describe("CallServiceManager native heartbeats", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    platform.ios = false;
+  });
 
   it("hands the open sessions to the native service", () => {
     withCalls({ a: { sessionId: "s2" }, b: { sessionId: "s1" } });
@@ -62,5 +69,41 @@ describe("CallServiceManager native heartbeats", () => {
     expect(CallService.setSessions).toHaveBeenLastCalledWith(
       expect.objectContaining({ sessionIds: [] })
     );
+  });
+});
+
+describe("CallServiceManager iOS CallKit call", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    platform.ios = true;
+  });
+
+  it("starts the call when in a line, without Android-only setup", () => {
+    withCalls({ a: { sessionId: "s1" } });
+    render(<CallServiceManager />);
+    expect(CallService.start).toHaveBeenCalledTimes(1);
+    expect(CallService.requestNotificationPermission).not.toHaveBeenCalled();
+    expect(CallService.setSessions).not.toHaveBeenCalled();
+  });
+
+  it("stops the call when the last line is left", () => {
+    withCalls({ a: { sessionId: "s1" } });
+    const { rerender } = render(<CallServiceManager />);
+    withCalls({});
+    rerender(<CallServiceManager />);
+    expect(CallService.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing with no calls on mount", () => {
+    withCalls({});
+    render(<CallServiceManager />);
+    expect(CallService.start).not.toHaveBeenCalled();
+    expect(CallService.stop).not.toHaveBeenCalled();
+  });
+
+  it("stops the call when unmounted while in a line", () => {
+    withCalls({ a: { sessionId: "s1" } });
+    render(<CallServiceManager />).unmount();
+    expect(CallService.stop).toHaveBeenCalledTimes(1);
   });
 });
