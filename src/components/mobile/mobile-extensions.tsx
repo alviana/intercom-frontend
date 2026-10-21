@@ -6,6 +6,7 @@ import { CompanionStatus } from "../companion-status/companion-status";
 import { Modal } from "../modal/modal";
 import { BubbleActionHandler } from "./BubbleActionHandler";
 import { CallServiceManager } from "./CallServiceManager";
+import { HeadsetButtonManager } from "./HeadsetButtonManager";
 import { CompanionManager } from "./CompanionManager";
 import { MobileInit } from "./MobileInit";
 import { AudioRouteManager } from "./AudioRouteManager";
@@ -38,6 +39,7 @@ export const MobileProviders = () => {
       <BubbleActionHandler />
       <MobileInit />
       <CallServiceManager />
+      <HeadsetButtonManager />
       {companionFeatureEnabled && <CompanionManager />}
     </>
   );
