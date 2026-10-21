@@ -188,12 +188,19 @@ public class OverlayService extends Service {
         spacer.setLayoutParams(spacerLp);
         header.addView(spacer);
 
-        ImageView openBtn = buildHeaderIcon(android.R.drawable.ic_menu_call);
-        openBtn.setContentDescription("Abrir app");
+        // Labelled button: the old generic phone icon wasn't recognised as "open the app".
+        TextView openBtn = new TextView(this);
+        openBtn.setText("Abrir");
+        openBtn.setTextColor(0xFFFFFFFF);
+        openBtn.setTextSize(13);
+        openBtn.setTypeface(Typeface.DEFAULT_BOLD);
+        openBtn.setBackgroundColor(0xFF8B0000);
+        openBtn.setPadding(dp(12), dp(6), dp(12), dp(6));
+        openBtn.setContentDescription("Abrir o app nas linhas");
         openBtn.setOnClickListener(v -> openMainActivity());
         header.addView(openBtn);
 
-        ImageView collapseBtn = buildHeaderIcon(android.R.drawable.ic_menu_agenda);
+        ImageView collapseBtn = buildHeaderIcon(collapseIcon());
         collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
         collapseBtn.setOnClickListener(v -> toggleControls(collapseBtn));
         header.addView(collapseBtn);
@@ -229,7 +236,12 @@ public class OverlayService extends Service {
         }
         if (collapseBtn != null) {
             collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
+            collapseBtn.setImageResource(collapseIcon());
         }
+    }
+
+    private int collapseIcon() {
+        return expanded ? android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float;
     }
 
     private void attachDragHandler(View dragHandle) {
@@ -497,6 +509,8 @@ public class OverlayService extends Service {
         nameView.setMaxLines(1);
         nameView.setEllipsize(TextUtils.TruncateAt.END);
         nameView.setGravity(Gravity.CENTER);
+        // Tapping the line name is a shortcut back to the app (lands on the lines screen).
+        nameView.setOnClickListener(v -> openMainActivity());
         header.addView(nameView, new LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
