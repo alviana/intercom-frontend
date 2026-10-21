@@ -58,7 +58,7 @@ export const HeadsetButtonManager = () => {
         if (removed) h.remove();
         else remove = () => h.remove();
       })
-      .catch(() => {});
+      .catch((err) => console.warn("HeadsetButton: erro ao registrar", err));
     return () => {
       removed = true;
       remove?.();

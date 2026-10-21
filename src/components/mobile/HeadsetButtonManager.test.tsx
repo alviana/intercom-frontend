@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { HeadsetButtonManager } from "./HeadsetButtonManager";
 import { useGlobalState } from "../../global-state/context-provider";
 import { setCallActionHandler } from "../../mobile-overlay/action-handlers";
@@ -45,6 +45,7 @@ const withCalls = (calls: Record<string, unknown>) =>
   vi.mocked(useGlobalState).mockReturnValue([{ calls }, vi.fn()] as never);
 const fire = (key: string, action = "down") =>
   h.cb!({ key, action, source: "media_session" });
+let view: ReturnType<typeof render>;
 const lastResult = () => getHeadsetLog()[getHeadsetLog().length - 1]?.result;
 
 describe("HeadsetButtonManager", () => {
@@ -57,10 +58,13 @@ describe("HeadsetButtonManager", () => {
     setCallActionHandler("a", "toggle_input_mute", toggleA);
     setCallActionHandler("b", "toggle_input_mute", toggleB);
     withCalls({ a: {}, b: {} });
-    render(<HeadsetButtonManager />);
+    view = render(<HeadsetButtonManager />);
     await vi.advanceTimersByTimeAsync(0);
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it("toggles the headset line's mic on a tap", () => {
     fire("HEADSETHOOK");
@@ -96,15 +100,15 @@ describe("HeadsetButtonManager", () => {
       a: { joinProductionOptions: { lineUsedForProgramOutput: true } },
       b: {},
     });
-    render(<HeadsetButtonManager />);
+    view.rerender(<HeadsetButtonManager />);
     fire("HEADSETHOOK");
     expect(toggleA).not.toHaveBeenCalled();
+    expect(toggleB).toHaveBeenCalledTimes(1);
   });
 
-  it("ignores taps with no calls", async () => {
+  it("ignores taps with no calls", () => {
     withCalls({});
-    render(<HeadsetButtonManager />);
-    await vi.advanceTimersByTimeAsync(0);
+    view.rerender(<HeadsetButtonManager />);
     fire("HEADSETHOOK");
     expect(toggleA).not.toHaveBeenCalled();
     expect(lastResult()).toBe("ignorado: sem linha");
