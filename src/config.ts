@@ -94,6 +94,10 @@ export const hasConfiguredBackend = (): boolean => {
   );
 };
 
+/** Bitfocus Companion / Stream Deck integration. Off unless VITE_ENABLE_COMPANION=true at build time. */
+export const companionFeatureEnabled =
+  (import.meta as any)?.env?.VITE_ENABLE_COMPANION === "true";
+
 export const getBackendUrl = (): string => {
   // Prefer user-configured value, then env, then window origin
   const rawEnvUrl = (import.meta as any)?.env?.VITE_BACKEND_URL as

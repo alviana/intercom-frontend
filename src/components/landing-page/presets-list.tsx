@@ -23,6 +23,7 @@ import {
   ParticipantCountWrapper,
 } from "../production-list/production-list-components";
 import { isMobileApp } from "../../platform";
+import { companionFeatureEnabled } from "../../config";
 
 const CompanionRow = styled.div`
   font-size: 1.2rem;
@@ -357,10 +358,16 @@ export const PresetList = ({ productions }: PresetListProps) => {
         titleAdornment={
           <InfoTooltip>
             Uma <strong>configuração salva</strong> é uma combinação de linhas
-            em que você entra com um clique. Anexe uma{" "}
-            <strong>endereço do Companion</strong> para abrir automaticamente
-            uma conexão com o Companion ao abrir a configuração. Excluir uma
-            linha a remove de todas as configurações salvas em que ela está.
+            em que você entra com um clique.{" "}
+            {companionFeatureEnabled && (
+              <>
+                Anexe um <strong>endereço do Companion</strong> para abrir
+                automaticamente uma conexão com o Companion ao abrir a
+                configuração.{" "}
+              </>
+            )}
+            Excluir uma linha a remove de todas as configurações salvas em que
+            ela está.
           </InfoTooltip>
         }
       >

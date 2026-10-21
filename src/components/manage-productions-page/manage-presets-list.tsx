@@ -33,6 +33,7 @@ import {
   DeleteButton,
 } from "../delete-button/delete-button-components";
 import { ConfirmationModal } from "../verify-decision/confirmation-modal";
+import { companionFeatureEnabled } from "../../config";
 
 const SectionHeader = styled.h2`
   font-size: 2rem;
@@ -809,73 +810,75 @@ const ManagePresetCard = ({
         </SpacedAddCallForm>
       )}
 
-      <CompanionSection>
-        <CompanionEditRow>
-          <CompanionLabel>Companion</CompanionLabel>
-          <InfoTooltip>
-            Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
-            entrar nesta configuração salva. O Companion permite controlar seu{" "}
-            <strong>Stream Deck</strong> e outros painéis de botões via
-            WebSocket. Informe o endereço do seu servidor Companion local para
-            ativar.
-          </InfoTooltip>
-          {isEditingCompanion ? (
-            <>
-              <CompanionInputWrapper>
-                <CompanionPrefix aria-hidden="true">ws://</CompanionPrefix>
-                <CompanionInput
-                  autoFocus
-                  autoComplete="off"
-                  placeholder="localhost:12345"
-                  value={editCompanionValue}
-                  onChange={handleCompanionInputChange}
-                  onKeyDown={handleCompanionKeyDown}
-                  disabled={savingCompanion}
-                />
-              </CompanionInputWrapper>
-              <CompanionIconButton
-                className="save"
-                type="button"
-                disabled={savingCompanion || !isEditCompanionValid}
-                onClick={handleSaveCompanion}
-                title="Salvar"
-              >
-                <SaveIcon />
-              </CompanionIconButton>
-              <CompanionIconButton
-                type="button"
-                onClick={() => setIsEditingCompanion(false)}
-                title="Cancelar"
-              >
-                <RemoveIcon />
-              </CompanionIconButton>
-            </>
-          ) : (
-            <>
-              <CompanionUrl>
-                {preset.companionUrl ?? (
-                  <span style={{ opacity: 0.4, fontStyle: "italic" }}>
-                    Não definido
-                  </span>
-                )}
-              </CompanionUrl>
-              <IconButton
-                className="edit"
-                type="button"
-                onClick={handleEditCompanionClick}
-                title="Editar endereço do Companion"
-              >
-                <EditIcon />
-              </IconButton>
-            </>
+      {companionFeatureEnabled && (
+        <CompanionSection>
+          <CompanionEditRow>
+            <CompanionLabel>Companion</CompanionLabel>
+            <InfoTooltip>
+              Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
+              entrar nesta configuração salva. O Companion permite controlar seu{" "}
+              <strong>Stream Deck</strong> e outros painéis de botões via
+              WebSocket. Informe o endereço do seu servidor Companion local para
+              ativar.
+            </InfoTooltip>
+            {isEditingCompanion ? (
+              <>
+                <CompanionInputWrapper>
+                  <CompanionPrefix aria-hidden="true">ws://</CompanionPrefix>
+                  <CompanionInput
+                    autoFocus
+                    autoComplete="off"
+                    placeholder="localhost:12345"
+                    value={editCompanionValue}
+                    onChange={handleCompanionInputChange}
+                    onKeyDown={handleCompanionKeyDown}
+                    disabled={savingCompanion}
+                  />
+                </CompanionInputWrapper>
+                <CompanionIconButton
+                  className="save"
+                  type="button"
+                  disabled={savingCompanion || !isEditCompanionValid}
+                  onClick={handleSaveCompanion}
+                  title="Salvar"
+                >
+                  <SaveIcon />
+                </CompanionIconButton>
+                <CompanionIconButton
+                  type="button"
+                  onClick={() => setIsEditingCompanion(false)}
+                  title="Cancelar"
+                >
+                  <RemoveIcon />
+                </CompanionIconButton>
+              </>
+            ) : (
+              <>
+                <CompanionUrl>
+                  {preset.companionUrl ?? (
+                    <span style={{ opacity: 0.4, fontStyle: "italic" }}>
+                      Não definido
+                    </span>
+                  )}
+                </CompanionUrl>
+                <IconButton
+                  className="edit"
+                  type="button"
+                  onClick={handleEditCompanionClick}
+                  title="Editar endereço do Companion"
+                >
+                  <EditIcon />
+                </IconButton>
+              </>
+            )}
+          </CompanionEditRow>
+          {isEditingCompanion && !isEditCompanionValid && (
+            <StyledWarningMessage role="alert">
+              Informe um host:porta válido (ex.: localhost:12345)
+            </StyledWarningMessage>
           )}
-        </CompanionEditRow>
-        {isEditingCompanion && !isEditCompanionValid && (
-          <StyledWarningMessage role="alert">
-            Informe um host:porta válido (ex.: localhost:12345)
-          </StyledWarningMessage>
-        )}
-      </CompanionSection>
+        </CompanionSection>
+      )}
 
       <ActionBar>
         <AddCallToggleButton

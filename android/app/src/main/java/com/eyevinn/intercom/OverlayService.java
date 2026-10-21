@@ -289,7 +289,8 @@ public class OverlayService extends Service {
                 refreshRows();
             }
         };
-        registerReceiver(updateReceiver, new android.content.IntentFilter(ACTION_UPDATE));
+        androidx.core.content.ContextCompat.registerReceiver(this, updateReceiver,
+                new android.content.IntentFilter(ACTION_UPDATE), androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     private boolean anyPttHeld() {
@@ -382,6 +383,7 @@ public class OverlayService extends Service {
     private void sendAction(String action) {
         Intent intent = new Intent(ACTION);
         intent.putExtra("action", action);
+        intent.setPackage(getPackageName());
         sendBroadcast(intent);
     }
 
@@ -389,6 +391,7 @@ public class OverlayService extends Service {
         Intent intent = new Intent(ACTION);
         intent.putExtra("action", action);
         intent.putExtra("index", index);
+        intent.setPackage(getPackageName());
         sendBroadcast(intent);
     }
 

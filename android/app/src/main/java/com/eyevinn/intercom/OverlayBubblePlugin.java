@@ -11,6 +11,7 @@ import android.os.Build;
 import android.provider.Settings;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -35,7 +36,8 @@ public class OverlayBubblePlugin extends Plugin {
                 notifyListeners("bubbleAction", payload);
             }
         };
-        getContext().registerReceiver(receiver, filter);
+        // Android 14+ throws (and the whole plugin fails to load) unless the export flag is set.
+        ContextCompat.registerReceiver(getContext(), receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
@@ -135,6 +137,7 @@ public class OverlayBubblePlugin extends Plugin {
             intent.putExtra("listenAllowed", listenAllowed);
             intent.putExtra("labels", labels);
             intent.putExtra("activity", activity);
+            intent.setPackage(getContext().getPackageName());
             getContext().sendBroadcast(intent);
             call.resolve();
         } catch (Exception e) {

@@ -11,6 +11,7 @@ import { MobileInit } from "./MobileInit";
 import { AudioRouteManager } from "./AudioRouteManager";
 import { StartupPermissions } from "./StartupPermissions";
 import { MobileSettingsPage } from "./MobileSettingsPage";
+import { companionFeatureEnabled } from "../../config";
 
 const StatusBar = styled.div`
   display: flex;
@@ -27,13 +28,17 @@ export const MobileProviders = () => {
       <AudioRouteManager />
       <StatusBar>
         <BackendStatus />
-        <span style={{ width: 8 }} />
-        <CompanionStatus />
+        {companionFeatureEnabled && (
+          <>
+            <span style={{ width: 8 }} />
+            <CompanionStatus />
+          </>
+        )}
       </StatusBar>
       <BubbleActionHandler />
       <MobileInit />
       <CallServiceManager />
-      <CompanionManager />
+      {companionFeatureEnabled && <CompanionManager />}
     </>
   );
 };

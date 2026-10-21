@@ -7,6 +7,7 @@ import { ConnectToWSButton } from "./connect-to-ws-button";
 import { useGlobalMuteToggle } from "./use-global-mute-toggle";
 import { SavePresetModal } from "./save-preset-modal";
 import { useGlobalState } from "../../global-state/context-provider";
+import { companionFeatureEnabled } from "../../config";
 
 const AddCallContainer = styled.div`
   display: flex;
@@ -123,7 +124,7 @@ export const HeaderActions = ({
             {isMasterInputMuted ? <MicMuted /> : <MicUnmuted />}
           </MuteAllCallsBtn>
         )}
-        {!isEmpty && !isMobile && !isTablet && (
+        {companionFeatureEnabled && !isEmpty && !isMobile && !isTablet && (
           <ConnectToWSButton
             callActionHandlers={callActionHandlers}
             callIndexMap={callIndexMap}

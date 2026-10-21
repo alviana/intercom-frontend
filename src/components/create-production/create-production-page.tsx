@@ -45,6 +45,7 @@ import {
 import { usePresetContext } from "../../contexts/preset-context";
 import { useFetchProductionList } from "../landing-page/use-fetch-production-list.ts";
 import { PageHeader } from "../page-layout/page-header.tsx";
+import { companionFeatureEnabled } from "../../config";
 
 type PresetFormValues = {
   presetName: string;
@@ -591,25 +592,28 @@ export const CreateProductionPage = () => {
           compartilhadas via URL.
         </InfoTooltip>
       </VisibilityRow>
-      <VisibilityRow>
-        <RadioOption
-          type="button"
-          active={companionEnabled}
-          onClick={() => {
-            setCompanionEnabled(!companionEnabled);
-            if (companionEnabled) setCompanionHostPort("");
-          }}
-        >
-          <RadioDot active={companionEnabled} />
-          Conectar automaticamente ao Companion
-        </RadioOption>
-        <InfoTooltip>
-          Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
-          entrar nesta configuração salva. O Companion permite controlar seu{" "}
-          <strong>Stream Deck</strong> e outros painéis de botões via WebSocket.
-          Informe o endereço do seu servidor Companion local para ativar.
-        </InfoTooltip>
-      </VisibilityRow>
+      {companionFeatureEnabled && (
+        <VisibilityRow>
+          <RadioOption
+            type="button"
+            active={companionEnabled}
+            onClick={() => {
+              setCompanionEnabled(!companionEnabled);
+              if (companionEnabled) setCompanionHostPort("");
+            }}
+          >
+            <RadioDot active={companionEnabled} />
+            Conectar automaticamente ao Companion
+          </RadioOption>
+          <InfoTooltip>
+            Conecta automaticamente ao <strong>Bitfocus Companion</strong> ao
+            entrar nesta configuração salva. O Companion permite controlar seu{" "}
+            <strong>Stream Deck</strong> e outros painéis de botões via
+            WebSocket. Informe o endereço do seu servidor Companion local para
+            ativar.
+          </InfoTooltip>
+        </VisibilityRow>
+      )}
       {companionEnabled && (
         <>
           <CompanionInputGroup>

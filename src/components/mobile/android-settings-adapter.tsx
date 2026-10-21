@@ -20,6 +20,7 @@ import {
 import { Spinner } from "../loader/loader";
 import { MobileAudioRouteSelect } from "./MobileAudioRouteSelect";
 import { DebugPanel } from "./DebugPanel";
+import { companionFeatureEnabled } from "../../config";
 
 export const submitAndroidSettings = (
   payload: UserSettingsFormPayload,
@@ -274,77 +275,79 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
             placeholder="Chave de acesso (opcional)"
           />
         </FormItem>
-        <FormItem label="Companion (Stream Deck)">
-          <div style={{ display: "grid", gap: "0.6rem" }}>
-            <div style={{ position: "relative" }}>
-              <span
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  left: "0.6rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#9aa3ab",
-                  fontSize: "1.4rem",
-                  pointerEvents: "none",
-                }}
-              >
-                {protocol}
-              </span>
-              <FormInput
-                style={{ paddingLeft: "5.6rem", marginBottom: 0 }}
-                aria-label="Endereço e porta do Companion"
-                type="text"
-                placeholder="endereço:porta"
-                value={hostPort}
-                onChange={(e) => {
-                  const v = e.target.value.trim();
-                  let withoutProtocol = v;
-                  if (v.startsWith("ws://")) withoutProtocol = v.slice(5);
-                  if (v.startsWith("wss://")) withoutProtocol = v.slice(6);
-                  setHostPort(withoutProtocol);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    connectCompanion();
-                  }
-                }}
-              />
-            </div>
-            <div
-              style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}
-            >
-              {!isWSConnected ? (
-                <PrimaryButton
-                  type="button"
-                  onClick={connectCompanion}
-                  disabled={!hostPort}
-                  className={isWSReconnecting ? "with-loader" : ""}
+        {companionFeatureEnabled && (
+          <FormItem label="Companion (Stream Deck)">
+            <div style={{ display: "grid", gap: "0.6rem" }}>
+              <div style={{ position: "relative" }}>
+                <span
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    left: "0.6rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#9aa3ab",
+                    fontSize: "1.4rem",
+                    pointerEvents: "none",
+                  }}
                 >
-                  {isWSReconnecting ? (
-                    <Spinner className="companion-loader" />
-                  ) : (
-                    "Conectar"
-                  )}
-                </PrimaryButton>
-              ) : (
-                <PrimaryButton type="button" onClick={wsDisconnect}>
-                  Desconectar
-                </PrimaryButton>
-              )}
-              <div style={{ opacity: 0.85 }}>
-                Status:{" "}
-                {isWSConnected
-                  ? "conectado"
-                  : isWSReconnecting
-                    ? "reconectando"
-                    : "desconectado"}
-                {isConnectionConflict ? " • conflito" : ""}
+                  {protocol}
+                </span>
+                <FormInput
+                  style={{ paddingLeft: "5.6rem", marginBottom: 0 }}
+                  aria-label="Endereço e porta do Companion"
+                  type="text"
+                  placeholder="endereço:porta"
+                  value={hostPort}
+                  onChange={(e) => {
+                    const v = e.target.value.trim();
+                    let withoutProtocol = v;
+                    if (v.startsWith("ws://")) withoutProtocol = v.slice(5);
+                    if (v.startsWith("wss://")) withoutProtocol = v.slice(6);
+                    setHostPort(withoutProtocol);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      connectCompanion();
+                    }
+                  }}
+                />
+              </div>
+              <div
+                style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}
+              >
+                {!isWSConnected ? (
+                  <PrimaryButton
+                    type="button"
+                    onClick={connectCompanion}
+                    disabled={!hostPort}
+                    className={isWSReconnecting ? "with-loader" : ""}
+                  >
+                    {isWSReconnecting ? (
+                      <Spinner className="companion-loader" />
+                    ) : (
+                      "Conectar"
+                    )}
+                  </PrimaryButton>
+                ) : (
+                  <PrimaryButton type="button" onClick={wsDisconnect}>
+                    Desconectar
+                  </PrimaryButton>
+                )}
+                <div style={{ opacity: 0.85 }}>
+                  Status:{" "}
+                  {isWSConnected
+                    ? "conectado"
+                    : isWSReconnecting
+                      ? "reconectando"
+                      : "desconectado"}
+                  {isConnectionConflict ? " • conflito" : ""}
+                </div>
               </div>
             </div>
-          </div>
-        </FormItem>
+          </FormItem>
+        )}
       </>
     ),
     renderSettingsStatusFields: () =>
