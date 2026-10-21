@@ -20,6 +20,7 @@ import android.os.Build;
             registerPlugin(AudioRoutePlugin.class);
             registerPlugin(CallServicePlugin.class);
             registerPlugin(AppControlPlugin.class);
+            registerPlugin(HeadsetButtonPlugin.class);
         } catch (Exception e) {
             Log.e("Intercom", "Plugin register error: " + e.getMessage());
         }

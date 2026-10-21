@@ -11,7 +11,12 @@ import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.view.KeyEvent;
 import android.os.PowerManager;
 
 import androidx.core.app.NotificationCompat;
@@ -35,12 +40,55 @@ public class CallService extends Service {
             java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
     private static volatile String apiBaseUrl;
     private static volatile String apiKey;
+    private static volatile CallService instance;
+    private MediaSession mediaSession;
 
     static void setSessions(String baseUrl, String key, java.util.List<String> ids) {
         apiBaseUrl = baseUrl;
         apiKey = key;
         sessionIds.retainAll(ids);
         sessionIds.addAll(ids);
+        final CallService svc = instance;
+        if (svc != null) new Handler(Looper.getMainLooper()).post(svc::applySessionActive);
+    }
+
+    // The session is active only while the app is in a session, so with no call open
+    // Spotify/YouTube keep their play/pause button.
+    private void applySessionActive() {
+        if (mediaSession != null) mediaSession.setActive(!sessionIds.isEmpty());
+    }
+
+    // Hold-to-talk is impossible here: AOSP MediaSessionService treats HEADSETHOOK and
+    // MEDIA_PLAY_PAUSE as "voice keys", holding the DOWN until release; a long press launches
+    // the voice assistant instead of reaching the app. So only discrete presses are delivered.
+    @SuppressWarnings("deprecation")
+    private void createMediaSession() {
+        mediaSession = new MediaSession(this, "intercom-headset");
+        mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mediaSession.setPlaybackState(new PlaybackState.Builder()
+                .setActions(PlaybackState.ACTION_PLAY_PAUSE | PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE)
+                .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1f)
+                .build());
+        mediaSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+                KeyEvent ev = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                if (ev == null) return false;
+                String name;
+                switch (ev.getKeyCode()) {
+                    case KeyEvent.KEYCODE_HEADSETHOOK: name = "HEADSETHOOK"; break;
+                    case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: name = "MEDIA_PLAY_PAUSE"; break;
+                    case KeyEvent.KEYCODE_MEDIA_PLAY: name = "MEDIA_PLAY"; break;
+                    case KeyEvent.KEYCODE_MEDIA_PAUSE: name = "MEDIA_PAUSE"; break;
+                    case KeyEvent.KEYCODE_MEDIA_NEXT: name = "MEDIA_NEXT"; break;
+                    case KeyEvent.KEYCODE_MEDIA_PREVIOUS: name = "MEDIA_PREVIOUS"; break;
+                    default: name = "OTHER:" + ev.getKeyCode();
+                }
+                HeadsetButtonPlugin.emit(name, ev.getAction() == KeyEvent.ACTION_DOWN ? "down" : "up", "media_session");
+                return true;
+            }
+        });
+        applySessionActive();
     }
 
     private static void sendHeartbeats() {
@@ -72,6 +120,8 @@ public class CallService extends Service {
     public void onCreate() {
         super.onCreate();
         running = true;
+        instance = this;
+        createMediaSession();
         ensureChannel();
         // PendingIntents for notification actions
         int flags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -145,6 +195,12 @@ public class CallService extends Service {
         super.onDestroy();
         AudioRoutePlugin.releaseAppAudioRouting(this);
         running = false;
+        instance = null;
+        if (mediaSession != null) {
+            mediaSession.setActive(false);
+            mediaSession.release();
+            mediaSession = null;
+        }
         if (heartbeats != null) heartbeats.shutdownNow();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         if (wifiLock != null && wifiLock.isHeld()) wifiLock.release();
