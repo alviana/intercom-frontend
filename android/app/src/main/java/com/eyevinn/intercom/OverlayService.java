@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -31,11 +32,14 @@ public class OverlayService extends Service {
     public static final String ACTION_UPDATE = "com.eyevinn.intercom.BUBBLE_UPDATE";
     public static volatile boolean isRunning = false;
 
-    private static final int COLOR_BG = 0xF0121212;
-    private static final int COLOR_ROW = 0xFF2A2A2A;
+    private static final int COLOR_BG = 0xF2161618;
+    private static final int COLOR_CARD = 0xFF232327;
+    private static final int COLOR_ROW = 0xFF2E2E33;
     private static final int COLOR_ENABLED = 0xFF43A047;
     private static final int COLOR_DISABLED = 0xFFE53935;
-    private static final int COLOR_PTT = 0xFF1565C0;
+    // Broadcast tally convention: red = on air (mic latched open or PTT held).
+    private static final int COLOR_ON_AIR = 0xFFC62828;
+    private static final int COLOR_IDLE_ICON = 0xFF9E9E9E;
     private static final int COLOR_METER_ACTIVE = 0xFFB2FF59;
     private static final int COLOR_METER_INACTIVE = 0x55333333;
     private static final int[] TILE_HEADER_COLORS = {
@@ -53,7 +57,6 @@ public class OverlayService extends Service {
     private LinearLayout controlsContainer;
     private LinearLayout headerBar;
     private ScrollView scrollContainer;
-    private boolean expanded = true;
     private int rowCount = 1;
     private boolean[] rowLatch = new boolean[] { false };
     private boolean[] rowListen = new boolean[] { true };
@@ -139,8 +142,8 @@ public class OverlayService extends Service {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(COLOR_BG);
-        int outerPad = dp(6);
+        root.setBackground(rounded(COLOR_BG, 18));
+        int outerPad = dp(8);
         root.setPadding(outerPad, outerPad, outerPad, outerPad);
 
         headerBar = buildHeaderBar();
@@ -171,21 +174,17 @@ public class OverlayService extends Service {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setBackgroundColor(0xFF1E1E1E);
-        int padH = dp(6);
-        int padV = dp(6);
-        header.setPadding(padH, padV, padH, padV);
 
-        // No title: the widget is as wide as one line tile (~120dp) and a title pushed
-        // the header buttons out of view. Layout: [Abrir] ...spacer... [▲/▼].
+        // No title: the widget is only as wide as one line card and a title pushed the
+        // header buttons out of view. Layout: [Abrir ↗] ...spacer... [drag grip].
         // Labelled button: the old generic phone icon wasn't recognised as "open the app".
         TextView openBtn = new TextView(this);
-        openBtn.setText("Abrir");
+        openBtn.setText("Abrir  \u2197");
         openBtn.setTextColor(0xFFFFFFFF);
         openBtn.setTextSize(13);
         openBtn.setTypeface(Typeface.DEFAULT_BOLD);
-        openBtn.setBackgroundColor(0xFF8B0000);
-        openBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
+        openBtn.setBackground(rounded(0xFF8B0000, 17));
+        openBtn.setPadding(dp(12), dp(7), dp(12), dp(7));
         openBtn.setContentDescription("Abrir o app nas linhas");
         openBtn.setOnClickListener(v -> openMainActivity());
         header.addView(openBtn);
@@ -195,26 +194,14 @@ public class OverlayService extends Service {
         spacer.setLayoutParams(spacerLp);
         header.addView(spacer);
 
-        ImageView collapseBtn = buildHeaderIcon(collapseIcon());
-        collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
-        collapseBtn.setOnClickListener(v -> toggleControls(collapseBtn));
-        header.addView(collapseBtn);
+        // Always open (no collapse arrow); the grip shows where to drag the widget.
+        ImageView grip = new ImageView(this);
+        grip.setImageResource(R.drawable.ic_drag_indicator);
+        grip.setColorFilter(0xFF78787E);
+        grip.setContentDescription("Arrastar");
+        header.addView(grip, new LinearLayout.LayoutParams(dp(30), dp(30)));
 
         return header;
-    }
-
-    private ImageView buildHeaderIcon(int resId) {
-        ImageView iv = new ImageView(this);
-        iv.setImageResource(resId);
-        int size = dp(32);
-        int pad = dp(6);
-        iv.setPadding(pad, pad, pad, pad);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
-        lp.setMargins(dp(4), 0, 0, 0);
-        iv.setLayoutParams(lp);
-        iv.setBackgroundColor(0xFF333333);
-        iv.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        return iv;
     }
 
     private void openMainActivity() {
@@ -222,21 +209,6 @@ public class OverlayService extends Service {
         openIntent.setAction("com.eyevinn.intercom.OPEN");
         openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(openIntent);
-    }
-
-    private void toggleControls(ImageView collapseBtn) {
-        expanded = !expanded;
-        if (scrollContainer != null) {
-            scrollContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
-        }
-        if (collapseBtn != null) {
-            collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
-            collapseBtn.setImageResource(collapseIcon());
-        }
-    }
-
-    private int collapseIcon() {
-        return expanded ? android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float;
     }
 
     private void attachDragHandler(View dragHandle) {
@@ -383,6 +355,13 @@ public class OverlayService extends Service {
         super.onTaskRemoved(rootIntent);
     }
 
+    private GradientDrawable rounded(int color, int radiusDp) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(dp(radiusDp));
+        return g;
+    }
+
     private int dp(int v) {
         return (int) (getResources().getDisplayMetrics().density * v);
     }
@@ -425,7 +404,7 @@ public class OverlayService extends Service {
             TextView nameView = (TextView) header.getChildAt(0);
             String label = rowLabels != null && rowLabels.length > idx ? rowLabels[idx] : ("Linha " + (idx + 1));
             nameView.setText(label);
-            header.setBackgroundColor(tileHeaderColor(idx));
+            header.setBackground(rounded(tileHeaderColor(idx), 10));
             if (header.getChildCount() > 1) {
                 updateActivityMeter((LinearLayout) header.getChildAt(1), idx);
             }
@@ -451,14 +430,14 @@ public class OverlayService extends Service {
     private void updateMicVisual(int idx, LinearLayout micRow, ImageView micIcon) {
         boolean latch = rowLatch != null && rowLatch.length > idx && rowLatch[idx];
         boolean held = rowPttHeld != null && rowPttHeld.length > idx && rowPttHeld[idx];
-        if (held) {
-            micRow.setBackgroundColor(COLOR_PTT);
-            micIcon.setImageResource(R.drawable.ic_mic_on);
-            micIcon.setColorFilter(0xFFFFFFFF);
-        } else {
-            micRow.setBackgroundColor(COLOR_ROW);
-            micIcon.setImageResource(latch ? R.drawable.ic_mic_on : R.drawable.ic_mic_off);
-            micIcon.setColorFilter(latch ? COLOR_ENABLED : COLOR_DISABLED);
+        boolean onAir = held || latch;
+        micRow.setBackground(rounded(onAir ? COLOR_ON_AIR : COLOR_ROW, 14));
+        micIcon.setImageResource(onAir ? R.drawable.ic_mic_on : R.drawable.ic_mic_off);
+        micIcon.setColorFilter(onAir ? 0xFFFFFFFF : COLOR_IDLE_ICON);
+        if (micRow.getChildCount() > 1) {
+            TextView label = (TextView) micRow.getChildAt(1);
+            label.setText(held ? "FALANDO" : latch ? "ABERTO" : "FALAR");
+            label.setTextColor(onAir ? 0xFFFFFFFF : 0xFFC8C8C8);
         }
     }
 
@@ -483,15 +462,17 @@ public class OverlayService extends Service {
     private LinearLayout buildTile(final int idx) {
         LinearLayout tile = new LinearLayout(this);
         tile.setOrientation(LinearLayout.VERTICAL);
-        int tileWidth = dp(108);
+        int tileWidth = dp(132);
         LinearLayout.LayoutParams tileLp = new LinearLayout.LayoutParams(tileWidth, LinearLayout.LayoutParams.WRAP_CONTENT);
-        tileLp.setMargins(dp(4), 0, dp(4), 0);
+        tileLp.setMargins(dp(2), 0, dp(2), 0);
         tile.setLayoutParams(tileLp);
+        tile.setBackground(rounded(COLOR_CARD, 14));
+        tile.setPadding(dp(6), dp(6), dp(6), dp(6));
 
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER);
-        header.setBackgroundColor(tileHeaderColor(idx));
+        header.setBackground(rounded(tileHeaderColor(idx), 10));
         int headerPad = dp(8);
         header.setPadding(headerPad, dp(6), headerPad, dp(6));
 
@@ -522,13 +503,13 @@ public class OverlayService extends Service {
 
         ImageView listenBtn = new ImageView(this);
         listenBtn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        listenBtn.setBackgroundColor(COLOR_ROW);
+        listenBtn.setBackground(rounded(COLOR_ROW, 12));
         listenBtn.setPadding(dp(10), dp(10), dp(10), dp(10));
         LinearLayout.LayoutParams listenLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dp(44)
         );
-        listenLp.topMargin = dp(2);
+        listenLp.topMargin = dp(6);
         listenBtn.setLayoutParams(listenLp);
         listenBtn.setContentDescription("Ouvir");
         listenBtn.setOnClickListener(v -> sendAction("listen", idx));
@@ -536,18 +517,26 @@ public class OverlayService extends Service {
         LinearLayout micRow = new LinearLayout(this);
         micRow.setOrientation(LinearLayout.VERTICAL);
         micRow.setGravity(Gravity.CENTER);
-        micRow.setBackgroundColor(COLOR_ROW);
+        micRow.setBackground(rounded(COLOR_ROW, 14));
         LinearLayout.LayoutParams micRowLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(56)
+                dp(96) // large touch target for PTT
         );
-        micRowLp.topMargin = dp(2);
+        micRowLp.topMargin = dp(6);
         micRow.setLayoutParams(micRowLp);
 
         ImageView micIcon = new ImageView(this);
         micIcon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         micIcon.setImageResource(R.drawable.ic_mic_off);
-        micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(28), dp(28)));
+        micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        TextView micLabel = new TextView(this);
+        micLabel.setTextSize(13);
+        micLabel.setTypeface(Typeface.DEFAULT_BOLD);
+        micLabel.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams micLabelLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        micLabelLp.topMargin = dp(4);
+        micRow.addView(micLabel, micLabelLp);
         micRow.setContentDescription("Falar (toque para travar, segure para falar)");
         attachDualMicControl(micRow, micIcon, idx);
 
