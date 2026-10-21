@@ -25,8 +25,10 @@ export const HeadsetButtonTest: FC = () => {
         <p>Nenhum aperto recebido ainda.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {rows.map((e) => (
-            <li key={e.at + e.key}>
+          {rows.map((e, i) => (
+            // append-only log: DOWN/UP can share ms and key, so index disambiguates
+            // eslint-disable-next-line react/no-array-index-key
+            <li key={`${e.at}-${i}`}>
               {time(e.at)} {e.key} {e.action} {e.result}
             </li>
           ))}

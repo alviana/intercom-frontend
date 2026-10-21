@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { HeadsetButtonManager } from "./HeadsetButtonManager";
 import { useGlobalState } from "../../global-state/context-provider";
-import { setCallActionHandler } from "../../mobile-overlay/action-handlers";
+import {
+  setCallActionHandler,
+  setCallStateGetter,
+} from "../../mobile-overlay/action-handlers";
 import {
   clearHeadsetLog,
   getHeadsetLog,
@@ -39,6 +42,13 @@ vi.mock("../../global-state/context-provider", () => ({
   useGlobalState: vi.fn(),
 }));
 
+const cue = vi.hoisted(() => ({ enter: vi.fn(), exit: vi.fn() }));
+vi.mock("../production-line/use-audio-cue", () => ({
+  useAudioCue: () => ({ playEnterSound: cue.enter, playExitSound: cue.exit }),
+}));
+
+const setMuted = (id: string, isInputMuted: boolean) =>
+  setCallStateGetter(id, () => ({ isInputMuted, isOutputMuted: false }));
 const toggleA = vi.fn();
 const toggleB = vi.fn();
 const withCalls = (calls: Record<string, unknown>) =>
@@ -112,5 +122,40 @@ describe("HeadsetButtonManager", () => {
     fire("HEADSETHOOK");
     expect(toggleA).not.toHaveBeenCalled();
     expect(lastResult()).toBe("ignorado: sem linha");
+  });
+
+  it("logs listen-only when every line is listen-only", () => {
+    withCalls({
+      a: { joinProductionOptions: { lineUsedForProgramOutput: true } },
+    });
+    view.rerender(<HeadsetButtonManager />);
+    fire("HEADSETHOOK");
+    expect(lastResult()).toBe("ignorado: linha só ouvinte");
+    expect(cue.enter).not.toHaveBeenCalled();
+    expect(cue.exit).not.toHaveBeenCalled();
+  });
+
+  it("plays the enter cue when the tap opens a muted mic", () => {
+    setMuted("a", true);
+    view.rerender(<HeadsetButtonManager />);
+    fire("HEADSETHOOK");
+    expect(cue.enter).toHaveBeenCalledTimes(1);
+    expect(cue.exit).not.toHaveBeenCalled();
+  });
+
+  it("plays the exit cue when the tap mutes an open mic", () => {
+    setMuted("a", false);
+    view.rerender(<HeadsetButtonManager />);
+    fire("HEADSETHOOK");
+    expect(cue.exit).toHaveBeenCalledTimes(1);
+    expect(cue.enter).not.toHaveBeenCalled();
+  });
+
+  it("plays no cue when the tap is ignored", () => {
+    withCalls({});
+    view.rerender(<HeadsetButtonManager />);
+    fire("HEADSETHOOK");
+    expect(cue.enter).not.toHaveBeenCalled();
+    expect(cue.exit).not.toHaveBeenCalled();
   });
 });
