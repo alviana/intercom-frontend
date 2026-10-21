@@ -72,6 +72,8 @@ type TPatchAudioSessionResponse = null;
 
 type TDeleteAudioSessionOptions = {
   sessionId: string;
+  // Let the request outlive the page (sent from a pagehide handler).
+  keepalive?: boolean;
 };
 
 type THeartbeatOptions = {
@@ -226,10 +228,12 @@ export const API = {
     ),
   deleteAudioSession: ({
     sessionId,
+    keepalive,
   }: TDeleteAudioSessionOptions): Promise<string> =>
     handleFetchRequest<string>(
       apiRequest(`session/${sessionId}`, {
         method: "DELETE",
+        keepalive,
       })
     ),
   heartbeat: ({ sessionId }: THeartbeatOptions): Promise<string> =>

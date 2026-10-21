@@ -176,7 +176,7 @@ export const UserList = ({
                   </OnlineIndicator>
                 </IsTalkingIndicator>
                 <UserName>
-                  {truncatedUsername} {p.isActive ? "" : "(inactive)"}
+                  {truncatedUsername} {p.isActive ? "" : "(inativo)"}
                 </UserName>
               </User>
               {!isYou && p.isActive && !programOutputLine && !p.isWhip && (

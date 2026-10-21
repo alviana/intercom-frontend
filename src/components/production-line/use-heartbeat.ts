@@ -3,6 +3,7 @@ import { API } from "../../api/api.ts";
 import { noop } from "../../helpers.ts";
 import logger from "../../utils/logger.ts";
 import { useGlobalState } from "../../global-state/context-provider.tsx";
+import { isMobileApp } from "../../platform";
 
 type TProps = { sessionId: string | null };
 
@@ -48,4 +49,21 @@ export const useHeartbeat = ({ sessionId }: TProps) => {
       window.clearInterval(interval);
     };
   }, [sessionId, dispatch]);
+
+  // Web only: end the session when the page is reloaded or closed, otherwise it
+  // lingers in the participant list as a duplicate until it times out (~100 s).
+  // Skipped in the mobile app, where the page may only be going to the background.
+  useEffect(() => {
+    if (!sessionId || isMobileApp()) return noop;
+
+    const onPageHide = (e: PageTransitionEvent) => {
+      if (e.persisted) return; // kept in the back/forward cache: the call may come back
+      API.deleteAudioSession({ sessionId, keepalive: true }).catch(noop);
+    };
+    window.addEventListener("pagehide", onPageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [sessionId]);
 };
