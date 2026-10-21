@@ -26,9 +26,28 @@ public class CallServicePlugin extends Plugin {
         } else {
             ctx.startService(svc);
         }
+        askBatteryOptimizationExemptionOnce(ctx);
         JSObject ret = new JSObject();
         ret.put("running", true);
         call.resolve(ret);
+    }
+
+    // Doze/battery savers kill the call with the screen off; ask the user once to exempt the app.
+    private void askBatteryOptimizationExemptionOnce(Context ctx) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || getActivity() == null) return;
+        // Wait until the mic is granted (first call) so this doesn't collide with the startup permission prompts.
+        if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
+        android.content.SharedPreferences prefs = ctx.getSharedPreferences("intercom", Context.MODE_PRIVATE);
+        android.os.PowerManager pm = (android.os.PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
+        if (prefs.getBoolean("askedBatteryOpt", false) || pm.isIgnoringBatteryOptimizations(ctx.getPackageName())) return;
+        prefs.edit().putBoolean("askedBatteryOpt", true).apply();
+        try {
+            Intent i = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            i.setData(android.net.Uri.parse("package:" + ctx.getPackageName()));
+            getActivity().startActivity(i);
+        } catch (android.content.ActivityNotFoundException ignored) {
+            // Some OEM builds lack this screen; the user can still exempt the app in system settings.
+        }
     }
 
     @PluginMethod

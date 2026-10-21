@@ -26,6 +26,8 @@ jobs:
         run: npm ci
 
       - name: Typecheck and build web (Android entry)
+        env:
+          VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
         run: npm run build:android
 
       - name: Setup Java 17

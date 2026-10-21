@@ -26,9 +26,18 @@ export const CallServiceManager = () => {
     };
   }, []);
 
-  // Keep file subscribed to state to avoid tree-shaking in prod
-  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-  state.calls;
+  // Restart on join so the native service adds the microphone foreground type
+  // (only allowed once RECORD_AUDIO is granted) and audio survives screen-off.
+  const inCall = Object.keys(state.calls).length > 0;
+  useEffect(() => {
+    if (
+      !inCall ||
+      !isAndroidApp() ||
+      !Capacitor.isPluginAvailable("CallService")
+    )
+      return;
+    CallService.start().catch(() => {});
+  }, [inCall]);
 
   return null;
 };

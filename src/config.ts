@@ -87,7 +87,11 @@ const normalizeBackendUrl = (url: string): string => {
 /** True when the mobile app has a user-saved backend URL (not Capacitor localhost). */
 export const hasConfiguredBackend = (): boolean => {
   if (!isMobileApp()) return true;
-  return getStoredBackendUrl() != null;
+  // A backend baked in at build time (VITE_BACKEND_URL) counts as configured.
+  return (
+    getStoredBackendUrl() != null ||
+    !!(import.meta as any)?.env?.VITE_BACKEND_URL
+  );
 };
 
 export const getBackendUrl = (): string => {
