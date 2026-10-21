@@ -15,11 +15,11 @@ export const GenerateWhepUrlButton = ({
   const renderButtonLabel = () => {
     if (isMinified) {
       if (isMobile) {
-        return "WHEP";
+        return "Saída";
       }
-      return "WHEP URL";
+      return "Saída (WHEP)";
     }
-    return "Obter URL WHEP";
+    return "Link de saída de áudio (WHEP)";
   };
 
   const renderModalContent = useCallback(

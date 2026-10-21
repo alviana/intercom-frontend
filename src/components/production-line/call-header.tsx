@@ -104,13 +104,13 @@ const ShareButton = styled.div`
   transition: all 0.15s ease;
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 
   svg {
     width: 2rem;
     height: 2rem;
-    fill: #59cbe8;
+    fill: #ff5c4d;
   }
 `;
 
@@ -125,8 +125,8 @@ const ChevronButton = styled.div`
   transition: all 0.15s ease;
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
-    color: #59cbe8;
+    background: rgba(255, 92, 77, 0.1);
+    color: #ff5c4d;
   }
 
   svg {
@@ -261,7 +261,7 @@ export const CallHeaderComponent = ({
       {line?.programOutputLine && open && (
         <AudioFeedIcon open={open}>
           <TVIcon />
-          Feed de áudio
+          Áudio do programa
         </AudioFeedIcon>
       )}
       {shareModalOpen && (

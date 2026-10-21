@@ -48,12 +48,12 @@ const CopyButton = styled.button<{
     border-color: ${({ copied, isError, isLoading }) => {
       if ((isLoading && !copied) || isError) return "rgba(255,255,255,0.15)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
     color: ${({ copied, isError, isLoading }) => {
       if ((isLoading && !copied) || isError) return "rgba(255,255,255,0.3)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
   }
 `;
@@ -79,7 +79,7 @@ const CheckboxRow = styled.label`
     width: 1.6rem;
     height: 1.6rem;
     cursor: pointer;
-    accent-color: #59cbe8;
+    accent-color: #ff5c4d;
     flex-shrink: 0;
   }
 `;
@@ -243,7 +243,7 @@ export const ShareUrlModal = ({
             checked={includeCompanion}
             onChange={(e) => handleCompanionToggle(e.target.checked)}
           />
-          Incluir URL do Companion
+          Incluir endereço do Companion
         </CheckboxRow>
       )}
     </Modal>

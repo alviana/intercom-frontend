@@ -24,7 +24,7 @@ const UserSettingsWrapper = styled.div`
   svg {
     width: 2.5rem;
     flex-shrink: 0;
-    fill: rgba(89, 203, 232, 1);
+    fill: rgba(255, 92, 77, 1);
   }
 
   &.mobile {

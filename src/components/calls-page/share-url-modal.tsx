@@ -59,7 +59,7 @@ export const ShareUrlModal = ({ onClose }: ShareUrlModalProps) => {
           {copied ? "Copiado!" : "Copiar"}
         </CopyBtn>
       </InputRow>
-      {copied && <SuccessText>URL copiada</SuccessText>}
+      {copied && <SuccessText>Link copiado</SuccessText>}
     </Modal>
   );
 };

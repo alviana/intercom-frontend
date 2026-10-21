@@ -67,27 +67,28 @@ export const GenerateWhepUrlModal = ({
   };
 
   return (
-    <Modal onClose={onClose} title="Gerar URL WHEP">
+    <Modal onClose={onClose} title="Gerar link de saída de áudio (WHEP)">
       <div ref={modalRef}>
         <ModalText>
-          Informe um nome de usuário para gerar uma URL WHEP de conexão com o
-          servidor.
+          Informe um nome de usuário para gerar o link de saída de áudio (WHEP)
+          de conexão com o servidor.
         </ModalText>
         <ModalNoteWrapper>
           <ModalTextBold>Observação:</ModalTextBold>
           <ModalTextItalic>
-            Esta URL está vinculada ao nome de usuário e muda se você a renovar.
+            Este link está vinculado ao nome de usuário e muda se você o
+            renovar.
           </ModalTextItalic>
         </ModalNoteWrapper>
 
         <Wrapper>
           <InputWrapper>
             <LinkLabel>
-              <DecorativeLabel>WHEP URL</DecorativeLabel>
+              <DecorativeLabel>Link de saída (WHEP)</DecorativeLabel>
               <CombinedInputWrapper>
                 <span>{generateWhepUrl(productionId, lineId, "")}</span>
                 <input
-                  aria-label="Nome de usuário WHEP"
+                  aria-label="Nome de usuário da saída (WHEP)"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="nome de usuário"
@@ -103,7 +104,7 @@ export const GenerateWhepUrlModal = ({
         </Wrapper>
 
         <RefreshButton
-          label="Renovar URL"
+          label="Renovar link"
           isLoading={isLoading}
           onRefresh={handleRefresh}
         />

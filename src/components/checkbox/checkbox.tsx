@@ -27,7 +27,7 @@ const CheckboxComponent = styled.input`
   margin-right: 1rem;
 
   &:checked {
-    background-color: rgba(89, 203, 232, 1);
+    background-color: #8b0000;
     border-color: #6d6d6d;
   }
 
@@ -36,13 +36,13 @@ const CheckboxComponent = styled.input`
     display: flex;
     justify-content: center;
     align-items: center;
-    color: #1a1a1a;
+    color: #ffffff;
     font-size: 1.6rem;
     font-weight: bold;
   }
 
   &:hover {
-    background-color: rgba(89, 203, 232, 1);
+    background-color: #8b0000;
   }
 `;
 

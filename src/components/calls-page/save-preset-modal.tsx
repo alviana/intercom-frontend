@@ -96,7 +96,7 @@ const RadioDot = styled.span<{ active: boolean }>`
   border-radius: 50%;
   border: 0.2rem solid
     ${({ active }) =>
-      active ? "rgba(89, 203, 232, 1)" : "rgba(255,255,255,0.3)"};
+      active ? "rgba(255, 92, 77, 1)" : "rgba(255,255,255,0.3)"};
   background: transparent;
   flex-shrink: 0;
   transition: border-color 0.15s;
@@ -110,7 +110,7 @@ const RadioDot = styled.span<{ active: boolean }>`
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
-    background: rgba(89, 203, 232, 1);
+    background: rgba(255, 92, 77, 1);
     opacity: ${({ active }) => (active ? 1 : 0)};
     transition: opacity 0.15s;
   }
@@ -245,7 +245,7 @@ export const SavePresetModal = ({
             onClick={() => setIsLocal(true)}
           >
             <RadioDot active={isLocal} />
-            Local
+            Neste aparelho
           </RadioOption>
           <InfoTooltip>
             Configurações salvas <strong>públicas</strong> ficam armazenadas no
@@ -265,12 +265,11 @@ export const SavePresetModal = ({
                 onClick={() => setIncludeCompanion((v) => !v)}
               >
                 <RadioDot active={includeCompanion} />
-                Incluir URL do Companion
+                Incluir endereço do Companion
               </RadioOption>
               <InfoTooltip>
-                Se incluída, ao entrar nesta configuração salva você será
-                conectado automaticamente ao seu servidor WebSocket do Bitfocus
-                Companion.
+                Se incluído, ao entrar nesta configuração salva você será
+                conectado automaticamente ao seu Bitfocus Companion.
               </InfoTooltip>
             </CompanionToggleRow>
             {includeCompanion && (

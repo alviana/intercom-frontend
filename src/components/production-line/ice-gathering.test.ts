@@ -54,7 +54,7 @@ describe("waitForIceGathering", () => {
 
     vi.advanceTimersByTime(3000);
 
-    await expect(promise).rejects.toThrow("ice gathering timeout");
+    await expect(promise).rejects.toThrow("Tempo esgotado ao conectar o áudio");
   });
 
   it("cleans up event listener after completion", async () => {
@@ -86,6 +86,6 @@ describe("waitForIceGathering", () => {
     // At 5s, should reject
     vi.advanceTimersByTime(100);
 
-    await expect(promise).rejects.toThrow("waited 5 seconds");
+    await expect(promise).rejects.toThrow("(ICE, 5 s)");
   });
 });

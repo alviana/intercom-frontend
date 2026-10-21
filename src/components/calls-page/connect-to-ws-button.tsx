@@ -22,7 +22,7 @@ const ConnectButton = styled(PrimaryButton)<{
 }>`
   background: ${({ isConnected }) => (isConnected ? "#73d16d" : "")};
   border: 0.2rem solid
-    ${({ isConnected }) => (isConnected ? "#73d16d" : "rgba(89, 203, 232, 1)")};
+    ${({ isConnected }) => (isConnected ? "#73d16d" : "rgba(255, 92, 77, 1)")};
   text-align: center;
   padding: 1rem;
   align-items: center;
@@ -105,7 +105,7 @@ export const ConnectToWSButton = ({
   const handleWsError = useCallback(
     (message: string) => {
       setIsConnecting(false);
-      const errorMessage = `Não foi possível conectar ao Companion: ${message}`;
+      const errorMessage = `Não foi possível conectar ao Companion. ${message}`;
       if (isManualConnectRef.current) {
         dispatch({
           type: "ERROR",

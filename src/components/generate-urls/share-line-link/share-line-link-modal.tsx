@@ -77,12 +77,12 @@ const RowCopyButton = styled.button<{ copied: boolean; isLoading: boolean }>`
     border-color: ${({ copied, isLoading }) => {
       if (isLoading && !copied) return "rgba(255,255,255,0.15)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
     color: ${({ copied, isLoading }) => {
       if (isLoading && !copied) return "rgba(255,255,255,0.3)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
   }
 `;
@@ -123,12 +123,12 @@ const FullWidthCopyButton = styled.button<{
     border-color: ${({ copied, isLoading }) => {
       if (isLoading && !copied) return "rgba(255,255,255,0.15)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
     color: ${({ copied, isLoading }) => {
       if (isLoading && !copied) return "rgba(255,255,255,0.3)";
       if (copied) return "#91fa8c";
-      return "#59cbe8";
+      return "#ff5c4d";
     }};
   }
 `;
@@ -204,7 +204,7 @@ export const ShareLineLinkModal = ({
   return (
     <Modal
       onClose={onClose}
-      title={`Compartilhar ${isCopyProduction ? "linhas" : "URL da linha"}`}
+      title={`Compartilhar ${isCopyProduction ? "linhas" : "link da linha"}`}
     >
       <Description>
         {isCopyProduction

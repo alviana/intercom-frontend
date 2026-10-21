@@ -162,7 +162,7 @@ const AppRouterShell = ({
               <DisplayWarning
                 text={
                   isMobileApp()
-                    ? "O servidor não está disponível. Abra as configurações, verifique a URL do servidor e salve — o app voltará à tela inicial e recarregará a lista de produções."
+                    ? "O servidor não está disponível. Abra as configurações, verifique o endereço do servidor e salve — o app voltará à tela inicial e recarregará a lista de produções."
                     : "O servidor não está disponível. Recarregue a página para tentar novamente."
                 }
                 title="Servidor indisponível"

@@ -241,7 +241,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
     renderExtraFields: ({ errors, register }) => (
       <>
         <FormItem
-          label="URL do servidor"
+          label="Endereço do servidor"
           fieldName="backendUrl"
           errors={errors}
         >
@@ -255,11 +255,11 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
                   void parsed.href;
                   return true;
                 } catch {
-                  return "Informe uma URL válida (ex.: https://host/)";
+                  return "Informe um endereço válido (ex.: https://intercom.ac24horas.com/manager)";
                 }
               },
             })}
-            placeholder="https://your-intercom-manager/"
+            placeholder="https://intercom.ac24horas.com/manager"
           />
         </FormItem>
         <FormItem
@@ -271,7 +271,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
             // eslint-disable-next-line
             {...register(`backendApiKey` as any)}
             type="password"
-            placeholder="Token de acesso opcional"
+            placeholder="Chave de acesso (opcional)"
           />
         </FormItem>
         <FormItem label="Companion (Stream Deck)">
@@ -293,9 +293,9 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
               </span>
               <FormInput
                 style={{ paddingLeft: "5.6rem", marginBottom: 0 }}
-                aria-label="Host e porta do WebSocket"
+                aria-label="Endereço e porta do Companion"
                 type="text"
-                placeholder="host:port"
+                placeholder="endereço:porta"
                 value={hostPort}
                 onChange={(e) => {
                   const v = e.target.value.trim();

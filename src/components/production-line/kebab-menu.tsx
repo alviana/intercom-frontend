@@ -29,8 +29,8 @@ const KebabButton = styled.button`
   transition: all 0.15s ease;
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
-    color: #59cbe8;
+    background: rgba(255, 92, 77, 0.1);
+    color: #ff5c4d;
   }
 `;
 
@@ -60,7 +60,7 @@ const DropdownItem = styled.button`
   transition: background 0.1s ease;
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 
   &:not(:last-child) {

@@ -137,8 +137,8 @@ export const ProgramLineJoinCard = ({
         </CardTitleWrapper>
       </CardHeader>
       <RoleLabel>
-        Esta é uma linha de feed de áudio. Entrar como ouvinte ou como feed de
-        áudio?
+        Esta é uma linha de áudio do programa. Entrar como ouvinte ou como feed
+        de áudio?
       </RoleLabel>
       <CheckboxWrapper>
         <Checkbox
@@ -147,7 +147,7 @@ export const ProgramLineJoinCard = ({
           onChange={() => setIsProgramUser(false)}
         />
         <Checkbox
-          label="Feed de áudio"
+          label="Áudio do programa"
           checked={isProgramUser}
           onChange={() => setIsProgramUser(true)}
         />

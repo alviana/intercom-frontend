@@ -21,7 +21,7 @@ export const CopyButton = ({
 
   return (
     <CopyIconWrapper
-      title="Copiar URL"
+      title="Copiar link"
       isCopied={isCopied}
       onClick={handleCopy}
       className={className}

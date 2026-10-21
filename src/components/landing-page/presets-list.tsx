@@ -86,18 +86,18 @@ const ManagePresetsButton = styled(PrimaryButton)`
   justify-content: center;
   align-items: center;
   background: transparent;
-  border: 0.2rem solid rgba(89, 203, 232, 1);
-  color: rgba(89, 203, 232, 1);
+  border: 0.2rem solid rgba(255, 92, 77, 1);
+  color: rgba(255, 92, 77, 1);
   box-shadow: none;
 
   svg {
-    fill: rgba(89, 203, 232, 1);
+    fill: rgba(255, 92, 77, 1);
     height: 2rem;
     width: 2rem;
   }
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 `;
 
@@ -228,7 +228,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
       </ParticipantCountWrapper>
       {preset.calls.length > 0 && (
         <CopyIconWrapper
-          title="Compartilhar URL da configuração salva"
+          title="Compartilhar link da configuração salva"
           onClick={handleShare}
           className="production-list-item"
           isCopied={false}
@@ -236,7 +236,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
           <ShareIcon />
         </CopyIconWrapper>
       )}
-      {preset.isLocal && <LocalBadge>Local</LocalBadge>}
+      {preset.isLocal && <LocalBadge>Neste aparelho</LocalBadge>}
       {preset.companionUrl && <CompanionBadge>Companion</CompanionBadge>}
       <Spacer />
       <JoinButton
@@ -285,7 +285,7 @@ const PresetCard = ({ preset, productions }: PresetCardProps) => {
                   <LineName>{lineName}</LineName>
                   {call.lineUsedForProgramOutput && (
                     <RoleBadge>
-                      {call.isProgramUser ? "Feed de áudio" : "Ouvinte"}
+                      {call.isProgramUser ? "Áudio do programa" : "Ouvinte"}
                     </RoleBadge>
                   )}
                 </LineNameRow>
@@ -358,9 +358,9 @@ export const PresetList = ({ productions }: PresetListProps) => {
           <InfoTooltip>
             Uma <strong>configuração salva</strong> é uma combinação de linhas
             em que você entra com um clique. Anexe uma{" "}
-            <strong>URL do Companion</strong> para abrir automaticamente uma
-            conexão com o Companion ao abrir a configuração. Excluir uma linha a
-            remove de todas as configurações salvas em que ela está.
+            <strong>endereço do Companion</strong> para abrir automaticamente
+            uma conexão com o Companion ao abrir a configuração. Excluir uma
+            linha a remove de todas as configurações salvas em que ela está.
           </InfoTooltip>
         }
       >

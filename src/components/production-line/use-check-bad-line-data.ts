@@ -28,7 +28,7 @@ export const useCheckBadLineData = ({
       if (pidIsNan || lidIsNan) {
         // Someone entered a production id in the URL that's not a number
 
-        const errorString = `URL inválida. ${pidIsNan ? "O ID da produção não é um número." : ""} ${lidIsNan ? "O ID da linha não é um número." : ""}`;
+        const errorString = `Link inválido. ${pidIsNan ? "O ID da produção não é um número." : ""} ${lidIsNan ? "O ID da linha não é um número." : ""}`;
 
         dispatch({
           type: "ERROR",

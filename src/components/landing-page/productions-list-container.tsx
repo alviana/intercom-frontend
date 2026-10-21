@@ -38,16 +38,16 @@ const HeaderButtonText = styled.p`
 
 const ManageButton = styled(HeaderButton)`
   background: transparent;
-  border: 0.2rem solid rgba(89, 203, 232, 1);
-  color: rgba(89, 203, 232, 1);
+  border: 0.2rem solid rgba(255, 92, 77, 1);
+  color: rgba(255, 92, 77, 1);
   box-shadow: none;
 
   svg {
-    fill: rgba(89, 203, 232, 1);
+    fill: rgba(255, 92, 77, 1);
   }
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 `;
 
@@ -62,7 +62,7 @@ const EmptyState = styled.div`
   svg {
     width: 4.8rem;
     height: 4.8rem;
-    fill: rgba(89, 203, 232, 0.4);
+    fill: rgba(255, 92, 77, 0.4);
     margin-bottom: 1.5rem;
   }
 `;

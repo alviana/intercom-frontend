@@ -45,8 +45,8 @@ const CopyButton = styled.button<{ copied: boolean }>`
   }
 
   &:hover:not(:disabled) {
-    border-color: ${({ copied }) => (copied ? "#91fa8c" : "#59cbe8")};
-    color: ${({ copied }) => (copied ? "#91fa8c" : "#59cbe8")};
+    border-color: ${({ copied }) => (copied ? "#91fa8c" : "#ff5c4d")};
+    color: ${({ copied }) => (copied ? "#91fa8c" : "#ff5c4d")};
   }
 `;
 
@@ -77,7 +77,7 @@ export const GenerateWhipWhepUrlModal = ({
   };
 
   return (
-    <Modal onClose={onClose} title="WebRTC">
+    <Modal onClose={onClose} title="Áudio em tempo real (WebRTC)">
       <Description>
         Informe um nome de usuário para gerar links de conexão WHIP e WHEP.
       </Description>
@@ -96,7 +96,9 @@ export const GenerateWhipWhepUrlModal = ({
           disabled={!whipUrl}
           onClick={() => handleCopy(whipUrl, setWhipCopied)}
         >
-          {whipCopied ? "✓ Link WHIP copiado!" : "Copiar link WHIP"}
+          {whipCopied
+            ? "✓ Link de entrada copiado!"
+            : "Copiar link de entrada (WHIP)"}
         </CopyButton>
         <CopyButton
           type="button"
@@ -104,7 +106,9 @@ export const GenerateWhipWhepUrlModal = ({
           disabled={!whepUrl}
           onClick={() => handleCopy(whepUrl, setWhepCopied)}
         >
-          {whepCopied ? "✓ Link WHEP copiado!" : "Copiar link WHEP"}
+          {whepCopied
+            ? "✓ Link de saída copiado!"
+            : "Copiar link de saída (WHEP)"}
         </CopyButton>
       </ButtonGroup>
     </Modal>

@@ -31,7 +31,7 @@ const Popup = styled.span<{ x: number; y: number }>`
   z-index: 1000;
 
   a {
-    color: #59cbe8;
+    color: #ff5c4d;
     text-decoration: underline;
   }
 `;

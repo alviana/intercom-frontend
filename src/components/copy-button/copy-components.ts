@@ -98,7 +98,7 @@ export const CopyIconWrapper = styled.div<{
   }
 
   svg {
-    fill: #59cbe8;
+    fill: #ff5c4d;
     transition: transform 0.2s ease;
   }
 

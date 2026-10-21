@@ -208,7 +208,7 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
                 control={control}
                 render={({ field: controllerField }) => (
                   <Checkbox
-                    label="Feed de áudio"
+                    label="Áudio do programa"
                     checked={controllerField.value || false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       controllerField.onChange(e.target.checked)
@@ -217,9 +217,9 @@ export const ManageProductionButtons: FC<ManageProductionButtonsProps> = (
                 )}
               />
               <InfoTooltip>
-                Em uma linha de <strong>Feed de áudio</strong>, os ouvintes não
-                podem falar. Apenas o <strong>Feed de áudio</strong> será
-                ouvido.
+                Em uma linha de <strong>áudio do programa</strong>, os ouvintes
+                não podem falar. Apenas o <strong>áudio do programa</strong>{" "}
+                será ouvido.
               </InfoTooltip>
             </CheckboxWrapper>
           </ManageLineInputRow>

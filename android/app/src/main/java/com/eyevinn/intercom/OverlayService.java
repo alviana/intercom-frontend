@@ -536,7 +536,7 @@ public class OverlayService extends Service {
         micIcon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         micIcon.setImageResource(R.drawable.ic_mic_off);
         micRow.addView(micIcon, new LinearLayout.LayoutParams(dp(28), dp(28)));
-        micRow.setContentDescription("Falar (toque para travar, segure para PTT)");
+        micRow.setContentDescription("Falar (toque para travar, segure para falar)");
         attachDualMicControl(micRow, micIcon, idx);
 
         tile.addView(header);

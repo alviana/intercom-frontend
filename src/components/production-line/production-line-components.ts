@@ -110,7 +110,7 @@ export const AudioFeedIcon = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  color: #59cbe8;
+  color: #ff5c4d;
   font-size: 1.2rem;
   gap: ${({ open }: { open: boolean }) => (open ? "1rem" : "0.5rem")};
   flex-shrink: 0;
@@ -127,7 +127,7 @@ export const AudioFeedIcon = styled.div`
   `}
 
   svg {
-    fill: #59cbe8 !important;
+    fill: #ff5c4d !important;
     width: 1.5rem !important;
   }
 `;

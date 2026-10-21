@@ -38,14 +38,14 @@ const RefreshIconButton = styled.button<{ isRefreshing: boolean }>`
   .refresh-devices {
     width: 2rem;
     height: 2rem;
-    fill: #59cbe8;
+    fill: #ff5c4d;
     animation: ${spin} 0.8s linear infinite;
     animation-play-state: ${({ isRefreshing }) =>
       isRefreshing ? "running" : "paused"};
   }
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 `;
 

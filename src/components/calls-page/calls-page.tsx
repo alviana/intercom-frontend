@@ -466,7 +466,7 @@ export const CallsPage = () => {
           !isEmpty ? (
             <ShareAdornment>
               <CopyIconWrapper
-                title="Compartilhar URL das linhas"
+                title="Compartilhar link das linhas"
                 isCopied={false}
                 onClick={handleShare}
                 style={{ padding: 0 }}

@@ -37,7 +37,7 @@ export const ParticipantCountWrapper = styled.div`
 
   &.whip {
     svg {
-      fill: rgb(89, 203, 232);
+      fill: rgb(255, 92, 77);
     }
   }
 `;
@@ -130,7 +130,7 @@ export const LineBlockParticipant = styled.div`
 
   &.whip {
     svg {
-      fill: rgb(89, 203, 232);
+      fill: rgb(255, 92, 77);
     }
   }
 `;

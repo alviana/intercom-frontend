@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { darkText, errorColour } from "../../css-helpers/defaults";
-import { FlexContainer } from "../generic-components";
+import { FlexContainer, mediaQueries } from "../generic-components";
 
 export const HeaderWrapper = styled.div`
   display: flex;
@@ -77,11 +77,13 @@ export const LineNumber = styled.span`
 
 export const LineInputRow = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
 
+  /* Wrap the "Áudio do programa" checkbox below the name when the card is narrow. */
   > *:first-of-type {
-    flex: 1;
+    flex: 1 1 14rem;
     min-width: 0;
   }
 
@@ -128,7 +130,7 @@ export const TooltipContent = styled.span`
   transition: opacity 0.15s ease;
 
   a {
-    color: #59cbe8;
+    color: #ff5c4d;
     text-decoration: underline;
   }
 `;
@@ -157,9 +159,9 @@ export const AddLineCard = styled.button`
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    border-color: rgba(89, 203, 232, 0.6);
-    color: rgba(89, 203, 232, 0.8);
-    background: rgba(89, 203, 232, 0.05);
+    border-color: rgba(255, 92, 77, 0.6);
+    color: rgba(255, 92, 77, 0.8);
+    background: rgba(255, 92, 77, 0.05);
   }
 
   &:disabled {
@@ -217,5 +219,13 @@ export const TwoColumnLayout = styled.div`
   & > * {
     flex: 1;
     min-width: 0;
+  }
+
+  /* Fixed 24rem side padding + 20rem gap don't fit phones/tablets: stack the columns. */
+  ${mediaQueries.isMediumScreen} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3rem;
+    padding: 0 1.5rem;
   }
 `;

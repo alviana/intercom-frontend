@@ -158,7 +158,7 @@ const establishConnection = ({
     const sdpAnswer = await rtcPeerConnection.createAnswer();
 
     if (!sdpAnswer.sdp) {
-      throw new Error("No sdp in answer");
+      throw new Error("Falha ao negociar o áudio (sem SDP na resposta)");
     }
 
     await rtcPeerConnection.setLocalDescription(sdpAnswer);

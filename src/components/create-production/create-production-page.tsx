@@ -105,7 +105,7 @@ const RadioDot = styled.span<{ active: boolean }>`
   border-radius: 50%;
   border: 0.2rem solid
     ${({ active }) =>
-      active ? "rgba(89, 203, 232, 1)" : "rgba(255,255,255,0.3)"};
+      active ? "rgba(255, 92, 77, 1)" : "rgba(255,255,255,0.3)"};
   background: transparent;
   flex-shrink: 0;
   transition: border-color 0.15s;
@@ -119,7 +119,7 @@ const RadioDot = styled.span<{ active: boolean }>`
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
-    background: rgba(89, 203, 232, 1);
+    background: rgba(255, 92, 77, 1);
     opacity: ${({ active }) => (active ? 1 : 0)};
     transition: opacity 0.15s;
   }
@@ -452,16 +452,16 @@ export const CreateProductionPage = () => {
             render={({ field }) => (
               <CheckboxWrapper>
                 <Checkbox
-                  label="Feed de áudio"
+                  label="Áudio do programa"
                   checked={field.value || false}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     field.onChange(e.target.checked)
                   }
                 />
                 <InfoTooltip>
-                  Em uma linha de <strong>feed de áudio</strong>, os ouvintes
-                  não podem falar. Somente o <strong>feed de áudio</strong> será
-                  ouvido.
+                  Em uma linha de <strong>áudio do programa</strong>, os
+                  ouvintes não podem falar. Somente o{" "}
+                  <strong>áudio do programa</strong> será ouvido.
                 </InfoTooltip>
               </CheckboxWrapper>
             )}
@@ -497,16 +497,16 @@ export const CreateProductionPage = () => {
               render={({ field: controllerField }) => (
                 <CheckboxWrapper>
                   <Checkbox
-                    label="Feed de áudio"
+                    label="Áudio do programa"
                     checked={controllerField.value || false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       controllerField.onChange(e.target.checked)
                     }
                   />
                   <InfoTooltip>
-                    Em uma linha de <strong>feed de áudio</strong>, os ouvintes
-                    não podem falar. Somente o <strong>feed de áudio</strong>{" "}
-                    será ouvido.
+                    Em uma linha de <strong>áudio do programa</strong>, os
+                    ouvintes não podem falar. Somente o{" "}
+                    <strong>áudio do programa</strong> será ouvido.
                   </InfoTooltip>
                 </CheckboxWrapper>
               )}
@@ -580,7 +580,7 @@ export const CreateProductionPage = () => {
           onClick={() => setIsLocalPreset(true)}
         >
           <RadioDot active={isLocalPreset} />
-          Local
+          Neste aparelho
         </RadioOption>
         <InfoTooltip>
           Configurações salvas <strong>públicas</strong> ficam armazenadas no
@@ -616,7 +616,7 @@ export const CreateProductionPage = () => {
             <CompanionPrefix aria-hidden="true">ws://</CompanionPrefix>
             <CompanionHostPortInput
               id="create-companion-url"
-              aria-label="Host e porta do WebSocket do Companion"
+              aria-label="Endereço e porta do Companion"
               type="text"
               placeholder="localhost:12345"
               value={companionHostPort}
@@ -732,12 +732,12 @@ export const CreateProductionPage = () => {
                         onClick={() => roleField.onChange(true)}
                       >
                         <RadioDot active={roleField.value === true} />
-                        Feed de áudio
+                        Áudio do programa
                       </RadioOption>
                       <InfoTooltip>
-                        O <strong>ouvinte</strong> escuta o feed de áudio, mas
-                        não pode responder.
-                        <br />O <strong>feed de áudio</strong> é a fonte — o
+                        O <strong>ouvinte</strong> escuta o áudio do programa,
+                        mas não pode responder.
+                        <br />O <strong>áudio do programa</strong> é a fonte — o
                         áudio dele é transmitido para todos os ouvintes desta
                         linha.
                       </InfoTooltip>

@@ -67,27 +67,28 @@ export const GenerateWhipUrlModal = ({
   };
 
   return (
-    <Modal onClose={onClose} title="Gerar URL WHIP">
+    <Modal onClose={onClose} title="Gerar link de entrada de áudio (WHIP)">
       <div ref={modalRef}>
         <ModalText>
-          Informe um nome de usuário para gerar uma URL WHIP de conexão com o
-          servidor.
+          Informe um nome de usuário para gerar o link de entrada de áudio
+          (WHIP) de conexão com o servidor.
         </ModalText>
         <ModalNoteWrapper>
           <ModalTextBold>Observação:</ModalTextBold>
           <ModalTextItalic>
-            Esta URL está vinculada ao nome de usuário e muda se você a renovar.
+            Este link está vinculado ao nome de usuário e muda se você o
+            renovar.
           </ModalTextItalic>
         </ModalNoteWrapper>
 
         <Wrapper>
           <InputWrapper>
             <LinkLabel>
-              <DecorativeLabel>WHIP URL</DecorativeLabel>
+              <DecorativeLabel>Link de entrada (WHIP)</DecorativeLabel>
               <CombinedInputWrapper>
                 <span>{generateWhipUrl(productionId, lineId, "")}</span>
                 <input
-                  aria-label="Nome de usuário WHIP"
+                  aria-label="Nome de usuário da entrada (WHIP)"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="nome de usuário"
@@ -103,7 +104,7 @@ export const GenerateWhipUrlModal = ({
         </Wrapper>
 
         <RefreshButton
-          label="Renovar URL"
+          label="Renovar link"
           isLoading={isLoading}
           onRefresh={handleRefresh}
         />

@@ -42,15 +42,15 @@ const MuteAllCallsBtn = styled(PrimaryButton)`
 
 const SavePresetBtn = styled(SecondaryButton)`
   background: transparent;
-  border: 0.2rem solid rgba(89, 203, 232, 1);
-  color: rgba(89, 203, 232, 1);
+  border: 0.2rem solid rgba(255, 92, 77, 1);
+  color: rgba(255, 92, 77, 1);
   box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
 
   &:hover {
-    background: rgba(89, 203, 232, 0.1);
+    background: rgba(255, 92, 77, 0.1);
   }
 `;
 

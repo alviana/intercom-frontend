@@ -70,8 +70,8 @@ export const CombinedInputWrapper = styled.div`
   color: white;
 
   &:has(input:focus) {
-    border-color: #59cbe8;
-    outline: 0.1rem solid #59cbe8;
+    border-color: #ff5c4d;
+    outline: 0.1rem solid #ff5c4d;
   }
 
   span {

@@ -39,7 +39,7 @@ export function useWebSocket({
       socketRef.current = ws;
 
       const connectionErrorMessage =
-        "Não foi possível conectar ao servidor WebSocket";
+        "Verifique o endereço e se o Companion está aberto.";
       const dispatchConnectionError = () => {
         if (onError) {
           onError(connectionErrorMessage);

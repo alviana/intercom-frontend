@@ -473,7 +473,7 @@ export const UserSettingsForm = ({
             onChange={() => setIsProgramUser?.(false)}
           />
           <Checkbox
-            label="Feed de áudio"
+            label="Áudio do programa"
             checked={!!isProgramUser}
             onChange={() => setIsProgramUser?.(true)}
           />

@@ -159,7 +159,8 @@ export const ActionButton = styled.button`
 `;
 
 export const PrimaryButton = styled(ActionButton)`
-  background: rgba(89, 203, 232, 1);
+  background: #8b0000;
+  color: #ffffff;
   &:active:enabled {
     transform: translateY(0.125rem);
   }
@@ -198,7 +199,7 @@ export const PrimaryButton = styled(ActionButton)`
   }
 
   &:disabled {
-    background: rgba(89, 203, 232, 0.5);
+    background: rgba(139, 0, 0, 0.5);
   }
 `;
 

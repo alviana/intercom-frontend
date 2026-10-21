@@ -15,11 +15,11 @@ export const GenerateWhipUrlButton = ({
   const renderButtonLabel = () => {
     if (isMinified) {
       if (isMobile) {
-        return "WHIP";
+        return "Entrada";
       }
-      return "WHIP URL";
+      return "Entrada (WHIP)";
     }
-    return "Obter URL WHIP";
+    return "Link de entrada de áudio (WHIP)";
   };
 
   const renderModalContent = useCallback(

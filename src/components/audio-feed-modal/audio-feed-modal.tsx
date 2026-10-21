@@ -38,8 +38,8 @@ export const AudioFeedModal = ({
     <Modal onClose={onClose}>
       <ContentWrapper>
         <p>
-          Esta é uma linha de feed de áudio. Deseja entrar na linha como feed de
-          áudio ou como ouvinte?
+          Esta é uma linha de áudio do programa. Deseja entrar na linha como
+          feed de áudio ou como ouvinte?
         </p>
         <CheckboxWrapper>
           <Checkbox
@@ -48,7 +48,7 @@ export const AudioFeedModal = ({
             onChange={() => setIsProgramUser(false)}
           />
           <Checkbox
-            label="Feed de áudio"
+            label="Áudio do programa"
             checked={isProgramUser}
             onChange={() => setIsProgramUser(true)}
           />

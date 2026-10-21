@@ -32,7 +32,9 @@ export const waitForIceGathering = (
     timeout = window.setTimeout(() => {
       rtcPeerConnection.removeEventListener("icegatheringstatechange", cb);
       reject(
-        new Error(`ice gathering timeout (waited ${timeoutMs / 1000} seconds)`)
+        new Error(
+          `Tempo esgotado ao conectar o áudio (ICE, ${timeoutMs / 1000} s)`
+        )
       );
     }, timeoutMs);
 

@@ -4,7 +4,7 @@ import { BackArrow } from "../../assets/icons/icon";
 
 const StyledBackBtn = styled.div`
   cursor: pointer;
-  color: #59cbe8;
+  color: #ff5c4d;
   background: transparent;
   padding: 0;
   margin: 0;
@@ -12,7 +12,7 @@ const StyledBackBtn = styled.div`
   height: 4rem;
 
   svg {
-    fill: #59cbe8;
+    fill: #ff5c4d;
   }
 `;
 

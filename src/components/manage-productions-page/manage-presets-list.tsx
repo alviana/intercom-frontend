@@ -316,7 +316,7 @@ const RoleDot = styled.span<{ active: boolean }>`
   border-radius: 50%;
   border: 0.2rem solid
     ${({ active }) =>
-      active ? "rgba(89, 203, 232, 1)" : "rgba(255,255,255,0.3)"};
+      active ? "rgba(255, 92, 77, 1)" : "rgba(255,255,255,0.3)"};
   background: transparent;
   flex-shrink: 0;
   transition: border-color 0.15s;
@@ -330,7 +330,7 @@ const RoleDot = styled.span<{ active: boolean }>`
     width: 0.6rem;
     height: 0.6rem;
     border-radius: 50%;
-    background: rgba(89, 203, 232, 1);
+    background: rgba(255, 92, 77, 1);
     opacity: ${({ active }) => (active ? 1 : 0)};
     transition: opacity 0.15s;
   }
@@ -627,7 +627,7 @@ const ManagePresetCard = ({
         <UsersIcon />
         <ParticipantCount>{totalParticipants}</ParticipantCount>
       </ParticipantCountWrapper>
-      {preset.isLocal && <LocalBadge>Local</LocalBadge>}
+      {preset.isLocal && <LocalBadge>Neste aparelho</LocalBadge>}
       {preset.companionUrl && <CompanionBadge>Companion</CompanionBadge>}
       <Spacer />
     </>
@@ -694,12 +694,12 @@ const ManagePresetCard = ({
                         }
                       >
                         <RoleDot active={!!call.isProgramUser} />
-                        Feed de áudio
+                        Áudio do programa
                       </RoleOption>
                       <InfoTooltip>
-                        O <strong>ouvinte</strong> escuta o feed de áudio, mas
-                        não pode responder.
-                        <br />O <strong>feed de áudio</strong> é a fonte — o
+                        O <strong>ouvinte</strong> escuta o áudio do programa,
+                        mas não pode responder.
+                        <br />O <strong>áudio do programa</strong> é a fonte — o
                         áudio dele é transmitido para todos os ouvintes desta
                         linha.
                       </InfoTooltip>
@@ -783,13 +783,13 @@ const ManagePresetCard = ({
                 onClick={() => setSelectedIsProgramUser(true)}
               >
                 <RoleDot active={selectedIsProgramUser} />
-                Feed de áudio
+                Áudio do programa
               </RoleOption>
               <InfoTooltip>
-                O <strong>ouvinte</strong> escuta o feed de áudio, mas não pode
-                responder.
-                <br />O <strong>feed de áudio</strong> é a fonte — o áudio dele
-                é transmitido para todos os ouvintes desta linha.
+                O <strong>ouvinte</strong> escuta o áudio do programa, mas não
+                pode responder.
+                <br />O <strong>áudio do programa</strong> é a fonte — o áudio
+                dele é transmitido para todos os ouvintes desta linha.
               </InfoTooltip>
             </RoleSelector>
           )}
@@ -863,7 +863,7 @@ const ManagePresetCard = ({
                 className="edit"
                 type="button"
                 onClick={handleEditCompanionClick}
-                title="Editar URL do Companion"
+                title="Editar endereço do Companion"
               >
                 <EditIcon />
               </IconButton>

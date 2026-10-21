@@ -18,7 +18,7 @@ const VolumeContainer = styled.div`
   svg {
     width: 5rem;
     padding: 0.5rem;
-    fill: #59cbe8;
+    fill: #8b0000;
   }
 `;
 
@@ -33,7 +33,7 @@ const SliderTrack = styled.div`
 const SliderThumb = styled.div<{ position: number }>`
   width: 1.5rem;
   height: 1.5rem;
-  background-color: #59cbe8;
+  background-color: #8b0000;
   border-radius: 50%;
   position: absolute;
   top: -0.6rem;

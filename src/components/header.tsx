@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { FC } from "react";
-import { HeadsetIcon } from "../assets/icons/icon.tsx";
+import logoAc24horas from "../assets/logo-ac24horas-branco.png";
 import { backgroundColour } from "../css-helpers/defaults.ts";
 import { mediaQueries } from "./generic-components.ts";
 
@@ -20,20 +20,17 @@ const AppTitle = styled.div`
   font-weight: semi-bold;
   color: rgba(255, 255, 255, 0.87);
 
-  svg {
-    width: 2.4rem;
-    height: 2.4rem;
-    margin-right: 1rem;
-    margin-left: 1rem;
-    fill: #59cbe8;
+  img {
+    height: 3.6rem;
+    width: auto;
+    margin: 0 1.2rem 0 1rem;
   }
 
   ${mediaQueries.isSmallScreen} {
     font-size: 2rem;
 
-    svg {
-      width: 2rem;
-      height: 2rem;
+    img {
+      height: 2.6rem;
     }
   }
 `;
@@ -42,8 +39,8 @@ export const Header: FC = () => {
   return (
     <HeaderWrapper>
       <AppTitle aria-label="Intercom ac24horas">
-        <HeadsetIcon />
-        Intercom ac24horas
+        <img src={logoAc24horas} alt="ac24horas" />
+        Intercom
       </AppTitle>
     </HeaderWrapper>
   );

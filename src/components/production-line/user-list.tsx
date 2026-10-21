@@ -98,7 +98,7 @@ const OnlineIndicator = styled.div`
   }
 
   &.whip {
-    background: rgb(89, 203, 232);
+    background: rgb(255, 92, 77);
   }
 `;
 
