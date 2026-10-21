@@ -43,7 +43,7 @@ describe("waitForIceGathering", () => {
     await expect(promise).resolves.toBeUndefined();
   });
 
-  it("rejects on timeout", async () => {
+  it("continues (resolves) on timeout instead of failing the call", async () => {
     const pc = new MockRTCPeerConnection();
     pc.iceGatheringState = "gathering";
 
@@ -54,7 +54,7 @@ describe("waitForIceGathering", () => {
 
     vi.advanceTimersByTime(3000);
 
-    await expect(promise).rejects.toThrow("Tempo esgotado ao conectar o áudio");
+    await expect(promise).resolves.toBeUndefined();
   });
 
   it("cleans up event listener after completion", async () => {
@@ -78,14 +78,21 @@ describe("waitForIceGathering", () => {
     const pc = new MockRTCPeerConnection();
     pc.iceGatheringState = "gathering";
 
-    const promise = waitForIceGathering(pc as unknown as RTCPeerConnection);
+    let settled = false;
+    const promise = waitForIceGathering(
+      pc as unknown as RTCPeerConnection
+    ).then(() => {
+      settled = true;
+    });
 
-    // At 4.9s, should not have rejected yet
+    // At 4.9s, still waiting
     vi.advanceTimersByTime(4900);
+    await Promise.resolve();
+    expect(settled).toBe(false);
 
-    // At 5s, should reject
+    // At 5s, gives up waiting and continues
     vi.advanceTimersByTime(100);
-
-    await expect(promise).rejects.toThrow("(ICE, 5 s)");
+    await promise;
+    expect(settled).toBe(true);
   });
 });

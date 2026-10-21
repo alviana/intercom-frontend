@@ -1,6 +1,8 @@
 /**
- * Promisified ICE gathering state change listener.
- * Extracted from use-rtc-connection.ts lines 208-230.
+ * Best-effort wait for ICE gathering to finish.
+ * The SDP answer is sent without our candidates (the SMB learns our address
+ * from incoming connectivity checks), so a slow gatherer — common on mobile
+ * networks — must not fail the call: on timeout we simply continue.
  */
 
 const DEFAULT_ICE_TIMEOUT_MS = 5000;
@@ -9,7 +11,7 @@ export const waitForIceGathering = (
   rtcPeerConnection: RTCPeerConnection,
   timeoutMs: number = DEFAULT_ICE_TIMEOUT_MS
 ): Promise<void> =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve) => {
     if (rtcPeerConnection.iceGatheringState === "complete") {
       resolve();
       return;
@@ -31,11 +33,7 @@ export const waitForIceGathering = (
 
     timeout = window.setTimeout(() => {
       rtcPeerConnection.removeEventListener("icegatheringstatechange", cb);
-      reject(
-        new Error(
-          `Tempo esgotado ao conectar o áudio (ICE, ${timeoutMs / 1000} s)`
-        )
-      );
+      resolve();
     }, timeoutMs);
 
     rtcPeerConnection.addEventListener("icegatheringstatechange", cb);

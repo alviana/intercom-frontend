@@ -27,33 +27,34 @@ export const useLinePolling = ({ callId, joinProductionOptions }: TProps) => {
           consecutiveFailureCount = 0;
           setLine(l);
         })
-        .catch(() => {
+        .catch((err) => {
           consecutiveFailureCount += 1;
           logger.red(
             `Error fetching production line ${productionId}/${lineId}. For call-id: ${callId}`
           );
-          if (consecutiveFailureCount >= 5) {
+          // The line was deleted: stop for good.
+          if (err?.status === 404) {
             dispatch({
               type: "ERROR",
               payload: {
                 callId,
-                error: new Error(
-                  `Não foi possível buscar a linha ${productionId}/${lineId}. ID da chamada: ${callId}`
-                ),
-              },
-            });
-          }
-          if (consecutiveFailureCount >= 10) {
-            dispatch({
-              type: "ERROR",
-              payload: {
-                callId,
-                error: new Error(
-                  "A atualização da linha foi interrompida após 10 falhas consecutivas."
-                ),
+                error: new Error("Esta linha não existe mais."),
               },
             });
             window.clearInterval(interval);
+            return;
+          }
+          // Network drops (e.g. switching 4G/Wi-Fi) are transient: warn once and keep polling.
+          if (consecutiveFailureCount === 5) {
+            dispatch({
+              type: "ERROR",
+              payload: {
+                callId,
+                error: new Error(
+                  "Sem conexão com o servidor. Tentando reconectar…"
+                ),
+              },
+            });
           }
         });
     }, 1000);

@@ -19,6 +19,11 @@ export const useHeartbeat = ({ sessionId }: TProps) => {
           failure401Count = 0; // resets after success
         })
         .catch((err) => {
+          // 410: the server no longer has this session (e.g. ended after a failed join).
+          if (err.status === 410) {
+            window.clearInterval(interval);
+            return;
+          }
           if (err.status === 401) {
             failure401Count += 1;
           }

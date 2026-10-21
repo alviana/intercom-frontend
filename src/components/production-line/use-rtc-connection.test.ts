@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { useRtcConnection } from "./use-rtc-connection.ts";
 import { GlobalStateContext } from "../../global-state/context-provider.tsx";
@@ -56,6 +56,7 @@ vi.mock("../../utils/logger.ts", () => ({
 vi.mock("../../api/api.ts", () => ({
   API: {
     patchAudioSession: vi.fn().mockResolvedValue(undefined),
+    deleteAudioSession: vi.fn().mockResolvedValue("ok"),
   },
 }));
 
@@ -181,5 +182,43 @@ describe("useRtcConnection", () => {
         }),
       })
     );
+  });
+
+  it("ends the server session when connection setup fails, so it doesn't linger as a duplicate participant", async () => {
+    const { API } = await import("../../api/api.ts");
+    // An answer without SDP makes connection setup fail.
+    vi.stubGlobal("RTCPeerConnection", function FailingAnswerPC() {
+      const pc = new MockRTCPeerConnection();
+      pc.createAnswer = vi.fn().mockResolvedValue({ sdp: "", type: "answer" });
+      return pc;
+    });
+    onTestFinished(() => {
+      vi.stubGlobal("RTCPeerConnection", MockRTCPeerConnection);
+    });
+
+    renderHook(
+      () =>
+        useRtcConnection({
+          ...defaultOptions,
+          sdpOffer: "v=0\r\n",
+          sessionId: "session-1",
+          inputAudioStream: "no-device",
+          joinProductionOptions: {
+            productionId: "1",
+            lineId: "line-1",
+            username: "user",
+            lineUsedForProgramOutput: false,
+            isProgramUser: false,
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() =>
+      expect(API.deleteAudioSession).toHaveBeenCalledWith({
+        sessionId: "session-1",
+      })
+    );
+    expect(API.patchAudioSession).not.toHaveBeenCalled();
   });
 });

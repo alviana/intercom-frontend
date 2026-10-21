@@ -176,6 +176,9 @@ const establishConnection = ({
   startConnecting().catch((e) => {
     rtcPeerConnection.close();
     logger.red(`Error starting connection: ${e}`);
+    // Without this the server keeps the half-joined session alive (heartbeats
+    // continue) and the user shows up as a duplicate participant.
+    API.deleteAudioSession({ sessionId }).catch(noop);
 
     dispatch({
       type: "ERROR",
