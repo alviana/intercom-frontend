@@ -172,22 +172,12 @@ public class OverlayService extends Service {
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setBackgroundColor(0xFF1E1E1E);
-        int padH = dp(10);
-        int padV = dp(8);
+        int padH = dp(6);
+        int padV = dp(6);
         header.setPadding(padH, padV, padH, padV);
 
-        TextView title = new TextView(this);
-        title.setText("Intercom");
-        title.setTextColor(0xFFFFFFFF);
-        title.setTextSize(15);
-        title.setTypeface(Typeface.DEFAULT_BOLD);
-        header.addView(title);
-
-        View spacer = new View(this);
-        LinearLayout.LayoutParams spacerLp = new LinearLayout.LayoutParams(0, 1, 1f);
-        spacer.setLayoutParams(spacerLp);
-        header.addView(spacer);
-
+        // No title: the widget is as wide as one line tile (~120dp) and a title pushed
+        // the header buttons out of view. Layout: [Abrir] ...spacer... [▲/▼].
         // Labelled button: the old generic phone icon wasn't recognised as "open the app".
         TextView openBtn = new TextView(this);
         openBtn.setText("Abrir");
@@ -195,10 +185,15 @@ public class OverlayService extends Service {
         openBtn.setTextSize(13);
         openBtn.setTypeface(Typeface.DEFAULT_BOLD);
         openBtn.setBackgroundColor(0xFF8B0000);
-        openBtn.setPadding(dp(12), dp(6), dp(12), dp(6));
+        openBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
         openBtn.setContentDescription("Abrir o app nas linhas");
         openBtn.setOnClickListener(v -> openMainActivity());
         header.addView(openBtn);
+
+        View spacer = new View(this);
+        LinearLayout.LayoutParams spacerLp = new LinearLayout.LayoutParams(0, 1, 1f);
+        spacer.setLayoutParams(spacerLp);
+        header.addView(spacer);
 
         ImageView collapseBtn = buildHeaderIcon(collapseIcon());
         collapseBtn.setContentDescription(expanded ? "Recolher" : "Expandir");
