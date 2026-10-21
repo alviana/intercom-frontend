@@ -7,6 +7,7 @@ import { NavigateToRootButton } from "../navigate-to-root-button/navigate-to-roo
 import { HeaderWrapper } from "../create-production/create-production-components";
 import { UserSettingsForm } from "../user-settings-form/user-settings-form";
 import { useAndroidSettingsFormAdapter } from "./android-settings-adapter";
+import { HeadsetButtonTest } from "./HeadsetButtonTest";
 
 export const MobileSettingsPage: FC<{
   isModal?: boolean;
@@ -40,7 +41,12 @@ export const MobileSettingsPage: FC<{
   ) : null;
 
   if (isModal) {
-    return form;
+    return (
+      <>
+        {form}
+        <HeadsetButtonTest />
+      </>
+    );
   }
 
   return (
@@ -50,6 +56,7 @@ export const MobileSettingsPage: FC<{
         <DisplayContainerHeader>Configurações</DisplayContainerHeader>
       </HeaderWrapper>
       {form}
+      <HeadsetButtonTest />
     </ResponsiveFormContainer>
   );
 };
