@@ -4,7 +4,8 @@ Para: dono do projeto, no Mac, com Apple ID gratuito (sem conta paga). Tempo: ~1
 
 ## 1. Preparar o Mac (uma vez)
 
-1. **Xcode 26** (App Store). É obrigatório o 26: o código usa uma opção de Bluetooth que só existe no SDK do iOS 26. Abra o Xcode uma vez e aceite a licença.
+1. **Xcode 26 ou mais novo** (o 27 da App Store serve). Versão mais antiga não compila: o código usa uma opção de Bluetooth que só existe a partir do SDK do iOS 26. Abra o Xcode uma vez, aceite a licença e deixe instalar os componentes do iOS que ele pedir.
+   - Se o Mac não aceitar o Xcode da App Store (macOS antigo), baixe o Xcode 26 em <https://developer.apple.com/download/all/> (entra com o Apple ID gratuito; arquivo `.xip`).
 2. Terminal:
    ```bash
    xcode-select --install          # Command Line Tools (se pedir)
