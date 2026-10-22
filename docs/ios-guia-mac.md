@@ -44,6 +44,16 @@ Abra sempre o **.xcworkspace** (não o .xcodeproj).
 
 **Se der erro de compilação:** copie a mensagem inteira (painel *Issue Navigator*, ícone de triângulo) com o nome do arquivo e a linha, e mande para mim. Eu corrijo, você faz `git pull` e roda ▶ de novo.
 
+## 4b. Atualizar quando eu mandar correção
+
+```bash
+cd intercom-frontend
+git pull
+VITE_BACKEND_URL=https://intercom.ac24horas.com/manager npm run ios:build
+```
+
+Depois **▶ (Run)** no Xcode. (`pod install` só se eu avisar.)
+
 ## 5. Antes de testar
 
 - No app: **Configurações → Saída de áudio → escolha o fone** (AirPods/Bluetooth ou com fio). O app começa no alto-falante; sem isso o botão do fone não chega. Confira na Central de Controle que o áudio está saindo pelo fone.

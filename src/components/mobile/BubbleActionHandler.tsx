@@ -11,7 +11,18 @@ import {
   resolveCallIdAtIndex,
 } from "../../mobile-overlay/overlay-call-state";
 import { setOverlaySyncListener } from "../../mobile-overlay/production-line-bridge";
+import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import { isAndroidApp, isIOSApp, isMobileApp } from "../../platform";
+
+// Widget mic taps go to the "Teste do botão do fone" log, next to the MIC on/off changes.
+const logWidgetMic = (value: boolean | undefined, result: string) =>
+  logHeadsetEvent({
+    at: Date.now(),
+    key: "WIDGET",
+    action: value === undefined ? "alternar" : value ? "ligar" : "desligar",
+    source: "widget",
+    result,
+  });
 
 const SYNC_DEBOUNCE_MS = 150;
 const DUPLICATE_ACTION_WINDOW_MS = 100;
@@ -68,7 +79,10 @@ export const BubbleActionHandler = () => {
   );
 
   const pushOverlayState = useCallback(
-    async (options?: { requireRunning?: boolean; allowDuringPtt?: boolean }) => {
+    async (options?: {
+      requireRunning?: boolean;
+      allowDuringPtt?: boolean;
+    }) => {
       try {
         if (!Capacitor.isPluginAvailable("OverlayBubble")) {
           return;
@@ -240,6 +254,7 @@ export const BubbleActionHandler = () => {
           action,
           index,
         });
+        if (action === "talk_latch") logWidgetMic(value, "ignorado: duplicado");
         return;
       }
       lastActionRef.current = { key: actionKey, at: now };
@@ -285,7 +300,9 @@ export const BubbleActionHandler = () => {
                 setOptimisticCallState(id, action, value);
               }
               const callState = getCallState(id);
-              const isListening = callState ? !callState.isOutputMuted : undefined;
+              const isListening = callState
+                ? !callState.isOutputMuted
+                : undefined;
               if (
                 typeof value !== "boolean" ||
                 isListening === undefined ||
@@ -312,6 +329,9 @@ export const BubbleActionHandler = () => {
             isTalking !== value
           ) {
             targetHandlers?.toggle_input_mute?.();
+            logWidgetMic(value, `alternou microfone: ${targetId}`);
+          } else {
+            logWidgetMic(value, "ignorado: já estava");
           }
         } else if (typeof index === "number") {
           await recordOverlayDebug("bubbleAction-js-stale-index", {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { ProductionsListContainer } from "./productions-list-container.tsx";
 import { useGlobalState } from "../../global-state/context-provider.tsx";
 import { UserSettings } from "../user-settings/user-settings.tsx";
@@ -23,6 +24,15 @@ export const LandingPage = () => {
 
   const showInlineWebSettings =
     !isMobileApp() && (showSettings || !isUserSettingsComplete(userSettings));
+
+  // The app has no inline form: without a name it would join as "Guest" and fail, so ask for it first.
+  const navigate = useNavigate();
+  const location = useLocation();
+  const needsName = isMobileApp() && settingsLoaded && !userSettings?.username;
+  useEffect(() => {
+    if (needsName)
+      navigate("/settings", { state: { backgroundLocation: location } });
+  }, [needsName, navigate, location]);
 
   return (
     <div>
