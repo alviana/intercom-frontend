@@ -7,6 +7,7 @@ public class BridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(AppControlPlugin())
         bridge?.registerPluginInstance(AudioRoutePlugin())
         bridge?.registerPluginInstance(CallServicePlugin())
+        bridge?.registerPluginInstance(HeadsetButtonPlugin())
         bridge?.registerPluginInstance(OverlayBubblePlugin())
     }
 }

@@ -1,8 +1,19 @@
 import Foundation
 import AVFoundation
 import CallKit
+import MediaPlayer
 import UserNotifications
 import Capacitor
+
+extension Notification.Name {
+    /// userInfo: ["key": String, "action": String, "source": String]
+    static let intercomHeadsetButton = Notification.Name("intercomHeadsetButton")
+}
+
+fileprivate func postHeadsetButton(key: String, source: String) {
+    let info: [String: Any] = ["key": key, "action": "down", "source": source]
+    NotificationCenter.default.post(name: .intercomHeadsetButton, object: nil, userInfo: info)
+}
 
 @objc(CallServicePlugin)
 public class CallServicePlugin: CAPPlugin {
@@ -12,8 +23,12 @@ public class CallServicePlugin: CAPPlugin {
 
     private var provider: CXProvider?
     private var callController: CXCallController?
+    // All state below is only touched on the main queue.
     private var activeCallUUID: UUID?
     private var running: Bool = false
+    private var desiredRunning: Bool = false
+    private var transactionInFlight: Bool = false
+    fileprivate var endingByApp: Bool = false
 
     public override func load() {
         CallServicePlugin.sharedRef = self
@@ -29,17 +44,23 @@ public class CallServicePlugin: CAPPlugin {
     }
 
     @objc func start(_ call: CAPPluginCall) {
-        startInternal()
-        call.resolve(["running": running])
+        DispatchQueue.main.async {
+            self.startInternal()
+            call.resolve(["running": self.running])
+        }
     }
 
     @objc func stop(_ call: CAPPluginCall) {
-        stopInternal()
-        call.resolve(["running": running])
+        DispatchQueue.main.async {
+            self.stopInternal()
+            call.resolve(["running": self.running])
+        }
     }
 
     @objc func isRunning(_ call: CAPPluginCall) {
-        call.resolve(["running": running])
+        DispatchQueue.main.async {
+            call.resolve(["running": self.running])
+        }
     }
 
     @objc func hasNotificationPermission(_ call: CAPPluginCall) {
@@ -62,45 +83,95 @@ public class CallServicePlugin: CAPPlugin {
         }
     }
 
-    // MARK: - Internal
+    // MARK: - Internal (main queue only)
 
     func startInternal() {
-        guard !running else { return }
-        let uuid = UUID()
-        let handle = CXHandle(type: .generic, value: "Intercom")
-        let action = CXStartCallAction(call: uuid, handle: handle)
-        let transaction = CXTransaction(action: action)
-        callController?.request(transaction) { error in
-            if let error = error {
-                CAPLog.print("CallServicePlugin: failed to start CallKit call: \(error)")
-                return
-            }
-            self.provider?.reportOutgoingCall(with: uuid, connectedAt: nil)
-            self.activeCallUUID = uuid
-            self.running = true
-        }
+        desiredRunning = true
+        reconcile()
     }
 
     func stopInternal() {
-        guard running, let uuid = activeCallUUID else {
+        desiredRunning = false
+        reconcile()
+    }
+
+    /// Issues at most one CallKit transaction at a time; each completion re-runs this,
+    /// so fast join/leave sequences converge to `desiredRunning`.
+    private func reconcile() {
+        if transactionInFlight { return }
+        if desiredRunning && !running {
+            requestStart()
+        } else if !desiredRunning && running {
+            requestEnd()
+        }
+    }
+
+    private func requestStart() {
+        guard let controller = callController else { return }
+        let uuid = UUID()
+        let handle = CXHandle(type: .generic, value: "Intercom ac24horas")
+        let action = CXStartCallAction(call: uuid, handle: handle)
+        let transaction = CXTransaction(action: action)
+        transactionInFlight = true
+        controller.request(transaction) { (error: Error?) in
+            DispatchQueue.main.async {
+                self.transactionInFlight = false
+                if let error = error {
+                    // No retry here (would loop); the next start() tries again.
+                    CAPLog.print("CallServicePlugin: failed to start CallKit call: \(error)")
+                    return
+                }
+                self.provider?.reportOutgoingCall(with: uuid, connectedAt: nil)
+                self.activeCallUUID = uuid
+                self.running = true
+                self.reconcile()
+            }
+        }
+    }
+
+    private func requestEnd() {
+        guard let controller = callController, let uuid = activeCallUUID else {
             running = false
             activeCallUUID = nil
             return
         }
         let action = CXEndCallAction(call: uuid)
         let transaction = CXTransaction(action: action)
-        callController?.request(transaction) { _ in
-            self.activeCallUUID = nil
-            self.running = false
+        endingByApp = true
+        transactionInFlight = true
+        controller.request(transaction) { (error: Error?) in
+            DispatchQueue.main.async {
+                self.transactionInFlight = false
+                if let error = error {
+                    // The delegate never saw this end, so the flag must not leak to the next
+                    // EarPods press. State is cleared anyway so reconcile cannot loop on it.
+                    self.endingByApp = false
+                    CAPLog.print("CallServicePlugin: failed to end CallKit call: \(error)")
+                }
+                self.activeCallUUID = nil
+                self.running = false
+                self.reconcile()
+            }
         }
+    }
+
+    fileprivate func didReset() {
+        // CallKit dropped every call; do not restart until JS calls start() again.
+        desiredRunning = false
+        running = false
+        activeCallUUID = nil
+        transactionInFlight = false
+        endingByApp = false
     }
 }
 
 private class CallServiceDelegate: NSObject, CXProviderDelegate {
     static let shared = CallServiceDelegate()
 
+    // Delegate queue is nil, so every callback below arrives on the main queue.
+
     func providerDidReset(_ provider: CXProvider) {
-        CallServicePlugin.shared?.stopInternal()
+        CallServicePlugin.shared?.didReset()
     }
 
     func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
@@ -109,6 +180,21 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     }
 
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
+        if let plugin = CallServicePlugin.shared, plugin.endingByApp {
+            plugin.endingByApp = false
+            action.fulfill()
+            return
+        }
+        // Not requested by the app: an EarPods centre press during a CallKit call is a
+        // hang-up. Treat it as a headset tap and keep the call; leaving is done with
+        // "Sair da linha".
+        postHeadsetButton(key: "CALLKIT_END", source: "callkit")
+        action.fail()
+    }
+
+    func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
+        // Mic state lives in JS; the audio session is left untouched.
+        postHeadsetButton(key: "CALLKIT_MUTE", source: "callkit")
         action.fulfill()
     }
 
@@ -118,5 +204,44 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     }
 
     func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+    }
+}
+
+@objc(HeadsetButtonPlugin)
+public class HeadsetButtonPlugin: CAPPlugin {
+
+    private var commandTargets: [(MPRemoteCommand, Any)] = []
+
+    public override func load() {
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(headsetButton(_:)),
+            name: .intercomHeadsetButton, object: nil
+        )
+
+        let center = MPRemoteCommandCenter.shared()
+        addCommand(center.togglePlayPauseCommand, key: "MEDIA_PLAY_PAUSE")
+        addCommand(center.playCommand, key: "MEDIA_PLAY")
+        addCommand(center.pauseCommand, key: "MEDIA_PAUSE")
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        for (command, target) in commandTargets {
+            command.removeTarget(target)
+        }
+    }
+
+    private func addCommand(_ command: MPRemoteCommand, key: String) {
+        command.isEnabled = true
+        let target = command.addTarget { (_: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus in
+            postHeadsetButton(key: key, source: "remote_command")
+            return .success
+        }
+        commandTargets.append((command, target))
+    }
+
+    @objc private func headsetButton(_ note: Notification) {
+        guard let info = note.userInfo as? [String: Any] else { return }
+        notifyListeners("headsetButton", data: info)
     }
 }

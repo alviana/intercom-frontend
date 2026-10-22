@@ -9,3 +9,5 @@ CAP_PLUGIN(CallServicePlugin, "CallService",
            CAP_PLUGIN_METHOD(hasRecordAudioPermission, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(requestNotificationPermission, CAPPluginReturnPromise);
 )
+
+CAP_PLUGIN(HeadsetButtonPlugin, "HeadsetButton", )

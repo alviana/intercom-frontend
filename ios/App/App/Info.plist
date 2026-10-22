@@ -59,11 +59,11 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Intercom needs the microphone to enable two-way audio on calls.</string>
+	<string>O Intercom ac24horas usa o microfone para você falar nas linhas.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Intercom uses Bluetooth to route call audio to paired headsets.</string>
+	<string>O Intercom ac24horas usa o Bluetooth para levar o áudio ao seu fone.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Intercom uses Bluetooth to route call audio to paired headsets.</string>
+	<string>O Intercom ac24horas usa o Bluetooth para levar o áudio ao seu fone.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Intercom needs local network access to reach a development manager backend on your LAN.</string>
 	<key>UIBackgroundModes</key>
