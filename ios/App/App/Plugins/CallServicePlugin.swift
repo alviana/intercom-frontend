@@ -29,6 +29,9 @@ public class CallServicePlugin: CAPPlugin {
     private var desiredRunning: Bool = false
     private var transactionInFlight: Bool = false
     fileprivate var endingByApp: Bool = false
+    // Bumped by didReset(); completions from an older epoch are ignored.
+    private var epoch: Int = 0
+    private let callObserver = CXCallObserver()
 
     public override func load() {
         CallServicePlugin.sharedRef = self
@@ -113,8 +116,10 @@ public class CallServicePlugin: CAPPlugin {
         let action = CXStartCallAction(call: uuid, handle: handle)
         let transaction = CXTransaction(action: action)
         transactionInFlight = true
+        let e = epoch
         controller.request(transaction) { (error: Error?) in
             DispatchQueue.main.async {
+                guard e == self.epoch else { return }
                 self.transactionInFlight = false
                 if let error = error {
                     // No retry here (would loop); the next start() tries again.
@@ -139,8 +144,10 @@ public class CallServicePlugin: CAPPlugin {
         let transaction = CXTransaction(action: action)
         endingByApp = true
         transactionInFlight = true
+        let e = epoch
         controller.request(transaction) { (error: Error?) in
             DispatchQueue.main.async {
+                guard e == self.epoch else { return }
                 self.transactionInFlight = false
                 if let error = error {
                     // The delegate never saw this end, so the flag must not leak to the next
@@ -155,8 +162,16 @@ public class CallServicePlugin: CAPPlugin {
         }
     }
 
+    /// True when CallKit knows a live call other than `uuid` (e.g. an incoming phone call).
+    fileprivate func otherCallPresent(besides uuid: UUID) -> Bool {
+        return callObserver.calls.contains { (c: CXCall) -> Bool in
+            c.uuid != uuid && !c.hasEnded
+        }
+    }
+
     fileprivate func didReset() {
-        // CallKit dropped every call; do not restart until JS calls start() again.
+        // CallKit dropped our call; do not restart until JS calls start() again.
+        epoch += 1
         desiredRunning = false
         running = false
         activeCallUUID = nil
@@ -182,6 +197,12 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
         if let plugin = CallServicePlugin.shared, plugin.endingByApp {
             plugin.endingByApp = false
+            action.fulfill()
+            return
+        }
+        if let plugin = CallServicePlugin.shared, plugin.otherCallPresent(besides: action.callUUID) {
+            // "End & Accept" of a phone call: failing this would block the phone call.
+            plugin.didReset()
             action.fulfill()
             return
         }
