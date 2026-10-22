@@ -94,11 +94,11 @@ describe("CallServiceManager iOS CallKit call", () => {
     expect(CallService.stop).toHaveBeenCalledTimes(1);
   });
 
-  it("does nothing with no calls on mount", () => {
+  it("stops a leftover call when mounted with no lines (e.g. after a reload)", () => {
     withCalls({});
     render(<CallServiceManager />);
     expect(CallService.start).not.toHaveBeenCalled();
-    expect(CallService.stop).not.toHaveBeenCalled();
+    expect(CallService.stop).toHaveBeenCalledTimes(1);
   });
 
   it("stops the call when unmounted while in a line", () => {

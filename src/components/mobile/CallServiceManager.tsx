@@ -40,16 +40,24 @@ export const CallServiceManager = () => {
     CallService.start().catch(() => {});
   }, [inCall]);
 
-  // iOS: hold a CallKit call while in a line (keeps audio/mic when locked);
-  // the cleanup ends it on leaving the last line and on unmount.
+  // iOS: hold a CallKit call while in a line (keeps audio/mic when locked).
+  // With no lines it sends stop, also on mount: after a WebView reload native may
+  // still hold a call that nothing else would end.
   useEffect(() => {
-    if (!inCall || !isIOSApp() || !Capacitor.isPluginAvailable("CallService"))
+    if (!isIOSApp() || !Capacitor.isPluginAvailable("CallService")) return;
+    if (!inCall) {
+      CallService.stop().catch(() => {});
       return;
+    }
     CallService.start().catch(() => {});
+  }, [inCall]);
+
+  useEffect(() => {
+    if (!isIOSApp() || !Capacitor.isPluginAvailable("CallService")) return;
     return () => {
       CallService.stop().catch(() => {});
     };
-  }, [inCall]);
+  }, []);
 
   // With the screen off the WebView's timers are throttled and the JS heartbeat
   // stops reaching the server (user drops out of the participant list while

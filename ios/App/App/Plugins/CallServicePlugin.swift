@@ -16,7 +16,7 @@ fileprivate func postHeadsetButton(key: String, source: String) {
 }
 
 @objc(CallServicePlugin)
-public class CallServicePlugin: CAPPlugin {
+public class CallServicePlugin: CAPPlugin, CXCallObserverDelegate {
 
     fileprivate static weak var sharedRef: CallServicePlugin?
     public static var shared: CallServicePlugin? { sharedRef }
@@ -29,9 +29,9 @@ public class CallServicePlugin: CAPPlugin {
     private var desiredRunning: Bool = false
     private var transactionInFlight: Bool = false
     fileprivate var endingByApp: Bool = false
-    // Bumped by didReset(); completions from an older epoch are ignored.
+    // Bumped by releaseCall(); completions from an older epoch are ignored.
     private var epoch: Int = 0
-    private let callObserver = CXCallObserver()
+    private let callWatcher = CXCallObserver()
 
     public override func load() {
         CallServicePlugin.sharedRef = self
@@ -41,9 +41,19 @@ public class CallServicePlugin: CAPPlugin {
         config.maximumCallsPerCallGroup = 1
         config.maximumCallGroups = 1
         config.supportedHandleTypes = [.generic]
+        config.includesCallsInRecents = false
         provider = CXProvider(configuration: config)
         provider?.setDelegate(CallServiceDelegate.shared, queue: nil)
         callController = CXCallController()
+        callWatcher.setDelegate(self, queue: nil)
+    }
+
+    // Main queue (delegate queue nil). When a phone call goes away, take our call back
+    // or retry a start that failed during it; does nothing while one is still live.
+    public func callObserver(_ callObserver: CXCallObserver, callChanged call: CXCall) {
+        if transactionInFlight { return }
+        if otherCallPresent(besides: activeCallUUID) { return }
+        reconcile()
     }
 
     @objc func start(_ call: CAPPluginCall) {
@@ -163,16 +173,36 @@ public class CallServicePlugin: CAPPlugin {
     }
 
     /// True when CallKit knows a live call other than `uuid` (e.g. an incoming phone call).
-    fileprivate func otherCallPresent(besides uuid: UUID) -> Bool {
-        return callObserver.calls.contains { (c: CXCall) -> Bool in
+    fileprivate func otherCallPresent(besides uuid: UUID?) -> Bool {
+        return callWatcher.calls.contains { (c: CXCall) -> Bool in
             c.uuid != uuid && !c.hasEnded
         }
     }
 
+    /// True when CallKit asks to end a call we no longer want, or one that is not ours.
+    fileprivate func isUnwantedCall(_ uuid: UUID) -> Bool {
+        if !desiredRunning { return true }
+        // activeCallUUID is nil while our own start is in flight; that call is not stray.
+        if let active = activeCallUUID, active != uuid { return true }
+        return false
+    }
+
+    fileprivate func forgetCall(_ uuid: UUID) {
+        if uuid == activeCallUUID {
+            running = false
+            activeCallUUID = nil
+        }
+    }
+
     fileprivate func didReset() {
-        // CallKit dropped our call; do not restart until JS calls start() again.
-        epoch += 1
+        // CallKit dropped every call; do not restart until JS calls start() again.
         desiredRunning = false
+        releaseCall()
+    }
+
+    /// Our call is gone without the app asking; desiredRunning is kept so reconcile can bring it back.
+    fileprivate func releaseCall() {
+        epoch += 1
         running = false
         activeCallUUID = nil
         transactionInFlight = false
@@ -195,14 +225,25 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     }
 
     func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
-        if let plugin = CallServicePlugin.shared, plugin.endingByApp {
+        guard let plugin = CallServicePlugin.shared else {
+            action.fulfill()
+            return
+        }
+        if plugin.endingByApp {
             plugin.endingByApp = false
             action.fulfill()
             return
         }
-        if let plugin = CallServicePlugin.shared, plugin.otherCallPresent(besides: action.callUUID) {
+        if plugin.isUnwantedCall(action.callUUID) {
+            // e.g. the WebView reloaded and JS never sent stop(): let the user hang it up.
+            plugin.forgetCall(action.callUUID)
+            action.fulfill()
+            return
+        }
+        if plugin.otherCallPresent(besides: action.callUUID) {
             // "End & Accept" of a phone call: failing this would block the phone call.
-            plugin.didReset()
+            // Our call comes back in callObserver(_:callChanged:) when the phone call ends.
+            plugin.releaseCall()
             action.fulfill()
             return
         }
