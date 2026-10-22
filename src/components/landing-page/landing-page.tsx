@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { ProductionsListContainer } from "./productions-list-container.tsx";
 import { useGlobalState } from "../../global-state/context-provider.tsx";
@@ -29,9 +29,17 @@ export const LandingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const needsName = isMobileApp() && settingsLoaded && !userSettings?.username;
+  // Once per empty-name episode: under the settings modal the router hands out a new
+  // location object every render, so depending on it re-navigated in a loop.
+  const askedForNameRef = useRef(false);
   useEffect(() => {
-    if (needsName)
-      navigate("/settings", { state: { backgroundLocation: location } });
+    if (!needsName) {
+      askedForNameRef.current = false;
+      return;
+    }
+    if (askedForNameRef.current) return;
+    askedForNameRef.current = true;
+    navigate("/settings", { state: { backgroundLocation: location } });
   }, [needsName, navigate, location]);
 
   return (

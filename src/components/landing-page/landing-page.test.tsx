@@ -47,6 +47,14 @@ describe("LandingPage first run on the app", () => {
     });
   });
 
+  it("asks only once while the name is still empty (no redirect loop)", () => {
+    withUsername("");
+    const { rerender } = render(<LandingPage />);
+    rerender(<LandingPage />);
+    rerender(<LandingPage />);
+    expect(navigate).toHaveBeenCalledTimes(1);
+  });
+
   it("does not open the settings when a name is saved", () => {
     withUsername("Ale");
     render(<LandingPage />);
