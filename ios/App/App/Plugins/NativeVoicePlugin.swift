@@ -8,14 +8,47 @@ import WebRTC
 @objc(NativeVoicePlugin)
 public class NativeVoicePlugin: CAPPlugin {
 
+    /// For AppDelegate.applicationWillTerminate (the plugin instance lives as long as the bridge).
+    private static weak var current: NativeVoicePlugin?
+
     private var calls: [String: NativeVoiceCall] = [:]
+    /// callIds in join order, so listCalls restores lines in the order they were opened.
+    private var callOrder: [String] = []
     /// Last line whose mic was opened: the headset toggle's target.
     private(set) var lastMicCallId: String?
     private var cuePlayer: AVAudioPlayer?
 
     public override func load() {
+        NativeVoicePlugin.current = self
         // AudioRoutePlugin starts on the speaker route.
         NativeVoicePlugin.configureWebRTCAudio(speaker: true)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(audioInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance()
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    /// Swiping the app away kills it without running JS: DELETE every native session
+    /// synchronously (2 s at most in total). Native knows the current session ids even after a
+    /// reconnect that happened while JS was asleep. Main thread (applicationWillTerminate).
+    static func leaveAllOnTerminate() {
+        guard let plugin = current else { return }
+        let group = DispatchGroup()
+        for callId in plugin.callOrder {
+            guard let voiceCall = plugin.calls[callId] else { continue }
+            for request in voiceCall.terminateRequests(timeout: 2) {
+                group.enter()
+                URLSession.shared.dataTask(with: request) { (_: Data?, _: URLResponse?, _: Error?) in
+                    group.leave()
+                }.resume()
+            }
+        }
+        _ = group.wait(timeout: .now() + 2)
     }
 
     /// WebRTC (re)configures the shared AVAudioSession when audio starts; make it apply the
@@ -65,6 +98,7 @@ public class NativeVoicePlugin: CAPPlugin {
                 self?.playCue("start-connection-451")
             }
             self.calls[callId] = voiceCall
+            self.callOrder.append(callId)
             voiceCall.start()
             call.resolve(voiceCall.info())
         }
@@ -77,6 +111,7 @@ public class NativeVoicePlugin: CAPPlugin {
                 call.resolve()
                 return
             }
+            self.callOrder.removeAll { (id: String) -> Bool in id == callId }
             if self.lastMicCallId == callId {
                 self.lastMicCallId = nil
             }
@@ -148,8 +183,8 @@ public class NativeVoicePlugin: CAPPlugin {
 
     @objc func listCalls(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            let list: [[String: Any]] = self.calls.values.map { (voiceCall: NativeVoiceCall) -> [String: Any] in
-                return voiceCall.info()
+            let list: [[String: Any]] = self.callOrder.compactMap { (id: String) -> [String: Any]? in
+                return self.calls[id]?.info()
             }
             call.resolve(["calls": list])
         }
@@ -163,6 +198,40 @@ public class NativeVoicePlugin: CAPPlugin {
     @objc func requestMicPermission(_ call: CAPPluginCall) {
         AVAudioSession.sharedInstance().requestRecordPermission { (granted: Bool) in
             call.resolve(["granted": granted])
+        }
+    }
+
+    // MARK: - Interruptions (phone call, Siri, alarm, another app's audio)
+
+    /// The user stays in every line during the interruption (heartbeats go on). When it ends,
+    /// audio resumes with every mic closed, so nobody talks into the line by surprise.
+    @objc private func audioInterruption(_ note: Notification) {
+        guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+        // Posted on an arbitrary thread; call state is main-only.
+        DispatchQueue.main.async {
+            self.handleInterruption(type)
+        }
+    }
+
+    private func handleInterruption(_ type: AVAudioSession.InterruptionType) {
+        if calls.isEmpty { return }
+        switch type {
+        case .began:
+            emitDiag("INTERRUPÇÃO", "áudio interrompido", "linhas mantidas")
+        case .ended:
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch {
+                emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
+            }
+            for callId in callOrder {
+                calls[callId]?.setMicEnabled(false, source: "interrupção")
+            }
+            emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
+            playCue("start-connection-451")
+        @unknown default:
+            break
         }
     }
 

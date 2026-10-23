@@ -38,6 +38,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Swiped away from the app switcher: leave the lines so no ghost user stays behind.
+        NativeVoicePlugin.leaveAllOnTerminate()
         CallServicePlugin.shared?.leaveSessionsOnTerminate()
     }
 

@@ -14,6 +14,11 @@ final class NativeVoiceCall: NSObject {
     private static let activityThreshold: Double = 0.02
     private static let iceGatherTimeout: TimeInterval = 5.0
     private static let statsInterval: TimeInterval = 0.1
+    private static let heartbeatInterval: TimeInterval = 10.0
+    private static let disconnectGrace: TimeInterval = 5.0
+    /// Wait before reconnect attempt n (1-based); after the list, every `steadyBackoff`.
+    private static let backoff: [TimeInterval] = [2.0, 4.0, 8.0]
+    private static let steadyBackoff: TimeInterval = 15.0
 
     let callId: String
     let meta: String
@@ -48,6 +53,16 @@ final class NativeVoiceCall: NSObject {
     private var gatherTimeout: DispatchWorkItem?
     private var pendingAnswerSdp: String?
     private var closed: Bool = false
+    private var heartbeatTimer: Timer?
+    /// PC `disconnected`: reconnect if it is not back within `disconnectGrace`.
+    private var disconnectWork: DispatchWorkItem?
+    /// The next reconnect attempt (backoff); cancelled by teardown, so `leave` stops retries.
+    private var retryWork: DispatchWorkItem?
+    /// Reconnect attempts since the line was last connected.
+    private var attempt: Int = 0
+    /// Dropped sessions whose DELETE got no answer (offline): DELETEd again before the next
+    /// POST, so the line never shows the user twice once the network is back.
+    private var staleSessionIds: [String] = []
 
     init(callId: String, baseUrl: String, apiKey: String, productionId: String,
          lineId: String, username: String, canTalk: Bool, meta: String) {
@@ -81,7 +96,8 @@ final class NativeVoiceCall: NSObject {
         openSession()
     }
 
-    /// Leaves for good: tears the connection down and DELETEs the session (best effort).
+    /// Leaves for good: tears the connection down (cancelling any pending reconnect) and
+    /// DELETEs the session (best effort).
     func close() {
         if closed { return }
         closed = true
@@ -89,6 +105,7 @@ final class NativeVoiceCall: NSObject {
         if let id = sessionId {
             deleteSession(id)
         }
+        flushStaleSessions()
         setState("closed")
     }
 
@@ -108,11 +125,21 @@ final class NativeVoiceCall: NSObject {
                 if let id = newId { self.deleteSession(id) }
                 return
             }
-            guard (200..<300).contains(status), let id = newId, let sdp = json?["sdp"] as? String else {
-                self.fail("POST session: \(NativeVoiceCall.describe(status: status, error: error))")
+            let reason: String = "POST session: \(NativeVoiceCall.describe(status: status, error: error))"
+            guard (200..<300).contains(status), let id = newId else {
+                // 4xx: the line or production is gone (or the key is refused); retrying cannot help.
+                if (400..<500).contains(status) {
+                    self.fail(reason)
+                } else {
+                    self.reconnect(reason)
+                }
                 return
             }
             self.sessionId = id
+            guard let sdp = json?["sdp"] as? String else {
+                self.reconnect("POST session: resposta sem SDP")
+                return
+            }
             self.emitState()
             self.connect(offer: sdp)
         }
@@ -129,7 +156,7 @@ final class NativeVoiceCall: NSObject {
         config.sdpSemantics = .unifiedPlan
         let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
         guard let pc = NativeVoiceCall.factory.peerConnection(with: config, constraints: constraints, delegate: self) else {
-            fail("não foi possível criar a conexão")
+            reconnect("não foi possível criar a conexão")
             return
         }
         peerConnection = pc
@@ -153,7 +180,7 @@ final class NativeVoiceCall: NSObject {
             DispatchQueue.main.async {
                 guard self.isCurrent(pc) else { return }
                 if let error = error {
-                    self.fail("oferta do servidor: \(error.localizedDescription)")
+                    self.reconnect("oferta do servidor: \(error.localizedDescription)")
                     return
                 }
                 self.applyOutput()
@@ -167,14 +194,14 @@ final class NativeVoiceCall: NSObject {
             DispatchQueue.main.async {
                 guard self.isCurrent(pc) else { return }
                 guard let answer = sdp else {
-                    self.fail("resposta SDP: \(error?.localizedDescription ?? "vazia")")
+                    self.reconnect("resposta SDP: \(error?.localizedDescription ?? "vazia")")
                     return
                 }
                 pc.setLocalDescription(answer) { (error: Error?) in
                     DispatchQueue.main.async {
                         guard self.isCurrent(pc) else { return }
                         if let error = error {
-                            self.fail("descrição local: \(error.localizedDescription)")
+                            self.reconnect("descrição local: \(error.localizedDescription)")
                             return
                         }
                         self.waitForIceGathering(pc, answerSdp: answer.sdp)
@@ -213,7 +240,7 @@ final class NativeVoiceCall: NSObject {
         request("PATCH", "session/" + NativeVoiceCall.encode(id), body: ["sdpAnswer": sdp]) { (status: Int, _: Data?, error: Error?) in
             guard let pc = pc, self.isCurrent(pc) else { return }
             if !(200..<300).contains(status) {
-                self.fail("PATCH session: \(NativeVoiceCall.describe(status: status, error: error))")
+                self.reconnect("PATCH session: \(NativeVoiceCall.describe(status: status, error: error))")
             }
         }
     }
@@ -223,31 +250,76 @@ final class NativeVoiceCall: NSObject {
     }
 
     private func handlePeerState(_ newState: RTCPeerConnectionState) {
-        // Reconnect (disconnected > 5 s, heartbeat 410) builds on this switch.
         switch newState {
         case .connected:
+            disconnectWork?.cancel()
+            disconnectWork = nil
             setState("connected")
+        case .disconnected:
+            // Often recovers by itself (e.g. Wi-Fi to cellular); reconnect only if it lasts.
+            if disconnectWork != nil { return }
+            guard let pc = peerConnection else { return }
+            let work = DispatchWorkItem { [weak self] in
+                guard let self = self, self.isCurrent(pc) else { return }
+                self.disconnectWork = nil
+                self.reconnect("conexão de áudio sem resposta por mais de 5 s")
+            }
+            disconnectWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + NativeVoiceCall.disconnectGrace, execute: work)
         case .failed:
-            fail("conexão de áudio caiu")
+            reconnect("conexão de áudio caiu")
         default:
             break
         }
     }
 
-    /// Ends the attempt: drops the connection and the server session, reports "failed".
+    /// Terminal (POST 4xx only): drops the connection and the server session, reports "failed".
     private func fail(_ reason: String) {
         if closed { return }
         diag?("LINHA", "conectar linha \(lineId)", "falhou: \(reason)")
+        dropSession()
+        setState("failed")
+    }
+
+    /// Drops the attempt (best-effort DELETE of its session) and schedules the next POST
+    /// after 2 s, 4 s, 8 s, then every 15 s, until connected, `fail` or `close`.
+    /// The mic keeps the user's choice: the next local track is created with `micEnabled`.
+    private func reconnect(_ reason: String) {
+        if closed { return }
+        diag?("LINHA", "conectar linha \(lineId)", "falhou: \(reason)")
+        dropSession()
+        attempt += 1
+        let delay: TimeInterval = attempt <= NativeVoiceCall.backoff.count
+            ? NativeVoiceCall.backoff[attempt - 1]
+            : NativeVoiceCall.steadyBackoff
+        setState("reconnecting")
+        diag?("RECONEXÃO", "tentativa \(attempt)", "aguardando \(Int(delay)) s")
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self, !self.closed else { return }
+            self.retryWork = nil
+            self.flushStaleSessions()
+            self.openSession()
+        }
+        retryWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    private func dropSession() {
         teardownPeer()
         if let id = sessionId {
             deleteSession(id)
             sessionId = nil
         }
-        setState("failed")
     }
 
+    /// Stops everything tied to the current attempt: timers, pending retry, peer connection.
     private func teardownPeer() {
         stopStats()
+        stopHeartbeat()
+        disconnectWork?.cancel()
+        disconnectWork = nil
+        retryWork?.cancel()
+        retryWork = nil
         gatherTimeout?.cancel()
         gatherTimeout = nil
         pendingAnswerSdp = nil
@@ -265,12 +337,18 @@ final class NativeVoiceCall: NSObject {
 
     private func setState(_ newState: String) {
         if newState == state { return }
-        let wasConnected = state == "connected"
+        let previous: String = state
         state = newState
         emitState()
-        if newState == "connected" && !wasConnected {
-            diag?("LINHA", "conectar linha \(lineId)", "conectado")
+        if newState == "connected" {
+            if previous == "reconnecting" {
+                diag?("RECONEXÃO", "linha \(lineId)", "reconectada após \(attempt) tentativa(s)")
+            } else {
+                diag?("LINHA", "conectar linha \(lineId)", "conectado")
+            }
+            attempt = 0
             startStats()
+            startHeartbeat()
             onConnected?()
         }
     }
@@ -385,31 +463,69 @@ final class NativeVoiceCall: NSObject {
         return false
     }
 
+    // MARK: - Heartbeat (presence; 410 = the server dropped the session)
+
+    private func startHeartbeat() {
+        stopHeartbeat()
+        let timer = Timer(timeInterval: NativeVoiceCall.heartbeatInterval, repeats: true) { [weak self] (_: Timer) in
+            self?.sendHeartbeat()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        heartbeatTimer = timer
+    }
+
+    private func stopHeartbeat() {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
+    }
+
+    private func sendHeartbeat() {
+        guard let id = sessionId else { return }
+        request("GET", "heartbeat/" + NativeVoiceCall.encode(id), body: nil) { (status: Int, _: Data?, _: Error?) in
+            // Drop answers for a session that was already replaced or left.
+            guard !self.closed, self.sessionId == id else { return }
+            if status == 410 {
+                self.reconnect("servidor encerrou a sessão (heartbeat 410)")
+            }
+        }
+    }
+
     // MARK: - HTTP
 
+    /// DELETEs of the current and stale sessions with a short timeout, for the synchronous
+    /// leave on app terminate.
+    func terminateRequests(timeout: TimeInterval) -> [URLRequest] {
+        var ids: [String] = staleSessionIds
+        if let id = sessionId { ids.append(id) }
+        return ids.compactMap { (id: String) -> URLRequest? in
+            return makeRequest("DELETE", "session/" + NativeVoiceCall.encode(id), body: nil, timeout: timeout)
+        }
+    }
+
     private func deleteSession(_ id: String) {
-        // 500 when the session is already gone is harmless.
-        request("DELETE", "session/" + NativeVoiceCall.encode(id), body: nil) { (_: Int, _: Data?, _: Error?) in }
+        // 500 when the session is already gone is harmless; no answer at all = try again later.
+        request("DELETE", "session/" + NativeVoiceCall.encode(id), body: nil) { (status: Int, _: Data?, _: Error?) in
+            if status == 0 && !self.closed {
+                self.staleSessionIds.append(id)
+            }
+        }
+    }
+
+    private func flushStaleSessions() {
+        let stale: [String] = staleSessionIds
+        staleSessionIds = []
+        for id in stale {
+            deleteSession(id)
+        }
     }
 
     /// Completion runs on the main queue with the HTTP status (0 when there was no response).
     private func request(_ method: String, _ path: String, body: [String: Any]?,
                          completion: @escaping (Int, Data?, Error?) -> Void) {
-        var base = baseUrl
-        if !base.hasSuffix("/") { base += "/" }
-        guard let url = URL(string: base + path) else {
+        guard let req = makeRequest(method, path, body: body, timeout: 15) else {
             diag?("SESSAO", "\(method) \(path)", "falhou: URL inválida")
             completion(0, nil, nil)
             return
-        }
-        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
-        req.httpMethod = method
-        if !apiKey.isEmpty {
-            req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        }
-        if let body = body {
-            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            req.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
         }
         let lineId = self.lineId
         URLSession.shared.dataTask(with: req) { (data: Data?, response: URLResponse?, error: Error?) in
@@ -422,6 +538,23 @@ final class NativeVoiceCall: NSObject {
                 completion(status, data, error)
             }
         }.resume()
+    }
+
+    private func makeRequest(_ method: String, _ path: String, body: [String: Any]?,
+                             timeout: TimeInterval) -> URLRequest? {
+        var base = baseUrl
+        if !base.hasSuffix("/") { base += "/" }
+        guard let url = URL(string: base + path) else { return nil }
+        var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: timeout)
+        req.httpMethod = method
+        if !apiKey.isEmpty {
+            req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        if let body = body {
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+        }
+        return req
     }
 
     private static func describe(status: Int, error: Error?) -> String {
