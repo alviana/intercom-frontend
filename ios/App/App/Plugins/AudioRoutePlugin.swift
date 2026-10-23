@@ -10,11 +10,31 @@ public class AudioRoutePlugin: CAPPlugin {
     /// Read-only use: setters go through `rtc` (see applyRoute).
     private let session = AVAudioSession.sharedInstance()
     private let rtc = RTCAudioSession.sharedInstance()
+    /// For NativeVoicePlugin.holdSession (the plugin instance lives as long as the bridge).
+    private static weak var current: AudioRoutePlugin?
+    // Route and tone state: main queue only.
     private var toneNode: AVAudioPlayerNode?
     private var toneEngine: AVAudioEngine?
+    /// Ends the test tone and gives back its session activation.
+    private var toneEnd: DispatchWorkItem?
+    private var toneHoldsSession: Bool = false
     private var preferredRoute: String = "speaker"
 
+    /// Main queue, right after NativeVoicePlugin activated the session for the first line:
+    /// the preferred input and the output override only take on an active session.
+    static func reapplyRoute() {
+        guard let plugin = current else { return }
+        do {
+            try plugin.applyRoute(plugin.preferredRoute)
+        } catch {
+            CAPLog.print("AudioRoutePlugin: failed to re-apply route: \(error)")
+        }
+    }
+
     public override func load() {
+        AudioRoutePlugin.current = self
+        // Category only: the session is activated when the first line opens (NativeVoicePlugin),
+        // so launching the app never stops the user's music.
         do {
             try applyRoute(preferredRoute)
         } catch {
@@ -56,39 +76,55 @@ public class AudioRoutePlugin: CAPPlugin {
             return
         }
 
-        let previous = preferredRoute
-        preferredRoute = route
-        do {
-            try applyRoute(route)
-            call.resolve(["active": activeRouteId() as Any])
-            emitRoutes()
-        } catch {
-            preferredRoute = previous
-            // The category may already have changed before the failure: put the old route back.
-            try? applyRoute(previous)
-            call.reject("Failed to set route: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            let previous = self.preferredRoute
+            self.preferredRoute = route
+            do {
+                try self.applyRoute(route)
+                call.resolve(["active": self.activeRouteId() as Any])
+                self.emitRoutes()
+            } catch {
+                self.preferredRoute = previous
+                // The category may already have changed before the failure: put the old route back.
+                try? self.applyRoute(previous)
+                call.reject("Failed to set route: \(error.localizedDescription)")
+            }
         }
     }
 
     @objc func playTestTone(_ call: CAPPluginCall) {
-        let durationMs = call.getInt("durationMs") ?? 5000
-        let frequencyHz = call.getInt("frequencyHz") ?? 440
-        let route = call.getString("route") ?? preferredRoute
-        stopToneInternal()
-        do {
-            try applyRoute(route)
-            preferredRoute = route
-            startTone(durationMs: durationMs, frequencyHz: frequencyHz)
-        } catch {
-            call.reject("Failed to activate audio session: \(error.localizedDescription)")
-            return
+        let durationMs: Int = call.getInt("durationMs") ?? 5000
+        let frequencyHz: Int = call.getInt("frequencyHz") ?? 440
+        let requested: String? = call.getString("route")
+        DispatchQueue.main.async {
+            let route: String = requested ?? self.preferredRoute
+            self.stopToneInternal()
+            do {
+                // One activation for the tone, given back by stopToneInternal.
+                try self.setSessionActive(true)
+                self.toneHoldsSession = true
+                try self.applyRoute(route)
+                self.preferredRoute = route
+                self.startTone(durationMs: durationMs, frequencyHz: frequencyHz)
+            } catch {
+                self.stopToneInternal()
+                call.reject("Failed to activate audio session: \(error.localizedDescription)")
+                return
+            }
+            let end = DispatchWorkItem { [weak self] in
+                self?.stopToneInternal()
+            }
+            self.toneEnd = end
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(durationMs) / 1000.0, execute: end)
+            call.resolve()
         }
-        call.resolve()
     }
 
     @objc func stopTestTone(_ call: CAPPluginCall) {
-        stopToneInternal()
-        call.resolve()
+        DispatchQueue.main.async {
+            self.stopToneInternal()
+            call.resolve()
+        }
     }
 
     // MARK: - Helpers
@@ -211,8 +247,8 @@ public class AudioRoutePlugin: CAPPlugin {
     // so its audio unit never reconfigures them. Not mixable: only a non-mixable session can
     // be the "Now Playing" app, which is what routes headset presses to HeadsetButtonPlugin.
     // Set through RTCAudioSession under its lock: WebRTC's audio unit takes the same lock when
-    // it configures the session, and its activation count keeps the session up after the last
-    // line leaves (WebRTC only deactivates on the last balanced setActive(false)).
+    // it configures the session. Never activates: lines (NativeVoicePlugin) and the test tone
+    // hold the activation, so the user's music is not stopped while no line is open.
     private func applyRoute(_ route: String) throws {
         guard route.hasPrefix("device:") || ["speaker", "earpiece", "headset", "bluetooth"].contains(route) else {
             throw NSError(
@@ -230,7 +266,11 @@ public class AudioRoutePlugin: CAPPlugin {
         rtc.lockForConfiguration()
         defer { rtc.unlockForConfiguration() }
         try rtc.setCategory(.playAndRecord, mode: .voiceChat, options: options)
-        try rtc.setActive(true)
+        // Preferred input and override only take on an active session; while none is open they
+        // are applied by reapplyRoute when the first line activates it.
+        if !rtc.isActive {
+            return
+        }
         // After the category: the inputs on offer (Bluetooth HFP) depend on it.
         guard let input = preferredInput(for: route) else {
             throw NSError(
@@ -289,10 +329,28 @@ public class AudioRoutePlugin: CAPPlugin {
         }
     }
 
+    /// Balanced activation through WebRTC's counter: the session is deactivated (notifying
+    /// other apps) only by the last setActive(false).
+    private func setSessionActive(_ active: Bool) throws {
+        rtc.lockForConfiguration()
+        defer { rtc.unlockForConfiguration() }
+        try rtc.setActive(active)
+    }
+
     fileprivate func stopToneInternal() {
+        toneEnd?.cancel()
+        toneEnd = nil
         toneNode?.stop()
         toneEngine?.stop()
         toneNode = nil
         toneEngine = nil
+        if toneHoldsSession {
+            toneHoldsSession = false
+            do {
+                try setSessionActive(false)
+            } catch {
+                CAPLog.print("AudioRoutePlugin: failed to release tone session: \(error)")
+            }
+        }
     }
 }

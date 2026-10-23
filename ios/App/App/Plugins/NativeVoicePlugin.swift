@@ -19,6 +19,10 @@ public class NativeVoicePlugin: CAPPlugin {
     /// systemUptime of the last headset press acted on (400 ms debounce).
     private var lastHeadsetPress: TimeInterval = -Double.infinity
     private var cuePlayer: AVAudioPlayer?
+    /// The one RTCAudioSession activation held while at least one line is open.
+    private var holdsSession: Bool = false
+    /// Gives the activation back after the last line's stop cue; cancelled by a new join.
+    private var releaseWork: DispatchWorkItem?
 
     public override func load() {
         NativeVoicePlugin.current = self
@@ -104,6 +108,7 @@ public class NativeVoicePlugin: CAPPlugin {
             voiceCall.onConnected = { [weak self] in
                 self?.playCue("start-connection-451")
             }
+            self.holdSession()
             self.calls[callId] = voiceCall
             self.callOrder.append(callId)
             voiceCall.start()
@@ -125,6 +130,9 @@ public class NativeVoicePlugin: CAPPlugin {
             voiceCall.close()
             self.playCue("stop-connection-451")
             self.emitDiag("LINHA", "sair da linha", "ok")
+            if self.calls.isEmpty {
+                self.scheduleRelease(after: (self.cuePlayer?.duration ?? 0) + 1.0)
+            }
             call.resolve()
         }
     }
@@ -227,15 +235,24 @@ public class NativeVoicePlugin: CAPPlugin {
         case .began:
             emitDiag("INTERRUPÇÃO", "áudio interrompido", "linhas mantidas")
         case .ended:
-            // Through WebRTC's wrapper so its isActive bookkeeping and audio unit restart agree.
+            // WebRTC reactivates by itself when its count is > 0 (our hold). Through its wrapper
+            // so isActive and the audio unit restart agree, and balanced: no extra count stays.
             let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
-            rtc.lockForConfiguration()
-            do {
-                try rtc.setActive(true)
-            } catch {
-                emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
+            if !holdsSession {
+                // The join-time activation failed (e.g. during a phone call): take it now.
+                holdSession()
+            } else if !rtc.isActive {
+                rtc.lockForConfiguration()
+                do {
+                    // Our hold keeps the count >= 1, so this setActive(false) only gives back the
+                    // count the setActive(true) added; it never deactivates.
+                    try rtc.setActive(true)
+                    try rtc.setActive(false)
+                } catch {
+                    emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
+                }
+                rtc.unlockForConfiguration()
             }
-            rtc.unlockForConfiguration()
             for callId in callOrder {
                 calls[callId]?.setMicEnabled(false, source: "interrupção")
             }
@@ -281,6 +298,53 @@ public class NativeVoicePlugin: CAPPlugin {
             return id
         }
         return callOrder.first { (id: String) -> Bool in calls[id]?.canTalk == true }
+    }
+
+    // MARK: - Session activation (main queue)
+
+    /// Takes the one activation for the open lines (idempotent). Non-mixable: from here on the
+    /// app is the Now Playing app, so headset presses reach HeadsetButtonPlugin.
+    private func holdSession() {
+        releaseWork?.cancel()
+        releaseWork = nil
+        if holdsSession { return }
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        rtc.lockForConfiguration()
+        do {
+            try rtc.setActive(true)
+            holdsSession = true
+        } catch {
+            emitDiag("ÁUDIO", "ativar sessão", "falhou: \(error.localizedDescription)")
+        }
+        rtc.unlockForConfiguration()
+        if holdsSession {
+            AudioRoutePlugin.reapplyRoute()
+        }
+    }
+
+    private func scheduleRelease(after delay: TimeInterval) {
+        releaseWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.releaseSession()
+        }
+        releaseWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// Last balanced setActive(false): RTCAudioSession deactivates with
+    /// .notifyOthersOnDeactivation, so the user's music resumes.
+    private func releaseSession() {
+        releaseWork = nil
+        guard holdsSession, calls.isEmpty else { return }
+        holdsSession = false
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        rtc.lockForConfiguration()
+        do {
+            try rtc.setActive(false)
+        } catch {
+            emitDiag("ÁUDIO", "liberar sessão", "falhou: \(error.localizedDescription)")
+        }
+        rtc.unlockForConfiguration()
     }
 
     // MARK: - Helpers (main queue)
