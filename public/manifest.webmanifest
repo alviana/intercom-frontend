@@ -1,0 +1,12 @@
+{
+  "name": "Intercom ac24horas",
+  "short_name": "Intercom",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#222222",
+  "theme_color": "#222222",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icon-ac24horas.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

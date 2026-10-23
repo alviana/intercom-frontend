@@ -24,6 +24,8 @@ import { useGlobalHotkeys } from "../production-line/use-line-hotkeys";
 import { ShareUrlModal } from "../share-url-modal/share-url-modal";
 import { useInitiateProductionCall } from "../../hooks/use-initiate-production-call";
 import { useWakeLock } from "../../hooks/use-wake-lock";
+import { PocketMode } from "./pocket-mode";
+import { useMediaSessionMicToggle } from "./use-media-session-mic-toggle";
 import { UserSettings } from "../user-settings/user-settings";
 import { ConfirmationModal } from "../verify-decision/confirmation-modal";
 import { HeaderActions } from "./header-actions";
@@ -327,7 +329,8 @@ export const CallsPage = () => {
   }, [pendingCallRefs]);
 
   usePreventPullToRefresh();
-  useWakeLock(!isEmpty);
+  // Installed app: native audio runs with the screen locked, so the screen may sleep.
+  useWakeLock(!isEmpty && !isMobileApp());
 
   const nativeRestoreDone = useNativeRestoreDone();
 
@@ -439,7 +442,16 @@ export const CallsPage = () => {
     };
   });
 
-  const { playExitSound } = useAudioCue();
+  const { playEnterSound, playExitSound } = useAudioCue();
+  const phoneBrowser = isMobile && !isMobileApp();
+
+  useMediaSessionMicToggle({
+    enabled: phoneBrowser && !isEmpty,
+    calls,
+    callActionHandlers,
+    // Audible confirmation: the phone is usually in a pocket.
+    onToggled: (wasMuted) => (wasMuted ? playEnterSound() : playExitSound()),
+  });
 
   const runExitAllCalls = async () => {
     setProductionId(null);
@@ -579,6 +591,7 @@ export const CallsPage = () => {
               updateUserSettings
             />
           )}
+        {phoneBrowser && !isEmpty && <PocketMode />}
         <CallsContainer>
           {addCallActive && (productionId || addCallPreSelected) && (
             <JoinProduction
