@@ -34,6 +34,11 @@
 		A2B000000000000000000003 /* IntercomLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */; };
 		A2B000000000000000000004 /* IntercomLiveActivityExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000008 /* IntercomLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A2B000000000000000000014 /* IntercomOverlayActionIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */; };
+		A1A1A1A1A1A1A1A100000021 /* IntercomLineActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */; };
+		A1A1A1A1A1A1A1A100000022 /* IntercomLineActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */; };
+		A1A1A1A1A1A1A1A100000024 /* IntercomLineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */; };
+		A1A1A1A1A1A1A1A100000025 /* IntercomLineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */; };
+		A1A1A1A1A1A1A1A100000027 /* IntercomLineActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -89,6 +94,9 @@
 		A2B000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2B000000000000000000008 /* IntercomLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IntercomLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomOverlayActionIntent.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityAttributes.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineIntents.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityWidget.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
@@ -201,6 +209,9 @@
 				A2B000000000000000000005 /* IntercomOverlayAttributes.swift */,
 				A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */,
 				A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */,
+				A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */,
+				A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */,
+				A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */,
 				A2B000000000000000000007 /* Info.plist */,
 			);
 			path = IntercomLiveActivity;
@@ -368,6 +379,8 @@
 				A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */,
 				A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */,
 				A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */,
+				A1A1A1A1A1A1A1A100000021 /* IntercomLineActivityAttributes.swift in Sources */,
+				A1A1A1A1A1A1A1A100000024 /* IntercomLineIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -378,6 +391,9 @@
 				A2B000000000000000000002 /* IntercomOverlayAttributes.swift in Sources */,
 				A2B000000000000000000014 /* IntercomOverlayActionIntent.swift in Sources */,
 				A2B000000000000000000003 /* IntercomLiveActivityWidget.swift in Sources */,
+				A1A1A1A1A1A1A1A100000022 /* IntercomLineActivityAttributes.swift in Sources */,
+				A1A1A1A1A1A1A1A100000025 /* IntercomLineIntents.swift in Sources */,
+				A1A1A1A1A1A1A1A100000027 /* IntercomLineActivityWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
