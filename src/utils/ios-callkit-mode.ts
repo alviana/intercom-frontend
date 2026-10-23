@@ -4,14 +4,14 @@ import { isIOSApp } from "../platform";
 // Same "id." prefix and JSON value as the other stored settings (see android-audio-route).
 const STORAGE_KEY = "id.callKitMode";
 
-/** Experimental iOS switch "Botão do fone Bluetooth"; off unless the user turned it on. */
+/** iOS switch "Botão do fone Bluetooth"; on unless the user turned it off. */
 export const readStoredCallKitMode = (): boolean => {
   try {
     return (
-      JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "false") === true
+      JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "true") === true
     );
   } catch {
-    return false;
+    return true;
   }
 };
 

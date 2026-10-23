@@ -18,8 +18,8 @@ beforeEach(() => {
 });
 
 describe("iOS CallKit mode switch", () => {
-  it("is off until the user turns it on", () => {
-    expect(readStoredCallKitMode()).toBe(false);
+  it("is on until the user turns it off", () => {
+    expect(readStoredCallKitMode()).toBe(true);
   });
 
   it("stores the switch and sends it to native", () => {
@@ -33,8 +33,8 @@ describe("iOS CallKit mode switch", () => {
 
   it("does nothing outside iOS", () => {
     h.ios = false;
-    applyCallKitMode(true);
-    expect(readStoredCallKitMode()).toBe(false);
+    applyCallKitMode(false);
+    expect(readStoredCallKitMode()).toBe(true);
     expect(h.setCallKitMode).not.toHaveBeenCalled();
   });
 });

@@ -11,7 +11,7 @@ import {
 export const NativeVoiceDiagnostics = () => {
   useEffect(() => {
     if (!isIOSApp()) return undefined;
-    // App start: the native layer forgets the experimental CallKit switch on every launch.
+    // App start: the native layer forgets the CallKit switch on every launch.
     applyCallKitMode(readStoredCallKitMode());
     let removed = false;
     let remove: (() => void) | undefined;

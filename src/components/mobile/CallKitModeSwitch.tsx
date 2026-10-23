@@ -5,12 +5,12 @@ import {
   readStoredCallKitMode,
 } from "../../utils/ios-callkit-mode";
 
-/** iOS only, experimental: the Bluetooth headset button through an iPhone (CallKit) call. */
+/** iOS only: the Bluetooth headset button through an iPhone (CallKit) call. */
 export const CallKitModeSwitch = () => {
   const [enabled, setEnabled] = useState(readStoredCallKitMode);
 
   return (
-    <FormItem label="Botão do fone Bluetooth (experimental)">
+    <FormItem label="Botão do fone Bluetooth">
       <span style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
         <input
           type="checkbox"
