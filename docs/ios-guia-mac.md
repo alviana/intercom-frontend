@@ -48,41 +48,35 @@ Abra sempre o **.xcworkspace** (não o .xcodeproj).
 
 ```bash
 cd intercom-frontend
+git checkout ios/App/Podfile.lock   # descarta o lock gerado pelo pod install anterior
 git pull
 VITE_BACKEND_URL=https://intercom.ac24horas.com/manager npm run ios:build
 cd ios/App && pod install && cd ../..
 ```
 
-Depois **▶ (Run)** no Xcode. O `pod install` agora é obrigatório depois de cada `git pull`: o app usa a biblioteca WebRTC nativa (pod `WebRTC-lib`); sem ele o Xcode acusa `No such module 'WebRTC'`.
+Depois **▶ (Run)** no Xcode. O `pod install` é obrigatório depois de cada `git pull`: o app usa a biblioteca WebRTC nativa (pod `WebRTC-lib`); sem ele o Xcode acusa `No such module 'WebRTC'`. Se o build falhar com `Sandbox: rsync deny`, me avise.
 
 ## 5. Antes de testar
 
-- No app: **Configurações → Saída de áudio → escolha o fone** (AirPods/Bluetooth ou com fio). O app começa no alto-falante; sem isso o botão do fone não chega. Confira na Central de Controle que o áudio está saindo pelo fone.
+- No app: **Configurações → Saída de áudio → escolha o fone** (Bluetooth ou com fio). Isso escolhe o **som e o mic** juntos. O campo "Microfone" não vale no iPhone.
 - Deixe o PC numa linha para ouvir/falar com o iPhone.
-- **Configurações → Teste do botão do fone** mostra cada aperto que chegou e o que o app fez.
+- **Configurações → Teste do botão do fone** mostra o que o app fez: `ROTA … mic: <nome>`, `FONE ligou/desligou`, `RECONEXÃO …`, etc.
+- No iPhone não há mais "chamada" verde nem widget: isso é esperado.
 
 ## 6. Testes — anote o resultado de cada linha
 
 | # | Teste | Resultado |
 |---|---|---|
-| 1 | Entrar numa linha: ouve o PC e o PC ouve (app aberto). Aparece a "chamada" verde/Dynamic Island "Intercom ac24horas"? | |
-| 2 | Mic aberto, **bloquear 10 min**: ouve o PC? O PC ouve você? | |
-| 3 | Mic aberto, **outro app na frente 5 min** (um app sem som): mesmas duas perguntas | |
-| 4 | Bloqueado 5 min: no PC você continua "ativo" na lista? | |
-| 5 | **AirPods**, toque na haste (bloqueado): a tela de teste mostra `CALLKIT_MUTE`? O mic alterna **e o PC confirma**? A chamada continua? Ouve o som de confirmação? | |
-| 6 | **EarPods** (com fio), aperto no meio (bloqueado): mostra `CALLKIT_END` ou `MEDIA_*`? Mic alterna, PC confirma, chamada continua? | |
-| 7 | Botão vermelho de encerrar na tela bloqueada/Dynamic Island: o que acontece? (esperado: alterna o mic, não sai) | |
-| 8 | **Ligação de celular** chegando com você numa linha → "Encerrar e Atender": a ligação conecta? Depois de desligar a ligação, o áudio do intercom volta? O botão do fone volta a funcionar? | |
-| 9 | Ligação chegando → "Recusar" e, se aparecer, "Em espera e Atender": o que acontece? | |
-| 10 | "Sair da linha": a chamada verde some? A tela de teste **não** mostra `CALLKIT_END`? | |
-| 11 | Entrar/sair/entrar rápido ~5 vezes: no fim, uma única chamada verde se estiver numa linha, nenhuma se não estiver | |
-| 12 | Primeiro uso: os pedidos de permissão de microfone e Bluetooth aparecem em português? | |
-
-Os tocar/pausar da Central de Controle provavelmente não fazem nada — é esperado, não precisa testar.
+| 1 | JBL ligado, Saída de áudio = Bluetooth, entrar na linha: o PC ouve pelo **mic do JBL** já na primeira vez? (lista: `ROTA bluetooth · mic: JBL…`) | |
+| 2 | EarPods com fio, Saída de áudio = fone com fio: o PC ouve pelo **mic do EarPods**? | |
+| 3 | Mic aberto, **bloquear 10 min**: ouve o PC? O PC ouve você? No PC você segue "ativo"? | |
+| 4 | Bloqueado, **botão do fone**: cada aperto liga/desliga o mic uma vez, com som de confirmação? O PC confirma? | |
+| 5 | Bloqueado, **desligar o Wi-Fi** (com 4G) e depois religar; e também ficar ~1 min sem sinal nenhum: a linha volta sozinha (som de entrada)? Sem usuário duplicado no PC? | |
+| 6 | Linha de trabalho + "Áudio programa": ouve as duas? O botão do fone mexe só no mic da linha de trabalho? | |
+| 7 | Arrastar o app para fechar: você some da lista do PC em segundos? | |
+| 8 | Mic aberto, **receber uma ligação** (ou tocar um áudio de WhatsApp): depois, o som volta com o sinal e o **mic volta fechado**? | |
+| 9 | Spotify/Música tocando, abrir o app **sem entrar em linha**: a música continua? Entrar e sair de uma linha: a música volta depois de sair? | |
 
 ## 7. O que me mandar
 
-A tabela preenchida (pode ser foto) e, se algo falhou, o que a tela "Teste do botão do fone" mostrou.
-- Linha 2 ou 3 falhou (mic ou áudio mudo bloqueado) → paro e preparo outro caminho (WebRTC nativo).
-- Linha 4 falhou ("inativo") → faço o heartbeat nativo no iOS (já planejado).
-- Linhas 5–6 sem nenhum evento → anoto por fone e preparo um ajuste.
+A tabela preenchida (pode ser foto) e, se algo falhou, o print da tela "Teste do botão do fone" logo depois.
