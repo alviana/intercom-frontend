@@ -83,7 +83,9 @@ private struct LineH2View: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(lineSubtleColor)
             }
-            LineWhoRow(line: line)
+            if !line.whoText.isEmpty {
+                LineWhoRow(line: line)
+            }
             HStack(spacing: 10) {
                 LineControlButton(line: line, isMic: false, label: "Som", height: 58, stacked: true)
                 LineControlButton(line: line, isMic: true, label: "Microfone", height: 58, stacked: true)
@@ -351,7 +353,8 @@ private extension IntercomLineActivityAttributes.Line {
             return statusText
         }
         if talker.isEmpty {
-            return (canTalk && !isProgramLine) ? "" : "Só ouvir"
+            // Only a program line has no talker: nothing to show to whoever may talk on it.
+            return canTalk ? "" : "Só ouvir"
         }
         return talker
     }

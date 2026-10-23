@@ -400,6 +400,9 @@ public class NativeVoicePlugin: CAPPlugin {
     /// failed at join (e.g. joined during a phone call).
     @objc private func appBecameActive(_ note: Notification) {
         if calls.isEmpty { return }
+        // In the foreground again: re-requests a Live Activity that could not start in the
+        // background, was dismissed or reached its time limit.
+        onLinesChanged?()
         if interruptedWithoutEnd {
             emitDiag("INTERRUPÇÃO", "app reaberto", "interrupção sem fim: retomando")
             resumeAfterInterruption()
