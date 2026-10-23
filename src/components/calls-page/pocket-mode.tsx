@@ -1,6 +1,5 @@
 import styled from "@emotion/styled";
 import { useEffect, useRef, useState } from "react";
-import { SecondaryButton } from "../form-elements/form-elements";
 
 const HOLD_MS = 1500;
 
@@ -26,6 +25,20 @@ const Overlay = styled.div`
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+`;
+
+/** Looks like the line card's control buttons, at the right above the lines. */
+const Open = styled.button`
+  display: block;
+  margin: 0 1rem 1rem auto;
+  padding: 1rem 1.6rem;
+  background: rgba(50, 56, 59, 1);
+  border: 0.2rem solid #6d6d6d;
+  border-radius: 0.8rem;
+  color: white;
+  font-size: 1.6rem;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const Hold = styled.button`
@@ -64,9 +77,9 @@ export const PocketMode = () => {
 
   if (!on) {
     return (
-      <SecondaryButton type="button" onClick={() => setOn(true)}>
+      <Open type="button" onClick={() => setOn(true)}>
         Modo bolso
-      </SecondaryButton>
+      </Open>
     );
   }
 
