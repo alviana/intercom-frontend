@@ -72,38 +72,25 @@ describe("CallServiceManager native heartbeats", () => {
   });
 });
 
-describe("CallServiceManager iOS CallKit call", () => {
+describe("CallServiceManager iOS (no CallKit call)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     platform.ios = true;
   });
 
-  it("starts the call when in a line, without Android-only setup", () => {
+  it("never starts a CallKit call, even in a line, and skips Android-only setup", () => {
     withCalls({ a: { sessionId: "s1" } });
-    render(<CallServiceManager />);
-    expect(CallService.start).toHaveBeenCalledTimes(1);
+    const { rerender } = render(<CallServiceManager />);
+    withCalls({ a: { sessionId: "s1" }, b: { sessionId: "s2" } });
+    rerender(<CallServiceManager />);
+    expect(CallService.start).not.toHaveBeenCalled();
     expect(CallService.requestNotificationPermission).not.toHaveBeenCalled();
     expect(CallService.setSessions).not.toHaveBeenCalled();
   });
 
-  it("stops the call when the last line is left", () => {
-    withCalls({ a: { sessionId: "s1" } });
-    const { rerender } = render(<CallServiceManager />);
-    withCalls({});
-    rerender(<CallServiceManager />);
-    expect(CallService.stop).toHaveBeenCalledTimes(1);
-  });
-
-  it("stops a leftover call when mounted with no lines (e.g. after a reload)", () => {
+  it("ends a call left by an older build when mounted", () => {
     withCalls({});
     render(<CallServiceManager />);
-    expect(CallService.start).not.toHaveBeenCalled();
-    expect(CallService.stop).toHaveBeenCalledTimes(1);
-  });
-
-  it("stops the call when unmounted while in a line", () => {
-    withCalls({ a: { sessionId: "s1" } });
-    render(<CallServiceManager />).unmount();
-    expect(CallService.stop).toHaveBeenCalledTimes(1);
+    expect(CallService.stop).toHaveBeenCalled();
   });
 });

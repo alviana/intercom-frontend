@@ -199,9 +199,10 @@ public class AudioRoutePlugin: CAPPlugin {
     private func configureAudioSession(defaultToSpeaker: Bool) throws {
         // HFP only: with A2DP allowed iOS could route a Bluetooth headset as media output with
         // the phone mic, and its button then became a media key the app never receives.
+        // Not mixable: only a non-mixable session can be the "Now Playing" app, which is what
+        // routes headset play/pause presses to HeadsetButtonPlugin.
         var options: AVAudioSession.CategoryOptions = [
             .allowBluetoothHFP,
-            .mixWithOthers,
         ]
         if defaultToSpeaker {
             options.insert(.defaultToSpeaker)

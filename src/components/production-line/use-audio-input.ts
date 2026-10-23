@@ -1,6 +1,6 @@
 import { Dispatch, useCallback, useEffect, useState } from "react";
 import { noop } from "../../helpers";
-import { isMobileApp } from "../../platform";
+import { isIOSApp, isMobileApp } from "../../platform";
 import { TJoinProductionOptions } from "./types.ts";
 import { TGlobalStateAction } from "../../global-state/global-state-actions.ts";
 
@@ -40,12 +40,16 @@ export const useAudioInput: TUseAudioInput = ({ audioInputId, dispatch }) => {
       // Then request the specific audio input the user has selected
       navigator.mediaDevices
         .getUserMedia({
-          audio: {
-            deviceId: isMobileApp()
-              ? { ideal: audioInputId }
-              : { exact: audioInputId },
-            noiseSuppression: true,
-          },
+          // iOS: no deviceId, so the mic follows the route picked in "Saída de áudio";
+          // a deviceId made WebKit force that mic (often the iPhone's) over the headset.
+          audio: isIOSApp()
+            ? { noiseSuppression: true }
+            : {
+                deviceId: isMobileApp()
+                  ? { ideal: audioInputId }
+                  : { exact: audioInputId },
+                noiseSuppression: true,
+              },
         })
         .then((mediaStream) => {
           selectedStream = mediaStream;

@@ -66,7 +66,7 @@ export const useMuteInput = ({
       });
     const onEvent = (e: Event) => log(e.type);
     const names = ["mute", "unmute", "ended"];
-    log("novo");
+    log(`novo: ${tracks[0]?.label || "?"}`);
     tracks.forEach((t) => names.forEach((n) => t.addEventListener(n, onEvent)));
     return () =>
       tracks.forEach((t) =>

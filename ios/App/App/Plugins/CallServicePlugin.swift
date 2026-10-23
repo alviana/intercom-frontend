@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import CallKit
 import MediaPlayer
+import UIKit
 import UserNotifications
 import Capacitor
 
@@ -284,6 +285,16 @@ public class HeadsetButtonPlugin: CAPPlugin {
         addCommand(center.togglePlayPauseCommand, key: "MEDIA_PLAY_PAUSE")
         addCommand(center.playCommand, key: "MEDIA_PLAY")
         addCommand(center.pauseCommand, key: "MEDIA_PAUSE")
+
+        // Headset presses only reach the "Now Playing" app: claim it with a live item.
+        DispatchQueue.main.async {
+            UIApplication.shared.beginReceivingRemoteControlEvents()
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+                MPMediaItemPropertyTitle: "Intercom ac24horas",
+                MPNowPlayingInfoPropertyIsLiveStream: true,
+                MPNowPlayingInfoPropertyPlaybackRate: 1.0,
+            ]
+        }
     }
 
     deinit {

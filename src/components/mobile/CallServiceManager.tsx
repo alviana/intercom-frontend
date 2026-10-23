@@ -40,16 +40,13 @@ export const CallServiceManager = () => {
     CallService.start().catch(() => {});
   }, [inCall]);
 
-  // iOS: hold a CallKit call while in a line (keeps audio/mic when locked).
-  // With no lines it sends stop, also on mount: after a WebView reload native may
-  // still hold a call that nothing else would end.
+  // iOS: no CallKit call. During a call a Bluetooth headset press means "hang up" (HFP);
+  // refusing it dropped the headset link after the first press. The audio background
+  // mode alone keeps audio and mic alive when locked (device test 2026-10-23), and presses
+  // arrive as play/pause instead. Still sends stop, so a call left by an older build ends.
   useEffect(() => {
     if (!isIOSApp() || !Capacitor.isPluginAvailable("CallService")) return;
-    if (!inCall) {
-      CallService.stop().catch(() => {});
-      return;
-    }
-    CallService.start().catch(() => {});
+    CallService.stop().catch(() => {});
   }, [inCall]);
 
   useEffect(() => {
