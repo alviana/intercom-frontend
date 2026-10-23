@@ -1,10 +1,6 @@
 import { Dispatch, useCallback, useEffect, useState } from "react";
 import { noop } from "../../helpers";
-import { isIOSApp, isMobileApp } from "../../platform";
-import {
-  readStoredAudioRoute,
-  setAndroidAudioRoute,
-} from "../../utils/android-audio-route";
+import { isMobileApp } from "../../platform";
 import { TJoinProductionOptions } from "./types.ts";
 import { TGlobalStateAction } from "../../global-state/global-state-actions.ts";
 
@@ -44,16 +40,14 @@ export const useAudioInput: TUseAudioInput = ({ audioInputId, dispatch }) => {
       // Then request the specific audio input the user has selected
       navigator.mediaDevices
         .getUserMedia({
-          // iOS: no deviceId (a saved one forced that mic, often the iPhone's); the route
-          // picked in "Saída de áudio" is re-applied below once the mic is open.
-          audio: isIOSApp()
-            ? { noiseSuppression: true }
-            : {
-                deviceId: isMobileApp()
-                  ? { ideal: audioInputId }
-                  : { exact: audioInputId },
-                noiseSuppression: true,
-              },
+          // The mic picked in "Microfone" decides the capture device (also on iOS, where
+          // WebKit otherwise opens the iPhone mic and overrides the native route).
+          audio: {
+            deviceId: isMobileApp()
+              ? { ideal: audioInputId }
+              : { exact: audioInputId },
+            noiseSuppression: true,
+          },
         })
         .then((mediaStream) => {
           selectedStream = mediaStream;
@@ -70,11 +64,6 @@ export const useAudioInput: TUseAudioInput = ({ audioInputId, dispatch }) => {
           });
 
           setAudioInput(mediaStream);
-
-          // iOS: WebKit opens the iPhone mic; re-applying the chosen route moves the
-          // capture to it (what re-picking it in "Saída de áudio" did by hand).
-          const route = isIOSApp() ? readStoredAudioRoute() : null;
-          if (route) setAndroidAudioRoute(route).catch(() => {});
         })
         .catch(() => {
           if (aborted) return;
