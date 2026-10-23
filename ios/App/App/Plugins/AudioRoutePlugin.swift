@@ -61,8 +61,9 @@ public class AudioRoutePlugin: CAPPlugin {
             outcome = "erro: antes \(before) · \(plugin.lastError)"
         }
         plugin.emitRoutes()
-        // iOS may post no route change afterwards (steady HFP out + built-in mic): check anyway.
-        plugin.scheduleReinforce(after: 1)
+        // iOS may post no route change afterwards (steady HFP out + built-in mic): check anyway,
+        // soon, since until then the line hears the iPhone mic (≤1/s still holds).
+        plugin.scheduleReinforce(after: 0.3)
         return outcome
     }
 

@@ -918,6 +918,9 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
         rtc.isAudioEnabled = true
         callKitAudioActive = true
         emitDiag("CALLKIT", "sessão de áudio ativada", calls.isEmpty ? "sem linhas" : "áudio ligado")
+        // Every headset press re-activates the session and costs a reinforcement: lift the
+        // 10/min cap so frequent presses never leave the line on the iPhone mic.
+        AudioRoutePlugin.resetReinforce()
         emitDiag("ROTA", "reaplicar ao ativar sessão (CallKit)", AudioRoutePlugin.reapplyRoute())
         flushPendingCue()
         updateKeepAlive()
