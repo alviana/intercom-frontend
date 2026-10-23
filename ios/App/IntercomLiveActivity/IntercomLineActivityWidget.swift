@@ -153,8 +153,8 @@ private struct LineM2Row: View {
                 }
             }
             HStack(spacing: 8) {
-                LineControlButton(line: line, isMic: false, label: "Som", height: 44, stacked: false)
-                LineControlButton(line: line, isMic: true, label: "Mic", height: 44, stacked: false)
+                LineControlButton(line: line, isMic: false, label: "Som", height: 40, stacked: false)
+                LineControlButton(line: line, isMic: true, label: "Mic", height: 40, stacked: false)
             }
         }
     }
@@ -317,7 +317,7 @@ private extension IntercomLineActivityAttributes.ContentState {
 
     var compactName: String {
         guard let line = mainLine else { return "🎧" }
-        return "🎧 " + String(line.shortName.prefix(10))
+        return (line.isHeadsetLine ? "🎧 " : "") + String(line.shortName.prefix(10))
     }
 }
 
@@ -351,7 +351,7 @@ private extension IntercomLineActivityAttributes.Line {
             return statusText
         }
         if talker.isEmpty {
-            return canTalk ? "" : "Só ouvir"
+            return (canTalk && !isProgramLine) ? "" : "Só ouvir"
         }
         return talker
     }
