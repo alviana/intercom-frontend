@@ -34,6 +34,7 @@ import { usePreventPullToRefresh } from "./use-prevent-pull-to-refresh";
 import { useSpeakerDetection } from "./use-speaker-detection";
 import { useSendWSCallStateUpdate } from "./use-send-ws-callstate-update";
 import { isMobileApp } from "../../platform";
+import { useNativeRestoreDone } from "../../mobile-overlay/native-restore";
 import { MobileSettingsPage } from "../mobile/MobileSettingsPage";
 
 const ShareAdornment = styled.div`
@@ -319,7 +320,10 @@ export const CallsPage = () => {
 
   usePreventPullToRefresh();
 
+  const nativeRestoreDone = useNativeRestoreDone();
+
   useEffect(() => {
+    if (!nativeRestoreDone) return;
     if (validatedCallRefs === null) return;
     if (autoJoinTriggeredRef.current) return;
     if (validatedCallRefs.length === 0) return;
@@ -359,6 +363,7 @@ export const CallsPage = () => {
         });
       });
   }, [
+    nativeRestoreDone,
     validatedCallRefs,
     userSettings,
     calls,

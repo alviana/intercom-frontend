@@ -4,6 +4,7 @@ import { isIOSApp } from "../../platform";
 import { useGlobalState } from "../../global-state/context-provider";
 import { NativeVoice } from "../../mobile-overlay/native-voice";
 import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
+import { markNativeRestoreDone } from "../../mobile-overlay/native-restore";
 import { createCallState } from "../../hooks/use-initiate-production-call";
 
 // After a WebView reload the native plugin keeps the lines running; re-create
@@ -53,6 +54,8 @@ export const NativeCallsRestore = () => {
           source: "NativeVoice",
           result: `falhou: ${e}`,
         });
+      } finally {
+        markNativeRestoreDone();
       }
     })();
   }, [dispatch, navigate]);

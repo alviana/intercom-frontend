@@ -11,6 +11,11 @@ import {
 const platform = vi.hoisted(() => ({ ios: true }));
 vi.mock("../../platform", () => ({ isIOSApp: () => platform.ios }));
 
+const restoreDone = vi.hoisted(() => vi.fn());
+vi.mock("../../mobile-overlay/native-restore", () => ({
+  markNativeRestoreDone: restoreDone,
+}));
+
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock("react-router", () => ({ useNavigate: () => navigate }));
 
@@ -92,5 +97,19 @@ describe("NativeCallsRestore", () => {
     expect(getHeadsetLog()[0].key).toBe("RESTAURAR");
     expect(dispatch).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("signals restore done after dispatching, also when listing fails", async () => {
+    setup({}, [info("a", JSON.stringify(opts))]);
+    dispatch.mockImplementation(() =>
+      expect(restoreDone).not.toHaveBeenCalled()
+    );
+    const { unmount } = render(<NativeCallsRestore />);
+    await waitFor(() => expect(restoreDone).toHaveBeenCalledTimes(1));
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    unmount();
+    vi.mocked(NativeVoice.listCalls).mockRejectedValue(new Error("x"));
+    render(<NativeCallsRestore />);
+    await waitFor(() => expect(restoreDone).toHaveBeenCalledTimes(2));
   });
 });
