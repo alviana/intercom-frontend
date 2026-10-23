@@ -10,7 +10,6 @@ public class AudioRoutePlugin: CAPPlugin {
     private var toneNode: AVAudioPlayerNode?
     private var toneEngine: AVAudioEngine?
     private var preferredRoute: String = "speaker"
-    private var lastReassert = Date.distantPast
 
     public override func load() {
         do {
@@ -32,24 +31,7 @@ public class AudioRoutePlugin: CAPPlugin {
     }
 
     @objc private func routeChanged(_ note: Notification) {
-        reassertHeadsetInputIfNeeded()
         emitRoutes()
-    }
-
-    // WebKit reconfigures the shared audio session whenever capture starts/stops and leaves
-    // the headset as output only with the iPhone mic; put the chosen headset mic back.
-    private func reassertHeadsetInputIfNeeded() {
-        guard preferredRoute == "bluetooth" || preferredRoute == "headset" else { return }
-        let wanted: [AVAudioSession.Port] = preferredRoute == "bluetooth"
-            ? [.bluetoothHFP, .bluetoothLE]
-            : [.headsetMic, .usbAudio, .lineIn]
-        if let current = session.currentRoute.inputs.first?.portType, wanted.contains(current) { return }
-        guard Date().timeIntervalSince(lastReassert) > 1 else { return } // no fight loop with WebKit
-        lastReassert = Date()
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            try? self.applyRoute(self.preferredRoute)
-        }
     }
 
     @objc func hasBluetoothPermission(_ call: CAPPluginCall) {
@@ -71,12 +53,14 @@ public class AudioRoutePlugin: CAPPlugin {
             return
         }
 
+        let previous = preferredRoute
+        preferredRoute = route
         do {
             try applyRoute(route)
-            preferredRoute = route
             call.resolve(["active": activeRouteId() as Any])
             emitRoutes()
         } catch {
+            preferredRoute = previous
             call.reject("Failed to set route: \(error.localizedDescription)")
         }
     }
@@ -103,15 +87,6 @@ public class AudioRoutePlugin: CAPPlugin {
     }
 
     // MARK: - Helpers
-
-    private func builtInMicInput() -> AVAudioSessionPortDescription? {
-        return session.availableInputs?.first { $0.portType == .builtInMic }
-    }
-
-    private func firstInput(ofTypes types: [String]) -> AVAudioSessionPortDescription? {
-        let want = Set(types)
-        return session.availableInputs?.first { want.contains($0.portType.rawValue) }
-    }
 
     private func findInputById(_ id: String) -> AVAudioSessionPortDescription? {
         return session.availableInputs?.first { "device:\($0.uid)" == id }
@@ -140,10 +115,10 @@ public class AudioRoutePlugin: CAPPlugin {
         let firstHeadset = headsetInputs.first
         let firstBluetooth = bluetoothInputs.first
         if let h = firstHeadset {
-            routes.append(routeObj(id: "headset", label: routeLabel(prefix: "Wired headset", port: h), available: true, type: "headset"))
+            routes.append(routeObj(id: "headset", label: routeLabel(prefix: "Wired headset", port: h), available: true, type: "headset", name: h.portName))
         }
         if let b = firstBluetooth {
-            routes.append(routeObj(id: "bluetooth", label: routeLabel(prefix: "Bluetooth audio", port: b), available: true, type: "bluetooth"))
+            routes.append(routeObj(id: "bluetooth", label: routeLabel(prefix: "Bluetooth audio", port: b), available: true, type: "bluetooth", name: b.portName))
         }
         // Also expose other specific devices so the JS layer can target by uid
         // (skipping the ones already listed above, which showed the same headset twice).
@@ -155,7 +130,8 @@ public class AudioRoutePlugin: CAPPlugin {
                 id: "device:\(input.uid)",
                 label: routeLabel(prefix: portTypePrefix(input.portType), port: input),
                 available: true,
-                type: type!
+                type: type!,
+                name: input.portName
             ))
         }
 
@@ -168,8 +144,8 @@ public class AudioRoutePlugin: CAPPlugin {
         ]
     }
 
-    private func routeObj(id: String, label: String, available: Bool, type: String) -> [String: Any] {
-        return ["id": id, "label": label, "available": available, "type": type]
+    private func routeObj(id: String, label: String, available: Bool, type: String, name: String = "") -> [String: Any] {
+        return ["id": id, "label": label, "available": available, "type": type, "name": name]
     }
 
     private func routeLabel(prefix: String, port: AVAudioSessionPortDescription) -> String {
@@ -217,31 +193,28 @@ public class AudioRoutePlugin: CAPPlugin {
         notifyListeners("audioRouteChanged", data: buildRoutesPayload())
     }
 
-    private func configureAudioSession(defaultToSpeaker: Bool) throws {
-        // HFP only: with A2DP allowed iOS could route a Bluetooth headset as media output with
-        // the phone mic, and its button then became a media key the app never receives.
-        // Not mixable: only a non-mixable session can be the "Now Playing" app, which is what
-        // routes headset play/pause presses to HeadsetButtonPlugin.
-        var options: AVAudioSession.CategoryOptions = [
-            .allowBluetoothHFP,
-        ]
-        if defaultToSpeaker {
-            options.insert(.defaultToSpeaker)
-        }
+    // Same category/mode/options WebKit applies for capture (AudioSessionIOS.mm). WebKit keeps
+    // its own session in the GPU process and re-applies its config on every capture start;
+    // any difference here made the two fight (route-change bursts, iPhone mic winning).
+    // Not mixable: only a non-mixable session can be the "Now Playing" app, which is what
+    // routes headset play/pause presses to HeadsetButtonPlugin.
+    private func configureAudioSession() throws {
         try session.setCategory(
             .playAndRecord,
-            mode: .voiceChat,
-            options: options
+            mode: .videoChat,
+            options: [.allowBluetoothHFP, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker]
         )
     }
 
+    // Routes choose the output only. The mic is chosen by WebKit from getUserMedia's deviceId
+    // (the JS layer asks for the mic named like the chosen headset); setting a preferred
+    // input here fought WebKit. With .defaultToSpeaker, "earpiece" plays on the speaker.
     private func applyRoute(_ route: String) throws {
-        try configureAudioSession(defaultToSpeaker: route == "speaker")
+        try configureAudioSession()
         try session.setActive(true, options: [])
 
         if route.hasPrefix("device:") {
-            if let input = findInputById(route) {
-                try session.setPreferredInput(input)
+            if findInputById(route) != nil {
                 try session.overrideOutputAudioPort(.none)
                 return
             }
@@ -254,25 +227,8 @@ public class AudioRoutePlugin: CAPPlugin {
 
         switch route {
         case "speaker":
-            try session.setPreferredInput(builtInMicInput())
             try session.overrideOutputAudioPort(.speaker)
-        case "earpiece":
-            try session.setPreferredInput(builtInMicInput())
-            try session.overrideOutputAudioPort(.none)
-        case "headset":
-            try session.setPreferredInput(firstInput(ofTypes: [
-                AVAudioSession.Port.headsetMic.rawValue,
-                AVAudioSession.Port.headphones.rawValue,
-                AVAudioSession.Port.usbAudio.rawValue,
-                AVAudioSession.Port.lineIn.rawValue,
-            ]) ?? builtInMicInput())
-            try session.overrideOutputAudioPort(.none)
-        case "bluetooth":
-            try session.setPreferredInput(firstInput(ofTypes: [
-                AVAudioSession.Port.bluetoothHFP.rawValue,
-                AVAudioSession.Port.bluetoothA2DP.rawValue,
-                AVAudioSession.Port.bluetoothLE.rawValue,
-            ]))
+        case "earpiece", "headset", "bluetooth":
             try session.overrideOutputAudioPort(.none)
         default:
             throw NSError(

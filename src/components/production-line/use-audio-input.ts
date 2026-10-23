@@ -1,6 +1,7 @@
 import { Dispatch, useCallback, useEffect, useState } from "react";
 import { noop } from "../../helpers";
-import { isMobileApp } from "../../platform";
+import { isIOSApp, isMobileApp } from "../../platform";
+import { resolveIOSMicDeviceId } from "../../utils/android-audio-route";
 import { TJoinProductionOptions } from "./types.ts";
 import { TGlobalStateAction } from "../../global-state/global-state-actions.ts";
 
@@ -37,18 +38,31 @@ export const useAudioInput: TUseAudioInput = ({ audioInputId, dispatch }) => {
 
       if (aborted) return;
 
+      const selected = {
+        deviceId: isMobileApp()
+          ? { ideal: audioInputId }
+          : { exact: audioInputId },
+        noiseSuppression: true,
+      };
+      // iOS: the mic follows the headset chosen in "Saída de áudio". exact makes WebKit
+      // itself switch to that mic; if it can't, fall back to the "Microfone" choice.
+      const iosMic = isIOSApp()
+        ? resolveIOSMicDeviceId().catch(() => null)
+        : Promise.resolve(null);
+
       // Then request the specific audio input the user has selected
-      navigator.mediaDevices
-        .getUserMedia({
-          // The mic picked in "Microfone" decides the capture device (also on iOS, where
-          // WebKit otherwise opens the iPhone mic and overrides the native route).
-          audio: {
-            deviceId: isMobileApp()
-              ? { ideal: audioInputId }
-              : { exact: audioInputId },
-            noiseSuppression: true,
-          },
-        })
+      iosMic
+        .then((micId) =>
+          micId
+            ? navigator.mediaDevices
+                .getUserMedia({
+                  audio: { deviceId: { exact: micId }, noiseSuppression: true },
+                })
+                .catch(() =>
+                  navigator.mediaDevices.getUserMedia({ audio: selected })
+                )
+            : navigator.mediaDevices.getUserMedia({ audio: selected })
+        )
         .then((mediaStream) => {
           selectedStream = mediaStream;
           if (aborted) {

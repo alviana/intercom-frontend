@@ -7,6 +7,8 @@ export interface AudioRouteItem {
   label: string;
   available: boolean;
   type?: string;
+  /** iOS: port name of a headset route; WebKit labels that mic with the same name. */
+  name?: string;
 }
 
 export interface GetRoutesResult {

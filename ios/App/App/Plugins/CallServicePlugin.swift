@@ -76,9 +76,14 @@ public class CallServicePlugin: CAPPlugin, CXCallObserverDelegate {
     private var leaveSessionIds: [String] = []
 
     @objc func setSessions(_ call: CAPPluginCall) {
-        leaveBaseUrl = call.getString("baseUrl") ?? ""
-        leaveApiKey = call.getString("apiKey") ?? ""
-        leaveSessionIds = call.getArray("sessionIds", String.self) ?? []
+        let baseUrl = call.getString("baseUrl") ?? ""
+        let apiKey = call.getString("apiKey") ?? ""
+        let ids = call.getArray("sessionIds", String.self) ?? []
+        DispatchQueue.main.async {
+            self.leaveBaseUrl = baseUrl
+            self.leaveApiKey = apiKey
+            self.leaveSessionIds = ids
+        }
         call.resolve()
     }
 
