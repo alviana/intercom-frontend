@@ -9,13 +9,9 @@ import { FormItem } from "../user-settings-form/form-item";
 import {
   isAudioRouteAvailable,
   resolveAudioRouteToApply,
-  resolveIOSMicDeviceId,
   setAndroidAudioRoute,
   writeStoredAudioRoute,
 } from "../../utils/android-audio-route";
-import { isIOSApp } from "../../platform";
-import { useGlobalState } from "../../global-state/context-provider";
-import { useStorage } from "../accessing-local-storage/access-local-storage";
 
 const DEFAULT_MOBILE_ROUTES: AudioRouteItem[] = [
   {
@@ -42,8 +38,6 @@ export const MobileAudioRouteSelect = ({
   const [routes, setRoutes] = useState<AudioRouteItem[]>(DEFAULT_MOBILE_ROUTES);
   const [selected, setSelected] = useState<AudioRouteId | "">("speaker");
   const [busy, setBusy] = useState(false);
-  const [{ userSettings }, dispatch] = useGlobalState();
-  const { writeToStorage } = useStorage();
 
   const refresh = useCallback(async () => {
     if (!isAudioRouteAvailable()) {
@@ -102,18 +96,6 @@ export const MobileAudioRouteSelect = ({
               writeStoredAudioRoute(route);
               try {
                 await setAndroidAudioRoute(route);
-                // iOS: the mic follows the headset. Saving it as the chosen mic reconnects
-                // open lines with it (same path as picking another "Microfone").
-                const micId = isIOSApp()
-                  ? await resolveIOSMicDeviceId().catch(() => null)
-                  : null;
-                if (micId && micId !== userSettings?.audioinput) {
-                  writeToStorage("audioinput", micId);
-                  dispatch({
-                    type: "UPDATE_USER_SETTINGS",
-                    payload: { ...userSettings, audioinput: micId },
-                  });
-                }
               } finally {
                 setBusy(false);
               }

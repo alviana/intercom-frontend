@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { isIOSApp } from "../platform";
+import { NativeVoice } from "../mobile-overlay/native-voice";
 
 export const useDevicePermissions = ({
   continueToApp,
@@ -18,8 +20,18 @@ export const useDevicePermissions = ({
     const request = () => {
       if (cancelled || pending || granted) return;
       pending = true;
-      navigator.mediaDevices
-        .getUserMedia({ audio: true, video: false })
+      // iOS: WebKit must never open the mic; ask the native layer instead.
+      const ask = isIOSApp()
+        ? NativeVoice.checkMicPermission()
+            .then(
+              ({ granted: ok }) =>
+                ok || NativeVoice.requestMicPermission().then((r) => r.granted)
+            )
+            .then((ok) => {
+              if (!ok) throw new Error("mic denied");
+            })
+        : navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      ask
         .then(() => {
           if (cancelled) return;
           granted = true;

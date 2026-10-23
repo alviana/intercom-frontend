@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { isAndroidApp, isMobileApp } from "../../platform";
+import { isAndroidApp, isIOSApp, isMobileApp } from "../../platform";
 import { OverlayBubble } from "../../mobile-overlay/bubble";
+import { NativeVoice } from "../../mobile-overlay/native-voice";
 import { CallService } from "../../mobile-overlay/call-service";
 // AudioRoute disabled for now
 
@@ -66,6 +67,13 @@ const hasCallServiceChecks = (): boolean =>
     .hasRecordAudioPermission === "function";
 
 const isMicrophoneGranted = async (): Promise<boolean> => {
+  if (isIOSApp()) {
+    try {
+      return !!(await NativeVoice.checkMicPermission()).granted;
+    } catch {
+      return false;
+    }
+  }
   if (hasCallServiceChecks()) {
     try {
       const { granted } = await CallService.hasRecordAudioPermission();
@@ -188,12 +196,16 @@ export const StartupPermissions = () => {
           onClick={async () => {
             setBusy(true);
             try {
-              const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-              });
-              try {
-                stream.getTracks().forEach((t) => t.stop());
-              } catch {}
+              if (isIOSApp()) {
+                await NativeVoice.requestMicPermission();
+              } else {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                  audio: true,
+                });
+                try {
+                  stream.getTracks().forEach((t) => t.stop());
+                } catch {}
+              }
             } catch {}
             setBusy(false);
             await evaluate();

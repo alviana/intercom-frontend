@@ -17,7 +17,12 @@ vi.mock("@capacitor/core", () => ({
   registerPlugin: () => ({}),
 }));
 
-const h = vi.hoisted(() => ({ cb: null as null | ((ev: unknown) => void) }));
+const h = vi.hoisted(() => ({
+  cb: null as null | ((ev: unknown) => void),
+  ios: false,
+}));
+
+vi.mock("../../platform", () => ({ isIOSApp: () => h.ios }));
 
 vi.mock("../../mobile-overlay/headset-button", async () => {
   const actual = await vi.importActual<
@@ -157,5 +162,19 @@ describe("HeadsetButtonManager", () => {
     fire("HEADSETHOOK");
     expect(cue.enter).not.toHaveBeenCalled();
     expect(cue.exit).not.toHaveBeenCalled();
+  });
+});
+
+describe("HeadsetButtonManager on iOS", () => {
+  it("registers no listener (native handles the headset button)", async () => {
+    h.ios = true;
+    vi.clearAllMocks();
+    const { HeadsetButton } =
+      await import("../../mobile-overlay/headset-button");
+    withCalls({});
+    const v = render(<HeadsetButtonManager />);
+    expect(HeadsetButton.addListener).not.toHaveBeenCalled();
+    v.unmount();
+    h.ios = false;
   });
 });

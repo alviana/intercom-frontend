@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
+import { isIOSApp } from "../../platform";
 import { useGlobalState } from "../../global-state/context-provider";
 import {
   HeadsetButton,
@@ -31,7 +32,8 @@ export const HeadsetButtonManager = () => {
   const lastTapRef = useRef(-Infinity);
 
   useEffect(() => {
-    if (!Capacitor.isPluginAvailable("HeadsetButton")) return;
+    // iOS: the native layer handles the headset button.
+    if (isIOSApp() || !Capacitor.isPluginAvailable("HeadsetButton")) return;
     const handle = (ev: HeadsetButtonEvent) => {
       const done = (result: string) =>
         logHeadsetEvent({

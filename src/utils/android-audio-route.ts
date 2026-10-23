@@ -116,27 +116,4 @@ export const applyStoredAudioRoute = async (): Promise<AudioRouteId | null> => {
   }
 };
 
-// iOS: WebKit picks the mic from getUserMedia's deviceId and labels it with the port name,
-// so ask for the mic named like the headset chosen in "Saída de áudio" (built-in mic for
-// speaker/earpiece). Null when that mic is not listed (caller keeps its own choice).
-export const resolveIOSMicDeviceId = async (): Promise<string | null> => {
-  const { routes, active } = await AudioRoute.getAvailableRoutes();
-  const routeId = resolveAudioRouteToApply(routes, active);
-  const route = routes.find((r) => r.id === routeId);
-  const inputs = (await navigator.mediaDevices.enumerateDevices()).filter(
-    (d) => d.kind === "audioinput"
-  );
-  // Only headset mics: the built-in mic is also listed as a named device route.
-  const headsetNames = new Set(
-    routes
-      .filter((r) => r.type === "headset" || r.type === "bluetooth")
-      .map((r) => r.name)
-      .filter(Boolean)
-  );
-  const mic = route?.name
-    ? inputs.find((d) => d.label === route.name)
-    : inputs.find((d) => !headsetNames.has(d.label));
-  return mic?.deviceId || null;
-};
-
 export { STORAGE_KEY as ANDROID_AUDIO_ROUTE_STORAGE_KEY };

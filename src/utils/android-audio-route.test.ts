@@ -3,7 +3,6 @@ import type { GetRoutesResult } from "../mobile-overlay/audio-route";
 import {
   applyStoredAudioRoute,
   resolveAudioRouteToApply,
-  resolveIOSMicDeviceId,
   setAndroidAudioRoute,
 } from "./android-audio-route";
 
@@ -121,7 +120,7 @@ describe("applyStoredAudioRoute", () => {
   });
 });
 
-describe("iOS mic follows the chosen headset", () => {
+describe("iOS routing rules", () => {
   const iosRoutes: GetRoutesResult["routes"] = [
     { id: "speaker", label: "Phone speaker", available: true, type: "speaker" },
     {
@@ -140,11 +139,6 @@ describe("iOS mic follows the chosen headset", () => {
       name: "Microfone do iPhone",
     },
   ];
-  const inputs = [
-    { kind: "audioinput", deviceId: "builtin", label: "Microfone do iPhone" },
-    { kind: "audioinput", deviceId: "jbl", label: "JBL TUNE510BT" },
-    { kind: "audiooutput", deviceId: "out", label: "JBL TUNE510BT" },
-  ];
 
   beforeEach(() => {
     installLocalStorage();
@@ -152,35 +146,9 @@ describe("iOS mic follows the chosen headset", () => {
     mocks.isIOSApp.mockReturnValue(true);
     mocks.isMobileApp.mockReturnValue(true);
     mocks.getAvailableRoutes.mockResolvedValue({ routes: iosRoutes });
-    vi.stubGlobal("navigator", {
-      mediaDevices: { enumerateDevices: vi.fn().mockResolvedValue(inputs) },
-    });
   });
   afterEach(() => {
-    vi.unstubAllGlobals();
     mocks.isIOSApp.mockReturnValue(false);
-  });
-
-  it("asks WebKit for the mic named like the chosen Bluetooth headset", async () => {
-    window.localStorage.setItem("id.audioRoute", JSON.stringify("bluetooth"));
-    await expect(resolveIOSMicDeviceId()).resolves.toBe("jbl");
-  });
-
-  it("uses the built-in mic for the speaker route", async () => {
-    window.localStorage.setItem("id.audioRoute", JSON.stringify("speaker"));
-    await expect(resolveIOSMicDeviceId()).resolves.toBe("builtin");
-  });
-
-  it("returns null when the chosen headset's mic is not listed", async () => {
-    window.localStorage.setItem("id.audioRoute", JSON.stringify("bluetooth"));
-    mocks.getAvailableRoutes.mockResolvedValue({
-      routes: [{ ...iosRoutes[1], name: "Other headset" }],
-    });
-    await expect(resolveIOSMicDeviceId()).resolves.toBeNull();
-  });
-
-  it("with nothing chosen yet, asks for the connected headset's mic", async () => {
-    await expect(resolveIOSMicDeviceId()).resolves.toBe("jbl");
   });
 
   it("does not save an automatically applied speaker as the user's choice", async () => {
