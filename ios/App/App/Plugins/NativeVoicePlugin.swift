@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import UIKit
 import Capacitor
 import WebRTC
 
@@ -23,6 +24,11 @@ public class NativeVoicePlugin: CAPPlugin {
     private var holdsSession: Bool = false
     /// Gives the activation back after the last line's stop cue; cancelled by a new join.
     private var releaseWork: DispatchWorkItem?
+    /// Silent loop while lines (re)connect and none is connected: closing a peer connection stops
+    /// WebRTC's audio unit, and with no audio running iOS suspends the app and its retries.
+    private var keepAlivePlayer: AVAudioPlayer?
+    /// An interruption .began with no .ended yet (some apps never send it).
+    private var interruptedWithoutEnd: Bool = false
 
     public override func load() {
         NativeVoicePlugin.current = self
@@ -37,6 +43,10 @@ public class NativeVoicePlugin: CAPPlugin {
         NotificationCenter.default.addObserver(
             self, selector: #selector(headsetButton(_:)),
             name: .intercomHeadsetButton, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(appBecameActive(_:)),
+            name: UIApplication.didBecomeActiveNotification, object: nil
         )
     }
 
@@ -101,6 +111,9 @@ public class NativeVoicePlugin: CAPPlugin {
                                             username: username, canTalk: canTalk, meta: meta)
             voiceCall.emit = { [weak self] (event: String, data: [String: Any]) in
                 self?.notifyListeners(event, data: data)
+                if event == "callState" {
+                    self?.updateKeepAlive()
+                }
             }
             voiceCall.diag = { [weak self] (key: String, action: String, result: String) in
                 self?.emitDiag(key, action, result)
@@ -112,6 +125,8 @@ public class NativeVoicePlugin: CAPPlugin {
             self.calls[callId] = voiceCall
             self.callOrder.append(callId)
             voiceCall.start()
+            // The initial "connecting" is not emitted as a transition.
+            self.updateKeepAlive()
             call.resolve(voiceCall.info())
         }
     }
@@ -131,6 +146,7 @@ public class NativeVoicePlugin: CAPPlugin {
             self.playCue("stop-connection-451")
             self.emitDiag("LINHA", "sair da linha", "ok")
             if self.calls.isEmpty {
+                self.interruptedWithoutEnd = false
                 self.scheduleRelease(after: (self.cuePlayer?.duration ?? 0) + 1.0)
             }
             call.resolve()
@@ -233,33 +249,57 @@ public class NativeVoicePlugin: CAPPlugin {
         if calls.isEmpty { return }
         switch type {
         case .began:
+            interruptedWithoutEnd = true
             emitDiag("INTERRUPÇÃO", "áudio interrompido", "linhas mantidas")
         case .ended:
-            // WebRTC reactivates by itself when its count is > 0 (our hold). Through its wrapper
-            // so isActive and the audio unit restart agree, and balanced: no extra count stays.
-            let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
-            if !holdsSession {
-                // The join-time activation failed (e.g. during a phone call): take it now.
-                holdSession()
-            } else if !rtc.isActive {
-                rtc.lockForConfiguration()
-                do {
-                    // Our hold keeps the count >= 1, so this setActive(false) only gives back the
-                    // count the setActive(true) added; it never deactivates.
-                    try rtc.setActive(true)
-                    try rtc.setActive(false)
-                } catch {
-                    emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
-                }
-                rtc.unlockForConfiguration()
-            }
-            for callId in callOrder {
-                calls[callId]?.setMicEnabled(false, source: "interrupção")
-            }
-            emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
-            playCue("start-connection-451")
+            resumeAfterInterruption()
         @unknown default:
             break
+        }
+    }
+
+    /// Also run from appBecameActive when a .began never got its .ended.
+    private func resumeAfterInterruption() {
+        interruptedWithoutEnd = false
+        // WebRTC reactivates by itself when its count is > 0 (our hold). Through its wrapper
+        // so isActive and the audio unit restart agree, and balanced: no extra count stays.
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        if !holdsSession {
+            // The join-time activation failed (e.g. during a phone call): take it now.
+            holdSession()
+        } else if !rtc.isActive {
+            rtc.lockForConfiguration()
+            do {
+                // Our hold keeps the count >= 1, so this setActive(false) only gives back the
+                // count the setActive(true) added; it never deactivates.
+                try rtc.setActive(true)
+                try rtc.setActive(false)
+            } catch {
+                emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
+            }
+            rtc.unlockForConfiguration()
+        }
+        for callId in callOrder {
+            calls[callId]?.setMicEnabled(false, source: "interrupção")
+        }
+        emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
+        playCue("start-connection-451")
+        // The interruption paused the keep-alive loop too.
+        updateKeepAlive()
+    }
+
+    /// Main queue. Catches an interruption that never ended and a session activation that
+    /// failed at join (e.g. joined during a phone call).
+    @objc private func appBecameActive(_ note: Notification) {
+        if calls.isEmpty { return }
+        if interruptedWithoutEnd {
+            emitDiag("INTERRUPÇÃO", "app reaberto", "interrupção sem fim: retomando")
+            resumeAfterInterruption()
+        } else if !holdsSession {
+            holdSession()
+            if holdsSession {
+                emitDiag("ÁUDIO", "ativar sessão", "ok (nova tentativa)")
+            }
         }
     }
 
@@ -351,6 +391,43 @@ public class NativeVoicePlugin: CAPPlugin {
 
     private func emitDiag(_ key: String, _ action: String, _ result: String) {
         notifyListeners("diag", data: ["key": key, "action": action, "result": result])
+    }
+
+    /// On while some line is connecting/reconnecting and none is connected; off otherwise.
+    /// Its own player, so cues never cut it; the session hold keeps the session active meanwhile.
+    private func updateKeepAlive() {
+        let states: [String] = calls.values.map { (c: NativeVoiceCall) -> String in c.state }
+        let needed: Bool = !states.contains("connected")
+            && (states.contains("connecting") || states.contains("reconnecting"))
+        if !needed {
+            if let player = keepAlivePlayer {
+                player.stop()
+                keepAlivePlayer = nil
+                emitDiag("RECONEXÃO", "manter app acordado", "som mudo desligado")
+            }
+            return
+        }
+        if let player = keepAlivePlayer {
+            if !player.isPlaying {
+                player.play()
+            }
+            return
+        }
+        guard let url = Bundle.main.url(forResource: "start-connection-451", withExtension: "wav") else {
+            emitDiag("RECONEXÃO", "manter app acordado", "falhou: arquivo não encontrado")
+            return
+        }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.volume = 0
+            player.numberOfLoops = -1
+            player.prepareToPlay()
+            player.play()
+            keepAlivePlayer = player
+            emitDiag("RECONEXÃO", "manter app acordado", "som mudo ligado")
+        } catch {
+            emitDiag("RECONEXÃO", "manter app acordado", "falhou: \(error.localizedDescription)")
+        }
     }
 
     private func playCue(_ name: String) {

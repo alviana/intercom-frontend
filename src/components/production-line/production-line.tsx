@@ -123,11 +123,10 @@ export const ProductionLine = ({
     () => (ios ? createNativeMicStream(id) : null),
     [ios, id]
   );
-  const nativeInput =
-    joinProductionOptions?.audioinput === "no-device" ||
-    !canTalkOnCall({ joinProductionOptions })
-      ? "no-device"
-      : nativeMic;
+  // iOS captures natively: the WebKit-enumerated audioinput says nothing about the mic.
+  const nativeInput = !canTalkOnCall({ joinProductionOptions })
+    ? "no-device"
+    : nativeMic;
   const inputAudioStream = ios ? nativeInput : webInputStream;
 
   useEffect(() => {

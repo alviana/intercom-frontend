@@ -150,6 +150,18 @@ describe("ProductionLine platform", () => {
     expect(queryByText("Reconectando…")).not.toBeNull();
   });
 
+  it("iOS can talk even when WebKit enumerated no audio input", () => {
+    h.ios = true;
+    renderLine({
+      ...callState,
+      joinProductionOptions: {
+        ...callState.joinProductionOptions!,
+        audioinput: "no-device",
+      },
+    });
+    expect(h.nativeProps.at(-1)?.canTalk).toBe(true);
+  });
+
   it("iOS never opens a program-output line for a non-program user", () => {
     h.ios = true;
     renderLine({
