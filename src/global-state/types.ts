@@ -29,6 +29,8 @@ export interface CallState {
   hotkeys: Hotkeys;
   dataChannel: RTCDataChannel | null;
   isRemotelyMuted: boolean;
+  // iOS native call is re-establishing its connection
+  reconnecting?: boolean;
 }
 
 export type TGlobalState = {

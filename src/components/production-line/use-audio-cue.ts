@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { isIOSApp } from "../../platform";
 import connectionStart from "../../assets/sounds/start-connection-451.wav";
 import connectionStop from "../../assets/sounds/stop-connection-451.wav";
 
@@ -34,6 +35,7 @@ const playAudioElement = (audio: HTMLAudioElement) => {
 
 export const useAudioCue = () => {
   const playEnterSound = useCallback(() => {
+    if (isIOSApp()) return; // native plays the cues
     const now = Date.now();
     if (now - lastEnterCueAt < ENTER_CUE_DEBOUNCE_MS) {
       return;
@@ -45,6 +47,7 @@ export const useAudioCue = () => {
   }, []);
 
   const playExitSound = useCallback(() => {
+    if (isIOSApp()) return;
     exitAudio = getAudioElement(connectionStop, exitAudio);
     playAudioElement(exitAudio);
   }, []);

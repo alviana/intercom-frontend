@@ -30,6 +30,9 @@ import {
   LongPressWrapper,
 } from "./production-line-components.ts";
 import { SelectDevices } from "./select-devices.tsx";
+import { isIOSApp } from "../../platform";
+import { createNativeMicStream } from "../../mobile-overlay/native-voice-stubs";
+import { NativeVoiceConnection } from "./native-voice-connection.tsx";
 import { SymphonyRtcConnectionComponent } from "./symphony-rtc-connection-component.tsx";
 import { useActiveParticipant } from "./use-active-participant.tsx";
 import { useAudioCue } from "./use-audio-cue.ts";
@@ -110,10 +113,18 @@ export const ProductionLine = ({
     audioLevelAboveThreshold
   );
 
-  const [inputAudioStream, audioInputError, resetAudioInput] = useAudioInput({
-    audioInputId: joinProductionOptions?.audioinput ?? null,
+  const ios = isIOSApp();
+  const [webInputStream, audioInputError, resetAudioInput] = useAudioInput({
+    audioInputId: ios ? null : (joinProductionOptions?.audioinput ?? null),
     dispatch,
   });
+  const nativeMic = useMemo(
+    () => (ios ? createNativeMicStream(id) : null),
+    [ios, id]
+  );
+  const nativeInput =
+    joinProductionOptions?.audioinput === "no-device" ? "no-device" : nativeMic;
+  const inputAudioStream = ios ? nativeInput : webInputStream;
 
   useEffect(() => {
     if (audioInputError) {
@@ -468,15 +479,26 @@ export const ProductionLine = ({
             />
           </ConnectionErrorWrapper>
         ))}
-      {connectionActive && (
-        <SymphonyRtcConnectionComponent
-          joinProductionOptions={joinProductionOptions}
-          audiooutput={audiooutput || undefined}
-          inputAudioStream={inputAudioStream}
-          callId={id}
-          dispatch={dispatch}
-        />
-      )}
+      {callState.reconnecting && <div>Reconectando…</div>}
+      {connectionActive &&
+        (ios ? (
+          <NativeVoiceConnection
+            callId={id}
+            joinProductionOptions={joinProductionOptions}
+            canTalk={inputAudioStream !== "no-device"}
+            dispatch={dispatch}
+            muteInput={muteInput}
+            micStream={nativeMic ?? undefined}
+          />
+        ) : (
+          <SymphonyRtcConnectionComponent
+            joinProductionOptions={joinProductionOptions}
+            audiooutput={audiooutput || undefined}
+            inputAudioStream={inputAudioStream}
+            callId={id}
+            dispatch={dispatch}
+          />
+        ))}
       {!connectionError && !loading && (
         <CallContainer isProgramLine={line?.programOutputLine}>
           {line && (

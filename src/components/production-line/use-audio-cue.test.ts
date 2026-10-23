@@ -79,4 +79,19 @@ describe("useAudioCue", () => {
     expect(createdAudio).toHaveLength(1);
     expect(createdAudio[0].play).toHaveBeenCalledTimes(2);
   });
+
+  it("iOS cues are silent", async () => {
+    vi.doMock("../../platform", () => ({ isIOSApp: () => true }));
+    const createdAudio = installAudioMock();
+    const { useAudioCue } = await import("./use-audio-cue.ts");
+    const { result } = renderHook(() => useAudioCue());
+
+    act(() => {
+      result.current.playEnterSound();
+      result.current.playExitSound();
+    });
+
+    expect(createdAudio).toHaveLength(0);
+    vi.doUnmock("../../platform");
+  });
 });
