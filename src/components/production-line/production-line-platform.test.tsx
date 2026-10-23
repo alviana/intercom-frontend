@@ -1,12 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, render } from "@testing-library/react";
 import { ProductionLine } from "./production-line";
 import { CallState } from "../../global-state/types";
 
 const h = vi.hoisted(() => ({
   ios: false,
   getUserMedia: vi.fn(),
-  nativeProps: [] as { canTalk: boolean }[],
+  nativeProps: [] as {
+    canTalk: boolean;
+    onOutputMuted?: (m: boolean) => void;
+  }[],
+  line: null as unknown,
+  registerCallList: vi.fn(),
   audioInputArgs: [] as { audioInputId: string | null }[],
 }));
 
@@ -71,7 +76,7 @@ vi.mock("./use-line-hotkeys.ts", () => ({
   useLineHotkeys: vi.fn(),
   useSpeakerHotkeys: vi.fn(),
 }));
-vi.mock("./use-line-polling.ts", () => ({ useLinePolling: () => null }));
+vi.mock("./use-line-polling.ts", () => ({ useLinePolling: () => h.line }));
 vi.mock("./use-master-input-mute.ts", () => ({ useMasterInputMute: vi.fn() }));
 vi.mock("./use-mute-input.tsx", () => ({
   useMuteInput: () => ({ muteInput: vi.fn(), isInputMuted: true }),
@@ -117,13 +122,15 @@ const renderLine = (cs: CallState = callState) =>
       shouldReduceVolume={false}
       callActionHandlers={{ current: {} }}
       setFailedToConnect={vi.fn()}
-      registerCallList={vi.fn()}
+      registerCallList={h.registerCallList}
     />
   );
 
 describe("ProductionLine platform", () => {
   beforeEach(() => {
     h.audioInputArgs.length = 0;
+    h.nativeProps.length = 0;
+    h.line = null;
     vi.stubGlobal("navigator", {
       ...navigator,
       mediaDevices: { getUserMedia: h.getUserMedia },
@@ -173,6 +180,56 @@ describe("ProductionLine platform", () => {
       },
     });
     expect(h.nativeProps.at(-1)?.canTalk).toBe(false);
+  });
+
+  const withOutput = (muted: boolean) => {
+    const el = { muted, volume: 1 };
+    return {
+      el,
+      cs: { ...callState, audioElements: [el] } as unknown as CallState,
+    };
+  };
+  const lastOutputMuted = () =>
+    h.registerCallList.mock.calls.at(-1)?.[1].isOutputMuted;
+
+  it("iOS volume effect never unmutes a native-muted line", () => {
+    h.ios = true;
+    const { el, cs } = withOutput(true);
+    renderLine(cs);
+    expect(el.muted).toBe(true);
+    expect(el.volume).toBe(0.75);
+  });
+
+  it("iOS follows native output mute through onOutputMuted", () => {
+    h.ios = true;
+    renderLine();
+    act(() => h.nativeProps.at(-1)?.onOutputMuted?.(true));
+    expect(lastOutputMuted()).toBe(true);
+    act(() => h.nativeProps.at(-1)?.onOutputMuted?.(false));
+    expect(lastOutputMuted()).toBe(false);
+  });
+
+  it("iOS program user on program line mutes via the stand-in", () => {
+    h.ios = true;
+    h.line = { programOutputLine: true, participants: [] };
+    const { el, cs } = withOutput(false);
+    renderLine({
+      ...cs,
+      joinProductionOptions: {
+        ...callState.joinProductionOptions!,
+        isProgramUser: true,
+      },
+    });
+    expect(el.muted).toBe(true);
+    expect(lastOutputMuted()).toBe(true);
+  });
+
+  it("Android output behaviour unchanged", () => {
+    h.ios = false;
+    const { el, cs } = withOutput(true);
+    renderLine(cs);
+    expect(el.muted).toBe(false);
+    expect(h.nativeProps).toHaveLength(0);
   });
 
   it("Android renders SymphonyRtcConnectionComponent with useAudioInput", () => {

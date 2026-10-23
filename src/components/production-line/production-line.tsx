@@ -260,14 +260,15 @@ export const ProductionLine = ({
       audioElement.volume = value;
     });
 
-    if (value > 0) {
+    // On iOS native owns the output mute; never undo it from here.
+    if (value > 0 && !ios) {
       setIsOutputMuted(false);
       audioElements?.forEach((audioElement) => {
         // eslint-disable-next-line no-param-reassign
         audioElement.muted = false;
       });
     }
-  }, [audioElements, value]);
+  }, [audioElements, value, ios]);
 
   useHotkeys(savedHotkeys?.increaseVolumeHotkey || "u", () => {
     const newValue = Math.min(value + 0.05, 1);
@@ -410,8 +411,15 @@ export const ProductionLine = ({
   useEffect(() => {
     if (isProgramOutputLine && isProgramUser) {
       setIsOutputMuted(true);
+      // iOS: through the stand-in so native knows.
+      if (ios) {
+        audioElements?.forEach((audioElement) => {
+          // eslint-disable-next-line no-param-reassign
+          audioElement.muted = true;
+        });
+      }
     }
-  }, [isProgramOutputLine, isProgramUser]);
+  }, [isProgramOutputLine, isProgramUser, ios, audioElements]);
 
   useEffect(() => {
     if (!fetchProductionError) return;
@@ -492,6 +500,7 @@ export const ProductionLine = ({
             dispatch={dispatch}
             muteInput={muteInput}
             micStream={nativeMic ?? undefined}
+            onOutputMuted={setIsOutputMuted}
           />
         ) : (
           <SymphonyRtcConnectionComponent

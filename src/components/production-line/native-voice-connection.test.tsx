@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, waitFor, act } from "@testing-library/react";
 import { NativeVoiceConnection } from "./native-voice-connection";
 import { TJoinProductionOptions } from "./types";
+import { NativeVoice } from "../../mobile-overlay/native-voice";
 
 type Ev = Record<string, unknown>;
 
@@ -47,7 +48,8 @@ type Props = ComponentProps<typeof NativeVoiceConnection>;
 const ui = (
   dispatch: Props["dispatch"],
   muteInput: Props["muteInput"],
-  canTalk = true
+  canTalk = true,
+  onOutputMuted?: Props["onOutputMuted"]
 ) => (
   <NativeVoiceConnection
     callId="c1"
@@ -55,14 +57,16 @@ const ui = (
     canTalk={canTalk}
     dispatch={dispatch}
     muteInput={muteInput}
+    onOutputMuted={onOutputMuted}
   />
 );
 
 const setup = (canTalk = true) => {
   const dispatch = vi.fn();
   const muteInput = vi.fn();
-  const utils = render(ui(dispatch, muteInput, canTalk));
-  return { dispatch, muteInput, ...utils };
+  const onOutputMuted = vi.fn();
+  const utils = render(ui(dispatch, muteInput, canTalk, onOutputMuted));
+  return { dispatch, muteInput, onOutputMuted, ...utils };
 };
 
 const updates = (dispatch: ReturnType<typeof vi.fn>) =>
@@ -165,6 +169,29 @@ describe("NativeVoiceConnection", () => {
     await waitFor(() =>
       expect(muteInput).toHaveBeenCalledWith(false, "restaurado")
     );
+  });
+
+  it("outputChanged from native sets the output mute (iOS)", async () => {
+    const { onOutputMuted } = setup();
+    await waitFor(() => expect(h.listeners.outputChanged).toBeDefined());
+    act(() => h.listeners.outputChanged({ callId: "c1", muted: true }));
+    expect(onOutputMuted).toHaveBeenCalledWith(true);
+    act(() => h.listeners.outputChanged({ callId: "other", muted: false }));
+    expect(onOutputMuted).toHaveBeenCalledTimes(1);
+  });
+
+  it("restore applies native outputMuted instead of unmuting", async () => {
+    h.join.mockResolvedValue({
+      callId: "c1",
+      meta: "",
+      sessionId: "s1",
+      state: "connected",
+      micEnabled: false,
+      outputMuted: true,
+    });
+    const { onOutputMuted } = setup();
+    await waitFor(() => expect(onOutputMuted).toHaveBeenCalledWith(true));
+    expect(NativeVoice.setOutputMuted).not.toHaveBeenCalled();
   });
 
   it("ignores events of other calls", async () => {

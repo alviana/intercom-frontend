@@ -20,6 +20,8 @@ type TProps = {
   muteInput: (mute: boolean, source?: string) => void;
   /** The line's native mic stand-in, so UI and call state share one stream. */
   micStream?: MediaStream;
+  /** Native owns the line's output mute; this mirrors it into the UI. */
+  onOutputMuted?: (muted: boolean) => void;
 };
 
 const toConnectionState = (state: NativeCallState): RTCPeerConnectionState =>
@@ -33,9 +35,12 @@ export const NativeVoiceConnection = ({
   dispatch,
   muteInput,
   micStream,
+  onOutputMuted,
 }: TProps): null => {
   const muteRef = useRef(muteInput);
   muteRef.current = muteInput;
+  const outputRef = useRef(onOutputMuted);
+  outputRef.current = onOutputMuted;
 
   useEffect(() => {
     if (!joinProductionOptions) return undefined;
@@ -70,6 +75,9 @@ export const NativeVoiceConnection = ({
         if (!cancelled && ev.callId === callId)
           muteRef.current(!ev.enabled, ev.source);
       }),
+      NativeVoice.addListener("outputChanged", (ev) => {
+        if (!cancelled && ev.callId === callId) outputRef.current?.(ev.muted);
+      }),
       NativeVoice.addListener("activity", (ev) => {
         if (!cancelled && ev.callId === callId)
           update({ audioLevelAboveThreshold: ev.active });
@@ -100,6 +108,7 @@ export const NativeVoiceConnection = ({
             reconnecting: info.state === "reconnecting",
           });
         }
+        if (info.outputMuted) outputRef.current?.(true);
         if (info.micEnabled) muteRef.current(false, "restaurado");
       })
       .catch(() => update({ connectionState: "failed" }));
