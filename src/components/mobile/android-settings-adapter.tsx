@@ -21,6 +21,7 @@ import { Spinner } from "../loader/loader";
 import { MobileAudioRouteSelect } from "./MobileAudioRouteSelect";
 import { DebugPanel } from "./DebugPanel";
 import { companionFeatureEnabled } from "../../config";
+import { isIOSApp } from "../../platform";
 
 export const submitAndroidSettings = (
   payload: UserSettingsFormPayload,
@@ -232,6 +233,8 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
 
   return {
     inputLabel: "Microfone",
+    // iOS: the mic follows "Saída de áudio" natively; the WebKit list no longer applies.
+    hideInput: isIOSApp(),
     formatDeviceLabel: formatMediaDeviceLabel,
     renderDeviceOutputOverride: () => (
       <MobileAudioRouteSelect

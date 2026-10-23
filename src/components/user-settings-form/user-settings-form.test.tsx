@@ -195,4 +195,26 @@ describe("UserSettingsForm — lineId auto-selection fix", () => {
     expect(screen.getByText("Android output route")).toBeInTheDocument();
     expect(screen.queryByText("Saída")).not.toBeInTheDocument();
   });
+
+  it("hides the mic select when the adapter asks (iOS native audio)", async () => {
+    const { rerender } = render(
+      <UserSettingsForm
+        buttonText="Save"
+        defaultValues={defaultValues}
+        settingsAdapter={{ inputLabel: "Microfone" }}
+      />
+    );
+    expect(screen.getByText("Microfone")).toBeInTheDocument();
+
+    await act(async () => {
+      rerender(
+        <UserSettingsForm
+          buttonText="Save"
+          defaultValues={defaultValues}
+          settingsAdapter={{ inputLabel: "Microfone", hideInput: true }}
+        />
+      );
+    });
+    expect(screen.queryByText("Microfone")).not.toBeInTheDocument();
+  });
 });

@@ -19,16 +19,33 @@ public class AudioRoutePlugin: CAPPlugin {
     private var toneEnd: DispatchWorkItem?
     private var toneHoldsSession: Bool = false
     private var preferredRoute: String = "speaker"
+    /// Diagnostics: the last failure applying a route ("" after a success), sent in the payload.
+    private var lastError: String = ""
 
-    /// Main queue, right after NativeVoicePlugin activated the session for the first line:
-    /// the preferred input and the output override only take on an active session.
-    static func reapplyRoute() {
-        guard let plugin = current else { return }
-        do {
-            try plugin.applyRoute(plugin.preferredRoute)
-        } catch {
-            CAPLog.print("AudioRoutePlugin: failed to re-apply route: \(error)")
+    /// Main queue, right after NativeVoicePlugin activated the session for the first line and
+    /// on every line connect: the preferred input and the output override only take on an
+    /// active session, and WebRTC's audio unit reconfigures the session when it starts.
+    /// Returns the outcome for NativeVoicePlugin's "diag" (pt-BR).
+    @discardableResult
+    static func reapplyRoute() -> String {
+        guard let plugin = current else { return "erro: plugin de rota ausente" }
+        let route: String = plugin.preferredRoute
+        if !plugin.rtc.isActive {
+            return "sessão inativa: nada pedido (\(route))"
         }
+        let outcome: String
+        do {
+            try plugin.applyRoute(route)
+            plugin.lastError = ""
+            let asked: String = plugin.session.preferredInput?.portName ?? "nenhum"
+            let mic: String = plugin.session.currentRoute.inputs.first?.portName ?? "?"
+            outcome = "ok: \(route)→\(asked) · mic: \(mic)"
+        } catch {
+            plugin.lastError = "\(route): \(error.localizedDescription)"
+            outcome = "erro: \(plugin.lastError)"
+        }
+        plugin.emitRoutes()
+        return outcome
     }
 
     public override func load() {
@@ -38,6 +55,7 @@ public class AudioRoutePlugin: CAPPlugin {
         do {
             try applyRoute(preferredRoute)
         } catch {
+            lastError = "\(preferredRoute): \(error.localizedDescription)"
             CAPLog.print("AudioRoutePlugin: failed to configure session: \(error)")
         }
 
@@ -81,13 +99,16 @@ public class AudioRoutePlugin: CAPPlugin {
             self.preferredRoute = route
             do {
                 try self.applyRoute(route)
+                self.lastError = ""
                 call.resolve(["active": self.activeRouteId() as Any])
                 self.emitRoutes()
             } catch {
                 self.preferredRoute = previous
                 // The category may already have changed before the failure: put the old route back.
                 try? self.applyRoute(previous)
+                self.lastError = "\(route): \(error.localizedDescription)"
                 call.reject("Failed to set route: \(error.localizedDescription)")
+                self.emitRoutes()
             }
         }
     }
@@ -190,7 +211,22 @@ public class AudioRoutePlugin: CAPPlugin {
             // Diagnostics: the mic actually in use and whether Bluetooth mics are allowed now.
             "input": session.currentRoute.inputs.first?.portName ?? "",
             "hfp": session.categoryOptions.contains(.allowBluetoothHFP),
+            // Why the mic is not the headset's: what was asked, what iOS offers, what failed.
+            "preferred": preferredRoute,
+            "preferredInput": session.preferredInput?.portName ?? "",
+            "inputs": describePorts(inputs),
+            "output": describePorts(currentOutputs),
+            "lastError": lastError,
+            "mode": session.mode.rawValue,
+            "options": Int(session.categoryOptions.rawValue),
+            "sampleRate": Int(session.sampleRate),
         ]
+    }
+
+    private func describePorts(_ ports: [AVAudioSessionPortDescription]) -> String {
+        return ports.map { (port: AVAudioSessionPortDescription) -> String in
+            "\(port.portName) (\(port.portType.rawValue))"
+        }.joined(separator: ", ")
     }
 
     private func routeObj(id: String, label: String, available: Bool, type: String, name: String = "") -> [String: Any] {

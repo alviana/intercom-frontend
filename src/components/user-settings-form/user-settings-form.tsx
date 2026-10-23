@@ -401,33 +401,37 @@ export const UserSettingsForm = ({
               {isBrowserFirefox && <FirefoxWarning type="firefox-warning" />}
             </SectionTitle>
           </DevicesSection>
-          <FormItem label={inputLabel}>
-            <FormSelect
-              // eslint-disable-next-line
-              {...register(`audioinput`, {
-                onChange: (e) =>
-                  handleImmediateDeviceChange("audioinput", e.target.value),
-              })}
-            >
-              {devices.input && devices.input.length > 0 ? (
-                <>
-                  {settingsAdapter &&
-                    !devices.input.some((d) => d.deviceId === "default") && (
-                      <option value="default">
-                        Microfone padrão do sistema
+          {!settingsAdapter?.hideInput && (
+            <FormItem label={inputLabel}>
+              <FormSelect
+                // eslint-disable-next-line
+                {...register(`audioinput`, {
+                  onChange: (e) =>
+                    handleImmediateDeviceChange("audioinput", e.target.value),
+                })}
+              >
+                {devices.input && devices.input.length > 0 ? (
+                  <>
+                    {settingsAdapter &&
+                      !devices.input.some((d) => d.deviceId === "default") && (
+                        <option value="default">
+                          Microfone padrão do sistema
+                        </option>
+                      )}
+                    {devices.input.map((device, idx) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {formatDeviceLabel(device, idx)}
                       </option>
-                    )}
-                  {devices.input.map((device, idx) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {formatDeviceLabel(device, idx)}
-                    </option>
-                  ))}
-                </>
-              ) : (
-                <option value="no-device">Nenhum dispositivo disponível</option>
-              )}
-            </FormSelect>
-          </FormItem>
+                    ))}
+                  </>
+                ) : (
+                  <option value="no-device">
+                    Nenhum dispositivo disponível
+                  </option>
+                )}
+              </FormSelect>
+            </FormItem>
+          )}
           {outputOverride}
           {!outputOverride && !isBrowserSafari && (
             <FormItem label="Saída">

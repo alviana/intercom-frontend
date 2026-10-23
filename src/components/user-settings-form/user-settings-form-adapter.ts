@@ -37,6 +37,8 @@ export type UserSettingsFormAdapter = {
   ) => void;
   formatDeviceLabel?: (device: MediaDeviceInfo, index: number) => string;
   inputLabel?: string;
+  /** Hides the mic select (iOS: native audio takes the mic from the output route). */
+  hideInput?: boolean;
 };
 
 export const sanitizeStoredUrl = (value: string): string =>

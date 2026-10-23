@@ -120,6 +120,7 @@ public class NativeVoicePlugin: CAPPlugin {
             }
             voiceCall.onConnected = { [weak self] in
                 self?.playCue("start-connection-451")
+                self?.reassertRoute(lineId: lineId)
             }
             self.holdSession()
             self.calls[callId] = voiceCall
@@ -358,7 +359,19 @@ public class NativeVoicePlugin: CAPPlugin {
         }
         rtc.unlockForConfiguration()
         if holdsSession {
-            AudioRoutePlugin.reapplyRoute()
+            emitDiag("ROTA", "reaplicar ao ativar sessão", AudioRoutePlugin.reapplyRoute())
+        }
+    }
+
+    /// WebRTC's audio unit configures the session when it starts, after the reapply at
+    /// activation, and the headset mic can fall back to the built-in one: assert the user's
+    /// route again on every transition into "connected" and once more 0.5 s later. One-shot
+    /// per transition (never from route-change notifications, so no loop).
+    private func reassertRoute(lineId: String) {
+        emitDiag("ROTA", "reaplicar ao conectar linha \(lineId)", AudioRoutePlugin.reapplyRoute())
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self, !self.calls.isEmpty else { return }
+            self.emitDiag("ROTA", "reaplicar 0,5 s após conectar linha \(lineId)", AudioRoutePlugin.reapplyRoute())
         }
     }
 

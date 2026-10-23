@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { AudioRoute } from "../../mobile-overlay/audio-route";
+import {
+  AudioRoute,
+  describeRouteState,
+} from "../../mobile-overlay/audio-route";
 import { isIOSApp, isMobileApp } from "../../platform";
 import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import {
@@ -17,16 +20,14 @@ export const AudioRouteManager = () => {
 
     const listenerPromise = AudioRoute.addListener(
       "audioRouteChanged",
-      ({ active, input, hfp }) => {
+      (state) => {
+        const { active } = state;
         logHeadsetEvent({
           at: Date.now(),
           key: "ROTA",
           action: String(active ?? "nenhuma"),
           source: "sistema",
-          result:
-            input === undefined
-              ? "rota de áudio mudou"
-              : `mic: ${input || "?"} · bluetooth-mic: ${hfp ? "sim" : "não"}`,
+          result: describeRouteState(state),
         });
         // iOS: changes made by the system/WebKit (e.g. falling back to the speaker) must
         // not overwrite the route the user picked; the picker stores it itself.
