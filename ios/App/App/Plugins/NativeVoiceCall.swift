@@ -1,6 +1,23 @@
 import Foundation
 import WebRTC
 
+/// One line as the lock-screen widget shows it (built on the main queue).
+struct LineSnapshot: Equatable {
+    var callId: String
+    var lineName: String
+    var productionName: String
+    /// Set by the plugin (the headset toggle's target).
+    var isHeadsetLine: Bool
+    var canTalk: Bool
+    var micEnabled: Bool
+    var outputMuted: Bool
+    /// "ok" | "reconectando" | "pausa" ("pausa" is set by the plugin during an interruption).
+    var status: String
+    /// "Você" | participant name | "Alguém falando" | "Ninguém falando"; "" on a program line.
+    var talker: String
+    var isProgramLine: Bool
+}
+
 /// One line's call: the server session (HTTP) and one RTCPeerConnection.
 /// Main queue only: every WebRTC and URLSession callback hops to the main queue,
 /// and callbacks from a peer connection that is no longer current are dropped.
@@ -17,6 +34,7 @@ final class NativeVoiceCall: NSObject {
     private static let heartbeatInterval: TimeInterval = 10.0
     private static let disconnectGrace: TimeInterval = 5.0
     private static let connectTimeout: TimeInterval = 30.0
+    private static let participantsInterval: TimeInterval = 5.0
     /// Wait before reconnect attempt n (1-based); after the list, every `steadyBackoff`.
     private static let backoff: [TimeInterval] = [2.0, 4.0, 8.0]
     private static let steadyBackoff: TimeInterval = 15.0
@@ -29,6 +47,10 @@ final class NativeVoiceCall: NSObject {
     private let productionId: String
     let lineId: String
     private let username: String
+    /// From `meta` (TJoinProductionOptions); "" / false when absent.
+    private let metaLineName: String
+    private let metaProductionName: String
+    private let metaProgramLine: Bool
 
     /// "connecting" | "connected" | "reconnecting" | "failed" | "closed"
     private(set) var state: String = "connecting"
@@ -42,15 +64,28 @@ final class NativeVoiceCall: NSObject {
     var diag: ((String, String, String) -> Void)?
     /// Called on every transition into "connected" (start cue).
     var onConnected: (() -> Void)?
+    /// Called when `snapshot()` changed.
+    var onChanged: (() -> Void)?
 
     private var peerConnection: RTCPeerConnection?
     private var dataChannel: RTCDataChannel?
     private var localTrack: RTCAudioTrack?
-    private var outputMuted: Bool = false
+    private(set) var outputMuted: Bool = false
     private var volume: Double = 0.75
     private var statsTimer: Timer?
     private var statsInFlight: Bool = false
     private var lastActive: Bool = false
+    /// Talker inputs: remote audio, own mic audio, last DominantSpeaker endpoint.
+    private var inboundActive: Bool = false
+    private var localActive: Bool = false
+    private var dominantEndpoint: String?
+    /// From GET production/{p}/line/{l}: endpointId -> name (own session -> "Você").
+    private var participantNames: [String: String] = [:]
+    private var fetchedLineName: String = ""
+    private var fetchedProgramLine: Bool = false
+    private var participantsTimer: Timer?
+    private var participantsFailing: Bool = false
+    private var lastSnapshot: LineSnapshot?
     private var gatherTimeout: DispatchWorkItem?
     private var pendingAnswerSdp: String?
     private var closed: Bool = false
@@ -77,6 +112,10 @@ final class NativeVoiceCall: NSObject {
         self.username = username
         self.canTalk = canTalk
         self.meta = meta
+        let options: [String: Any]? = NativeVoiceCall.parseObject(meta.data(using: .utf8))
+        metaLineName = options?["lineName"] as? String ?? ""
+        metaProductionName = options?["productionName"] as? String ?? ""
+        metaProgramLine = options?["lineUsedForProgramOutput"] as? Bool ?? false
         super.init()
     }
 
@@ -89,7 +128,42 @@ final class NativeVoiceCall: NSObject {
             "sessionId": sid,
             "state": state,
             "micEnabled": micEnabled,
+            "outputMuted": outputMuted,
         ]
+    }
+
+    /// The widget's view of this line (isHeadsetLine false; the plugin sets it and "pausa").
+    func snapshot() -> LineSnapshot {
+        let isProgramLine: Bool = metaProgramLine || fetchedProgramLine
+        return LineSnapshot(
+            callId: callId,
+            lineName: metaLineName.isEmpty ? fetchedLineName : metaLineName,
+            productionName: metaProductionName,
+            isHeadsetLine: false,
+            canTalk: canTalk,
+            micEnabled: micEnabled,
+            outputMuted: outputMuted,
+            status: state == "connected" ? "ok" : "reconectando",
+            // The program feed is always active: no talker there.
+            talker: isProgramLine ? "" : talker(),
+            isProgramLine: isProgramLine
+        )
+    }
+
+    private func talker() -> String {
+        if micEnabled && localActive { return "Você" }
+        if !inboundActive { return "Ninguém falando" }
+        if let endpoint = dominantEndpoint, let name = participantNames[endpoint], !name.isEmpty {
+            return name
+        }
+        return "Alguém falando"
+    }
+
+    private func reportIfChanged() {
+        let current: LineSnapshot = snapshot()
+        if current == lastSnapshot { return }
+        lastSnapshot = current
+        onChanged?()
     }
 
     // MARK: - Lifecycle
@@ -339,6 +413,10 @@ final class NativeVoiceCall: NSObject {
         gatherTimeout?.cancel()
         gatherTimeout = nil
         pendingAnswerSdp = nil
+        stopParticipants()
+        inboundActive = false
+        localActive = false
+        dominantEndpoint = nil
         dataChannel?.delegate = nil
         dataChannel?.close()
         dataChannel = nil
@@ -367,8 +445,10 @@ final class NativeVoiceCall: NSObject {
             flushStaleSessions()
             startStats()
             startHeartbeat()
+            startParticipants()
             onConnected?()
         }
+        reportIfChanged()
     }
 
     private func emitState() {
@@ -388,11 +468,18 @@ final class NativeVoiceCall: NSObject {
         if let source = source {
             emit?("micChanged", ["callId": callId, "enabled": enabled, "source": source])
         }
+        reportIfChanged()
     }
 
-    func setOutputMuted(_ muted: Bool) {
+    /// `report` false = asked by JS (silent); true = native-originated, reported as outputChanged.
+    func setOutputMuted(_ muted: Bool, report: Bool = false) {
+        let changed: Bool = muted != outputMuted
         outputMuted = muted
         applyOutput()
+        if changed && report {
+            emit?("outputChanged", ["callId": callId, "muted": muted])
+        }
+        reportIfChanged()
     }
 
     func setVolume(_ value: Double) {
@@ -423,7 +510,9 @@ final class NativeVoiceCall: NSObject {
         guard let msg = NativeVoiceCall.parseObject(data), let type = msg["type"] as? String else { return }
         if type == "DominantSpeaker" {
             if let endpoint = msg["endpoint"] as? String {
+                dominantEndpoint = endpoint
                 emit?("dominantSpeaker", ["callId": callId, "endpoint": endpoint])
+                reportIfChanged()
             }
         } else if type == "EndpointMessage" {
             let payload = msg["payload"] as? [String: Any]
@@ -456,29 +545,85 @@ final class NativeVoiceCall: NSObject {
         guard !statsInFlight, let pc = peerConnection else { return }
         statsInFlight = true
         pc.statistics { (report: RTCStatisticsReport) in
-            let active: Bool = NativeVoiceCall.hasActivity(report)
+            let levels: (inbound: Bool, local: Bool) = NativeVoiceCall.activity(report)
             DispatchQueue.main.async {
                 guard self.isCurrent(pc) else { return }
                 self.statsInFlight = false
+                // JS "activity" keeps the web app's rule: inbound or local.
+                let active: Bool = levels.inbound || levels.local
                 if active != self.lastActive {
                     self.lastActive = active
                     self.emit?("activity", ["callId": self.callId, "active": active])
+                }
+                if levels.inbound != self.inboundActive || levels.local != self.localActive {
+                    self.inboundActive = levels.inbound
+                    self.localActive = levels.local
+                    self.reportIfChanged()
                 }
             }
         }
     }
 
-    /// Inbound or local audio level above the threshold (same rule as the web app).
-    private static func hasActivity(_ report: RTCStatisticsReport) -> Bool {
+    /// Inbound (remote) and local (own mic) audio level above the threshold, split for the talker.
+    private static func activity(_ report: RTCStatisticsReport) -> (inbound: Bool, local: Bool) {
+        var inbound: Bool = false
+        var local: Bool = false
         for (_, stat) in report.statistics {
-            if stat.type == "inbound-rtp" || stat.type == "media-source" {
-                if let level = stat.values["audioLevel"] as? NSNumber,
-                   level.doubleValue > activityThreshold {
-                    return true
-                }
+            guard let level = stat.values["audioLevel"] as? NSNumber,
+                  level.doubleValue > activityThreshold else { continue }
+            if stat.type == "inbound-rtp" {
+                inbound = true
+            } else if stat.type == "media-source" {
+                local = true
             }
         }
-        return false
+        return (inbound: inbound, local: local)
+    }
+
+    // MARK: - Participants (names for the talker; every 5 s while connected)
+
+    private func startParticipants() {
+        stopParticipants()
+        fetchParticipants()
+        let timer = Timer(timeInterval: NativeVoiceCall.participantsInterval, repeats: true) { [weak self] (_: Timer) in
+            self?.fetchParticipants()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        participantsTimer = timer
+    }
+
+    private func stopParticipants() {
+        participantsTimer?.invalidate()
+        participantsTimer = nil
+    }
+
+    private func fetchParticipants() {
+        let path: String = "production/" + NativeVoiceCall.encode(productionId)
+            + "/line/" + NativeVoiceCall.encode(lineId)
+        request("GET", path, body: nil, quiet: true) { (status: Int, data: Data?, error: Error?) in
+            if self.closed { return }
+            guard (200..<300).contains(status), let line = NativeVoiceCall.parseObject(data) else {
+                // One diag per failure streak (the fetch repeats every 5 s).
+                if !self.participantsFailing {
+                    self.participantsFailing = true
+                    self.diag?("PARTICIPANTES", "nomes da linha \(self.lineId)",
+                               "falhou: \(NativeVoiceCall.describe(status: status, error: error))")
+                }
+                return
+            }
+            self.participantsFailing = false
+            let own: String? = self.sessionId
+            var names: [String: String] = [:]
+            for participant in (line["participants"] as? [[String: Any]]) ?? [] {
+                guard let endpoint = participant["endpointId"] as? String else { continue }
+                let sid: String? = participant["sessionId"] as? String
+                names[endpoint] = (sid != nil && sid == own) ? "Você" : (participant["name"] as? String ?? "")
+            }
+            self.participantNames = names
+            self.fetchedLineName = line["name"] as? String ?? ""
+            self.fetchedProgramLine = line["programOutputLine"] as? Bool ?? false
+            self.reportIfChanged()
+        }
     }
 
     // MARK: - Heartbeat (presence; 410 = the server dropped the session)
@@ -538,7 +683,8 @@ final class NativeVoiceCall: NSObject {
     }
 
     /// Completion runs on the main queue with the HTTP status (0 when there was no response).
-    private func request(_ method: String, _ path: String, body: [String: Any]?,
+    /// `quiet`: no "SESSAO" diag on failure (the caller reports it).
+    private func request(_ method: String, _ path: String, body: [String: Any]?, quiet: Bool = false,
                          completion: @escaping (Int, Data?, Error?) -> Void) {
         guard let req = makeRequest(method, path, body: body, timeout: 15) else {
             diag?("SESSAO", "\(method) \(path)", "falhou: URL inválida")
@@ -549,7 +695,7 @@ final class NativeVoiceCall: NSObject {
         URLSession.shared.dataTask(with: req) { (data: Data?, response: URLResponse?, error: Error?) in
             let status: Int = (response as? HTTPURLResponse)?.statusCode ?? 0
             DispatchQueue.main.async {
-                if !(200..<300).contains(status) && !(method == "DELETE" && status == 500) {
+                if !quiet && !(200..<300).contains(status) && !(method == "DELETE" && status == 500) {
                     self.diag?("SESSAO", "\(method) sessão (linha \(lineId))",
                                 "falhou: \(NativeVoiceCall.describe(status: status, error: error))")
                 }

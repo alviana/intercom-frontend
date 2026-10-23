@@ -25,6 +25,8 @@ export interface NativeCallInfo {
   sessionId: string | null;
   state: NativeCallState;
   micEnabled: boolean;
+  /** Native owns it on iOS: a widget Som tap changes it (reported as outputChanged). */
+  outputMuted: boolean;
 }
 
 export interface NativeVoicePlugin {
@@ -52,8 +54,12 @@ export interface NativeVoicePlugin {
     listener: (ev: {
       callId: string;
       enabled: boolean;
-      source: "fone" | "interrupção" | "remoto";
+      source: "fone" | "interrupção" | "remoto" | "widget";
     }) => void
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: "outputChanged",
+    listener: (ev: { callId: string; muted: boolean }) => void
   ): Promise<PluginListenerHandle>;
   addListener(
     eventName: "activity",

@@ -16,8 +16,15 @@ public class NativeVoicePlugin: CAPPlugin {
     private var calls: [String: NativeVoiceCall] = [:]
     /// callIds in join order, so listCalls restores lines in the order they were opened.
     private var callOrder: [String] = []
+    /// Main queue: fired on any change of `lineSnapshots()` (set by the widget controller).
+    var onLinesChanged: (() -> Void)?
     /// Last line whose mic was opened: the headset toggle's target.
-    private(set) var lastMicCallId: String?
+    private(set) var lastMicCallId: String? {
+        didSet {
+            // The headset line (first row of the widget) may have moved.
+            if oldValue != lastMicCallId { onLinesChanged?() }
+        }
+    }
     /// systemUptime of the last headset press acted on (400 ms debounce).
     private var lastHeadsetPress: TimeInterval = -Double.infinity
     private var cuePlayer: AVAudioPlayer?
@@ -29,7 +36,12 @@ public class NativeVoicePlugin: CAPPlugin {
     /// WebRTC's audio unit, and with no audio running iOS suspends the app and its retries.
     private var keepAlivePlayer: AVAudioPlayer?
     /// An interruption .began with no .ended yet (some apps never send it).
-    private var interruptedWithoutEnd: Bool = false
+    private var interruptedWithoutEnd: Bool = false {
+        didSet {
+            // Every line's status ("pausa").
+            if oldValue != interruptedWithoutEnd { onLinesChanged?() }
+        }
+    }
 
     // CallKit mode (experimental switch, off by default): while on, one CallKit call owns the
     // audio session so a Bluetooth headset in HFP sends its button presses to the app.
@@ -161,6 +173,9 @@ public class NativeVoicePlugin: CAPPlugin {
                 self?.playCue("start-connection-451")
                 self?.reassertRoute(lineId: lineId)
             }
+            voiceCall.onChanged = { [weak self] in
+                self?.onLinesChanged?()
+            }
             AudioRoutePlugin.resetReinforce()
             // The switch takes effect when the first line opens with no activation of ours left.
             if self.calls.isEmpty && !self.holdsSession && !self.callKitMode && self.callKitWanted {
@@ -178,6 +193,7 @@ public class NativeVoicePlugin: CAPPlugin {
             voiceCall.start()
             // The initial "connecting" is not emitted as a transition.
             self.updateKeepAlive()
+            self.onLinesChanged?()
             call.resolve(voiceCall.info())
         }
     }
@@ -200,6 +216,7 @@ public class NativeVoicePlugin: CAPPlugin {
                 self.interruptedWithoutEnd = false
                 self.scheduleRelease(after: (self.cuePlayer?.duration ?? 0) + 1.0)
             }
+            self.onLinesChanged?()
             call.resolve()
         }
     }
@@ -332,7 +349,6 @@ public class NativeVoicePlugin: CAPPlugin {
 
     /// Also run from appBecameActive when a .began never got its .ended.
     private func resumeAfterInterruption() {
-        interruptedWithoutEnd = false
         if callKitMode {
             // CallKit owns the activation: only make sure our call is back.
             reconcileCallKit()
@@ -342,6 +358,8 @@ public class NativeVoicePlugin: CAPPlugin {
         for callId in callOrder {
             calls[callId]?.setMicEnabled(false, source: "interrupção")
         }
+        // After the mics closed, so the widget never shows an open mic out of "pausa".
+        interruptedWithoutEnd = false
         emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
         playCue("start-connection-451")
         // The interruption paused the keep-alive loop too.
@@ -407,18 +425,70 @@ public class NativeVoicePlugin: CAPPlugin {
             emitDiag("FONE", "ignorado", calls.isEmpty ? "sem linha" : "linha só ouvinte")
             return
         }
+        let open: Bool = flipMic(callId, voiceCall, source: "fone", cueLater: cueLater)
+        emitDiag("FONE", open ? "ligou" : "desligou", "linha \(voiceCall.lineId)")
+    }
+
+    /// Toggles one line's mic with its cue (reported to JS as micChanged `source`); returns
+    /// whether it is now open. An opened line becomes the headset target.
+    private func flipMic(_ callId: String, _ voiceCall: NativeVoiceCall, source: String, cueLater: Bool) -> Bool {
         let open: Bool = !voiceCall.micEnabled
-        voiceCall.setMicEnabled(open, source: "fone")
         if open {
+            // Before the change, so the snapshot it triggers already has the new headset line.
             lastMicCallId = callId
         }
+        voiceCall.setMicEnabled(open, source: source)
         let cue: String = open ? "start-connection-451" : "stop-connection-451"
         if cueLater {
             pendingCue = cue
         } else {
             playCue(cue)
         }
-        emitDiag("FONE", open ? "ligou" : "desligou", "linha \(voiceCall.lineId)")
+        return open
+    }
+
+    // MARK: - Widget (main queue; contract for the lock-screen Live Activity)
+
+    /// Every open line, the headset line first, then join order.
+    func lineSnapshots() -> [LineSnapshot] {
+        let headsetId: String? = headsetTarget()
+        // A phone call ended our CallKit call (CallKit mode): lines kept, paused like an interruption.
+        let paused: Bool = interruptedWithoutEnd || (callKitMode && otherCallPresent())
+        var ids: [String] = callOrder
+        if let first = headsetId, let index = ids.firstIndex(of: first) {
+            ids.remove(at: index)
+            ids.insert(first, at: 0)
+        }
+        return ids.compactMap { (id: String) -> LineSnapshot? in
+            guard var line = calls[id]?.snapshot() else { return nil }
+            line.isHeadsetLine = id == headsetId
+            if paused {
+                line.status = "pausa"
+            }
+            return line
+        }
+    }
+
+    /// A widget Mic tap: like a headset press on that line (cue, headset target), reported to
+    /// JS as micChanged "widget".
+    func toggleMic(callId: String) {
+        guard let voiceCall = calls[callId], voiceCall.canTalk else {
+            emitDiag("WIDGET", "microfone", calls[callId] == nil ? "ignorado: linha fechada" : "ignorado: linha só ouvinte")
+            return
+        }
+        let open: Bool = flipMic(callId, voiceCall, source: "widget", cueLater: false)
+        emitDiag("WIDGET", open ? "microfone ligado" : "microfone desligado", "linha \(voiceCall.lineId)")
+    }
+
+    /// A widget Som tap: flips the line's output mute, reported to JS as outputChanged.
+    func toggleOutput(callId: String) {
+        guard let voiceCall = calls[callId] else {
+            emitDiag("WIDGET", "som", "ignorado: linha fechada")
+            return
+        }
+        let muted: Bool = !voiceCall.outputMuted
+        voiceCall.setOutputMuted(muted, report: true)
+        emitDiag("WIDGET", muted ? "som desligado" : "som ligado", "linha \(voiceCall.lineId)")
     }
 
     private func headsetTarget() -> String? {
@@ -718,6 +788,8 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
             callKitMine.remove(call.uuid)
         }
         reconcileCallKit()
+        // A phone call came or went: "pausa" in lineSnapshots.
+        onLinesChanged?()
     }
 
     // MARK: CXProviderDelegate
