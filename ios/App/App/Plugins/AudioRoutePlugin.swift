@@ -119,14 +119,18 @@ public class AudioRoutePlugin: CAPPlugin {
             routes.append(routeObj(id: "earpiece", label: "Phone earpiece", available: true, type: "earpiece"))
         }
         routes.append(routeObj(id: "speaker", label: "Phone speaker", available: true, type: "speaker"))
-        if let h = headsetInputs.first {
+        let firstHeadset = headsetInputs.first
+        let firstBluetooth = bluetoothInputs.first
+        if let h = firstHeadset {
             routes.append(routeObj(id: "headset", label: routeLabel(prefix: "Wired headset", port: h), available: true, type: "headset"))
         }
-        if let b = bluetoothInputs.first {
+        if let b = firstBluetooth {
             routes.append(routeObj(id: "bluetooth", label: routeLabel(prefix: "Bluetooth audio", port: b), available: true, type: "bluetooth"))
         }
-        // Also expose specific devices so the JS layer can target by uid
+        // Also expose other specific devices so the JS layer can target by uid
+        // (skipping the ones already listed above, which showed the same headset twice).
         for input in inputs {
+            if input.uid == firstHeadset?.uid || input.uid == firstBluetooth?.uid { continue }
             let type = portTypeString(input.portType)
             guard type != nil else { continue }
             routes.append(routeObj(
@@ -193,9 +197,10 @@ public class AudioRoutePlugin: CAPPlugin {
     }
 
     private func configureAudioSession(defaultToSpeaker: Bool) throws {
+        // HFP only: with A2DP allowed iOS could route a Bluetooth headset as media output with
+        // the phone mic, and its button then became a media key the app never receives.
         var options: AVAudioSession.CategoryOptions = [
             .allowBluetoothHFP,
-            .allowBluetoothA2DP,
             .mixWithOthers,
         ]
         if defaultToSpeaker {
