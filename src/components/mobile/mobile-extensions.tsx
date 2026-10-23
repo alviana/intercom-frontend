@@ -13,6 +13,7 @@ import { CompanionManager } from "./CompanionManager";
 import { MobileInit } from "./MobileInit";
 import { AudioRouteManager } from "./AudioRouteManager";
 import { StartupPermissions } from "./StartupPermissions";
+import { AppTutorial } from "./AppTutorial";
 import { MobileSettingsPage } from "./MobileSettingsPage";
 import { companionFeatureEnabled } from "../../config";
 
@@ -28,6 +29,7 @@ export const MobileProviders = () => {
   return (
     <>
       <StartupPermissions />
+      <AppTutorial />
       <AudioRouteManager />
       <StatusBar>
         <BackendStatus />
