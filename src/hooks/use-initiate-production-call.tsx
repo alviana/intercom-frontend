@@ -5,6 +5,32 @@ import { isBrowserSafari, isIpad, isMobile } from "../bowser";
 import { useFetchDevices } from "./use-fetch-devices";
 import { useDevicePermissions } from "./use-device-permission";
 import logger from "../utils/logger";
+import { CallState } from "../global-state/types";
+
+export const createCallState = (
+  joinProductionOptions: TJoinProductionOptions,
+  audiooutput: string | undefined,
+  globalMuteHotkey?: string
+): CallState => ({
+  joinProductionOptions,
+  audiooutput,
+  mediaStreamInput: null,
+  dominantSpeaker: null,
+  audioLevelAboveThreshold: false,
+  connectionState: null,
+  audioElements: null,
+  sessionId: null,
+  dataChannel: null,
+  isRemotelyMuted: false,
+  hotkeys: {
+    muteHotkey: "m",
+    speakerHotkey: "n",
+    pushToTalkHotkey: "t",
+    increaseVolumeHotkey: "u",
+    decreaseVolumeHotkey: "d",
+    globalMuteHotkey: globalMuteHotkey || "p",
+  },
+});
 
 export const useInitiateProductionCall = ({
   dispatch,
@@ -87,26 +113,11 @@ export const useInitiateProductionCall = ({
           type: "ADD_CALL",
           payload: {
             id: uuid,
-            callState: {
-              joinProductionOptions: nextJoinOpts,
-              audiooutput: nextAudioOutput,
-              mediaStreamInput: null,
-              dominantSpeaker: null,
-              audioLevelAboveThreshold: false,
-              connectionState: null,
-              audioElements: null,
-              sessionId: null,
-              dataChannel: null,
-              isRemotelyMuted: false,
-              hotkeys: {
-                muteHotkey: "m",
-                speakerHotkey: "n",
-                pushToTalkHotkey: "t",
-                increaseVolumeHotkey: "u",
-                decreaseVolumeHotkey: "d",
-                globalMuteHotkey: customGlobalMute || "p",
-              },
-            },
+            callState: createCallState(
+              nextJoinOpts,
+              nextAudioOutput,
+              customGlobalMute
+            ),
           },
         });
         dispatch({

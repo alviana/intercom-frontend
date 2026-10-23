@@ -7,6 +7,7 @@ import { Modal } from "../modal/modal";
 import { BubbleActionHandler } from "./BubbleActionHandler";
 import { CallServiceManager } from "./CallServiceManager";
 import { HeadsetButtonManager } from "./HeadsetButtonManager";
+import { NativeCallsRestore } from "./NativeCallsRestore";
 import { NativeVoiceDiagnostics } from "./NativeVoiceDiagnostics";
 import { CompanionManager } from "./CompanionManager";
 import { MobileInit } from "./MobileInit";
@@ -42,6 +43,7 @@ export const MobileProviders = () => {
       <CallServiceManager />
       <HeadsetButtonManager />
       <NativeVoiceDiagnostics />
+      <NativeCallsRestore />
       {companionFeatureEnabled && <CompanionManager />}
     </>
   );
