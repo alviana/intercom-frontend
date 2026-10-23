@@ -115,6 +115,7 @@ export const ProgramLineJoinCard = ({
           lineUsedForProgramOutput: true,
           isProgramUser,
           lineName,
+          productionName,
         },
         audiooutput: userSettings.audiooutput,
       },

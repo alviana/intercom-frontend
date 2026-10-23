@@ -110,6 +110,8 @@ export const ProductionListExpandedContent = ({
         lineUsedForProgramOutput:
           getLineByLineId(lineId)?.programOutputLine || false,
         isProgramUser: false,
+        lineName: getLineByLineId(lineId)?.name,
+        productionName: production.name,
       };
 
       const callPayload = {

@@ -35,6 +35,7 @@ final class NativeVoiceCall: NSObject {
     private static let disconnectGrace: TimeInterval = 5.0
     private static let connectTimeout: TimeInterval = 30.0
     private static let participantsInterval: TimeInterval = 5.0
+    private static let talkHold: TimeInterval = 1.5
     /// Wait before reconnect attempt n (1-based); after the list, every `steadyBackoff`.
     private static let backoff: [TimeInterval] = [2.0, 4.0, 8.0]
     private static let steadyBackoff: TimeInterval = 15.0
@@ -75,15 +76,20 @@ final class NativeVoiceCall: NSObject {
     private var statsTimer: Timer?
     private var statsInFlight: Bool = false
     private var lastActive: Bool = false
-    /// Talker inputs: remote audio, own mic audio, last DominantSpeaker endpoint.
+    /// Talker inputs: remote audio, own mic audio (each held `talkHold` after the last level
+    /// above the threshold, so speech pauses do not flicker), last DominantSpeaker endpoint.
     private var inboundActive: Bool = false
     private var localActive: Bool = false
+    private var lastInboundAt: TimeInterval = -Double.infinity
+    private var lastLocalAt: TimeInterval = -Double.infinity
     private var dominantEndpoint: String?
-    /// From GET production/{p}/line/{l}: endpointId -> name (own session -> "Você").
+    /// From GET production/{p}/line/{l}: endpointId -> name, and our own endpoint.
     private var participantNames: [String: String] = [:]
+    private var ownEndpoint: String?
     private var fetchedLineName: String = ""
     private var fetchedProgramLine: Bool = false
     private var participantsTimer: Timer?
+    private var participantsInFlight: Bool = false
     private var participantsFailing: Bool = false
     private var lastSnapshot: LineSnapshot?
     private var gatherTimeout: DispatchWorkItem?
@@ -153,7 +159,12 @@ final class NativeVoiceCall: NSObject {
     private func talker() -> String {
         if micEnabled && localActive { return "Você" }
         if !inboundActive { return "Ninguém falando" }
-        if let endpoint = dominantEndpoint, let name = participantNames[endpoint], !name.isEmpty {
+        guard let endpoint = dominantEndpoint else { return "Alguém falando" }
+        if endpoint == ownEndpoint {
+            // The SFU's dominant speaker is sticky: never "Você" with the mic closed.
+            return micEnabled ? "Você" : "Alguém falando"
+        }
+        if let name = participantNames[endpoint], !name.isEmpty {
             return name
         }
         return "Alguém falando"
@@ -416,6 +427,8 @@ final class NativeVoiceCall: NSObject {
         stopParticipants()
         inboundActive = false
         localActive = false
+        lastInboundAt = -Double.infinity
+        lastLocalAt = -Double.infinity
         dominantEndpoint = nil
         dataChannel?.delegate = nil
         dataChannel?.close()
@@ -555,9 +568,14 @@ final class NativeVoiceCall: NSObject {
                     self.lastActive = active
                     self.emit?("activity", ["callId": self.callId, "active": active])
                 }
-                if levels.inbound != self.inboundActive || levels.local != self.localActive {
-                    self.inboundActive = levels.inbound
-                    self.localActive = levels.local
+                let now: TimeInterval = ProcessInfo.processInfo.systemUptime
+                if levels.inbound { self.lastInboundAt = now }
+                if levels.local { self.lastLocalAt = now }
+                let inbound: Bool = now - self.lastInboundAt < NativeVoiceCall.talkHold
+                let local: Bool = now - self.lastLocalAt < NativeVoiceCall.talkHold
+                if inbound != self.inboundActive || local != self.localActive {
+                    self.inboundActive = inbound
+                    self.localActive = local
                     self.reportIfChanged()
                 }
             }
@@ -598,9 +616,13 @@ final class NativeVoiceCall: NSObject {
     }
 
     private func fetchParticipants() {
+        // One at a time: the request timeout (15 s) is longer than the interval.
+        if participantsInFlight { return }
+        participantsInFlight = true
         let path: String = "production/" + NativeVoiceCall.encode(productionId)
             + "/line/" + NativeVoiceCall.encode(lineId)
         request("GET", path, body: nil, quiet: true) { (status: Int, data: Data?, error: Error?) in
+            self.participantsInFlight = false
             if self.closed { return }
             guard (200..<300).contains(status), let line = NativeVoiceCall.parseObject(data) else {
                 // One diag per failure streak (the fetch repeats every 5 s).
@@ -614,12 +636,17 @@ final class NativeVoiceCall: NSObject {
             self.participantsFailing = false
             let own: String? = self.sessionId
             var names: [String: String] = [:]
+            var ownEndpoint: String? = nil
             for participant in (line["participants"] as? [[String: Any]]) ?? [] {
                 guard let endpoint = participant["endpointId"] as? String else { continue }
                 let sid: String? = participant["sessionId"] as? String
-                names[endpoint] = (sid != nil && sid == own) ? "Você" : (participant["name"] as? String ?? "")
+                if sid != nil && sid == own {
+                    ownEndpoint = endpoint
+                }
+                names[endpoint] = participant["name"] as? String ?? ""
             }
             self.participantNames = names
+            self.ownEndpoint = ownEndpoint
             self.fetchedLineName = line["name"] as? String ?? ""
             self.fetchedProgramLine = line["programOutputLine"] as? Bool ?? false
             self.reportIfChanged()

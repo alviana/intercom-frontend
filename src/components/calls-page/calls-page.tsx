@@ -28,6 +28,7 @@ import { ConfirmationModal } from "../verify-decision/confirmation-modal";
 import { HeaderActions } from "./header-actions";
 import { ProductionLines } from "./production-lines";
 import { ProgramLineJoinCard } from "./program-line-join-card";
+import { buildAutoJoinOptions, type LineNames } from "./auto-join-options";
 import { useCallsNavigation } from "./use-calls-navigation";
 import { useGlobalMuteHotkey } from "./use-global-mute-hotkey";
 import { usePreventPullToRefresh } from "./use-prevent-pull-to-refresh";
@@ -155,6 +156,8 @@ export const CallsPage = () => {
   const { initiateProductionCall } = useInitiateProductionCall({ dispatch });
   const autoJoinTriggeredRef = useRef(false);
   const pendingProgramKeysRef = useRef<Set<string>>(new Set());
+  /** "productionId:lineId" → names from the validation fetch, for the auto-join meta. */
+  const lineNamesRef = useRef<Map<string, LineNames>>(new Map());
 
   const { productionId: paramProductionId, lineId: paramLineId } = useParams();
   const { search } = useLocation();
@@ -286,6 +289,10 @@ export const CallsPage = () => {
           );
           if (!prod || !line) return;
           validRefs.push(ref);
+          lineNamesRef.current.set(`${ref.productionId}:${ref.lineId}`, {
+            productionName: prod.name,
+            lineName: line.name,
+          });
           if (line.programOutputLine === true && !ref.role) {
             program.push({
               productionId: ref.productionId,
@@ -349,14 +356,12 @@ export const CallsPage = () => {
       .forEach((ref) => {
         initiateProductionCall({
           payload: {
-            joinProductionOptions: {
-              productionId: ref.productionId,
-              lineId: ref.lineId,
-              username: userSettings.username!,
-              audioinput: userSettings.audioinput,
-              lineUsedForProgramOutput: ref.role === "l" || ref.role === "p",
-              isProgramUser: ref.role === "p",
-            },
+            joinProductionOptions: buildAutoJoinOptions(
+              ref,
+              userSettings.username!,
+              userSettings.audioinput,
+              lineNamesRef.current.get(`${ref.productionId}:${ref.lineId}`)
+            ),
             audiooutput: userSettings.audiooutput,
           },
           customGlobalMute,
