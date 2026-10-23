@@ -27,7 +27,7 @@ final class NativeVoiceCall: NSObject {
     private let baseUrl: String
     private let apiKey: String
     private let productionId: String
-    private let lineId: String
+    let lineId: String
     private let username: String
 
     /// "connecting" | "connected" | "reconnecting" | "failed" | "closed"

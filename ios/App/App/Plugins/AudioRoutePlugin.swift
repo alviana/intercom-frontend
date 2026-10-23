@@ -2,11 +2,14 @@ import Foundation
 import AVFoundation
 import UIKit
 import Capacitor
+import WebRTC
 
 @objc(AudioRoutePlugin)
 public class AudioRoutePlugin: CAPPlugin {
 
+    /// Read-only use: setters go through `rtc` (see applyRoute).
     private let session = AVAudioSession.sharedInstance()
+    private let rtc = RTCAudioSession.sharedInstance()
     private var toneNode: AVAudioPlayerNode?
     private var toneEngine: AVAudioEngine?
     private var preferredRoute: String = "speaker"
@@ -61,6 +64,8 @@ public class AudioRoutePlugin: CAPPlugin {
             emitRoutes()
         } catch {
             preferredRoute = previous
+            // The category may already have changed before the failure: put the old route back.
+            try? applyRoute(previous)
             call.reject("Failed to set route: \(error.localizedDescription)")
         }
     }
@@ -87,6 +92,14 @@ public class AudioRoutePlugin: CAPPlugin {
     }
 
     // MARK: - Helpers
+
+    private func builtInMicInput() -> AVAudioSessionPortDescription? {
+        return session.availableInputs?.first { $0.portType == .builtInMic }
+    }
+
+    private func firstInput(ofTypes types: [AVAudioSession.Port]) -> AVAudioSessionPortDescription? {
+        return session.availableInputs?.first { types.contains($0.portType) }
+    }
 
     private func findInputById(_ id: String) -> AVAudioSessionPortDescription? {
         return session.availableInputs?.first { "device:\($0.uid)" == id }
@@ -193,49 +206,56 @@ public class AudioRoutePlugin: CAPPlugin {
         notifyListeners("audioRouteChanged", data: buildRoutesPayload())
     }
 
-    // Same category/mode/options WebKit applies for capture (AudioSessionIOS.mm). WebKit keeps
-    // its own session in the GPU process and re-applies its config on every capture start;
-    // any difference here made the two fight (route-change bursts, iPhone mic winning).
-    // Not mixable: only a non-mixable session can be the "Now Playing" app, which is what
-    // routes headset play/pause presses to HeadsetButtonPlugin.
-    private func configureAudioSession() throws {
-        try session.setCategory(
-            .playAndRecord,
-            mode: .videoChat,
-            options: [.allowBluetoothHFP, .allowBluetoothA2DP, .allowAirPlay, .defaultToSpeaker]
-        )
-    }
-
-    // Routes choose the output only. The mic is chosen by WebKit from getUserMedia's deviceId
-    // (the JS layer asks for the mic named like the chosen headset); setting a preferred
-    // input here fought WebKit. With .defaultToSpeaker, "earpiece" plays on the speaker.
+    // A route is the whole headset: its mic and its output together. Session values from the
+    // iOS native audio plan, the same ones WebRTC gets (NativeVoicePlugin.configureWebRTCAudio)
+    // so its audio unit never reconfigures them. Not mixable: only a non-mixable session can
+    // be the "Now Playing" app, which is what routes headset presses to HeadsetButtonPlugin.
+    // Set through RTCAudioSession under its lock: WebRTC's audio unit takes the same lock when
+    // it configures the session, and its activation count keeps the session up after the last
+    // line leaves (WebRTC only deactivates on the last balanced setActive(false)).
     private func applyRoute(_ route: String) throws {
-        try configureAudioSession()
-        try session.setActive(true, options: [])
-
-        if route.hasPrefix("device:") {
-            if findInputById(route) != nil {
-                try session.overrideOutputAudioPort(.none)
-                return
-            }
-            throw NSError(
-                domain: "AudioRoutePlugin",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Unknown route: \(route)"]
-            )
-        }
-
-        switch route {
-        case "speaker":
-            try session.overrideOutputAudioPort(.speaker)
-        case "earpiece", "headset", "bluetooth":
-            try session.overrideOutputAudioPort(.none)
-        default:
+        guard route.hasPrefix("device:") || ["speaker", "earpiece", "headset", "bluetooth"].contains(route) else {
             throw NSError(
                 domain: "AudioRoutePlugin",
                 code: 2,
                 userInfo: [NSLocalizedDescriptionKey: "Unknown route: \(route)"]
             )
+        }
+        let speaker: Bool = route == "speaker"
+        NativeVoicePlugin.configureWebRTCAudio(speaker: speaker)
+        var options: AVAudioSession.CategoryOptions = [.allowBluetoothHFP]
+        if speaker {
+            options.insert(.defaultToSpeaker)
+        }
+        rtc.lockForConfiguration()
+        defer { rtc.unlockForConfiguration() }
+        try rtc.setCategory(.playAndRecord, mode: .voiceChat, options: options)
+        try rtc.setActive(true)
+        // After the category: the inputs on offer (Bluetooth HFP) depend on it.
+        guard let input = preferredInput(for: route) else {
+            throw NSError(
+                domain: "AudioRoutePlugin",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Route not available: \(route)"]
+            )
+        }
+        try rtc.setPreferredInput(input)
+        try rtc.overrideOutputAudioPort(speaker ? AVAudioSession.PortOverride.speaker : .none)
+    }
+
+    /// The mic that goes with a route. Choosing an HFP/wired mic also moves the output there.
+    private func preferredInput(for route: String) -> AVAudioSessionPortDescription? {
+        if route.hasPrefix("device:") {
+            return findInputById(route)
+        }
+        switch route {
+        case "bluetooth":
+            return firstInput(ofTypes: [.bluetoothHFP, .bluetoothLE])
+        case "headset":
+            return firstInput(ofTypes: [.headsetMic, .usbAudio, .lineIn]) ?? builtInMicInput()
+        default:
+            // speaker, earpiece
+            return builtInMicInput()
         }
     }
 

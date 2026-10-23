@@ -293,7 +293,7 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     }
 
     func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
-        // Mic state lives in JS; the audio session is left untouched.
+        // A headset tap: NativeVoicePlugin toggles the mic; the audio session is left untouched.
         postHeadsetButton(key: "CALLKIT_MUTE", source: "callkit")
         action.fulfill()
     }
@@ -307,6 +307,8 @@ private class CallServiceDelegate: NSObject, CXProviderDelegate {
     }
 }
 
+/// Turns headset presses into `.intercomHeadsetButton` (NativeVoicePlugin toggles the mic from it)
+/// and forwards them to JS as `headsetButton` events (diagnostics only on iOS).
 @objc(HeadsetButtonPlugin)
 public class HeadsetButtonPlugin: CAPPlugin {
 

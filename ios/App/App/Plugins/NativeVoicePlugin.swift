@@ -16,6 +16,8 @@ public class NativeVoicePlugin: CAPPlugin {
     private var callOrder: [String] = []
     /// Last line whose mic was opened: the headset toggle's target.
     private(set) var lastMicCallId: String?
+    /// systemUptime of the last headset press acted on (400 ms debounce).
+    private var lastHeadsetPress: TimeInterval = -Double.infinity
     private var cuePlayer: AVAudioPlayer?
 
     public override func load() {
@@ -26,6 +28,11 @@ public class NativeVoicePlugin: CAPPlugin {
             self, selector: #selector(audioInterruption(_:)),
             name: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance()
+        )
+        // Posted by HeadsetButtonPlugin (remote commands) and the CallKit delegate.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(headsetButton(_:)),
+            name: .intercomHeadsetButton, object: nil
         )
     }
 
@@ -237,6 +244,43 @@ public class NativeVoicePlugin: CAPPlugin {
         @unknown default:
             break
         }
+    }
+
+    // MARK: - Headset button (the only toggle on iOS: JS HeadsetButtonManager is inert there)
+
+    @objc private func headsetButton(_ note: Notification) {
+        DispatchQueue.main.async {
+            self.toggleMicFromHeadset()
+        }
+    }
+
+    /// One press toggles the mic of the last line whose mic was opened, else of the first
+    /// line the user may talk on.
+    private func toggleMicFromHeadset() {
+        let now: TimeInterval = ProcessInfo.processInfo.systemUptime
+        if now - lastHeadsetPress < 0.4 {
+            emitDiag("FONE", "ignorado", "repetido")
+            return
+        }
+        lastHeadsetPress = now
+        guard let callId = headsetTarget(), let voiceCall = calls[callId] else {
+            emitDiag("FONE", "ignorado", calls.isEmpty ? "sem linha" : "linha só ouvinte")
+            return
+        }
+        let open: Bool = !voiceCall.micEnabled
+        voiceCall.setMicEnabled(open, source: "fone")
+        if open {
+            lastMicCallId = callId
+        }
+        playCue(open ? "start-connection-451" : "stop-connection-451")
+        emitDiag("FONE", open ? "ligou" : "desligou", "linha \(voiceCall.lineId)")
+    }
+
+    private func headsetTarget() -> String? {
+        if let id = lastMicCallId, calls[id]?.canTalk == true {
+            return id
+        }
+        return callOrder.first { (id: String) -> Bool in calls[id]?.canTalk == true }
     }
 
     // MARK: - Helpers (main queue)
