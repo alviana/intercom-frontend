@@ -74,7 +74,11 @@ export const setAndroidAudioRoute = async (
   if (!isAudioRouteAvailable()) return null;
   try {
     const result = await AudioRoute.setRoute({ route });
-    writeStoredAudioRoute(route);
+    // iOS: an automatically applied speaker/earpiece is not a user choice (the picker saves
+    // its own pick); saving it kept the iPhone mic after a headset was connected.
+    if (!isIOSApp() || (route !== "speaker" && route !== "earpiece")) {
+      writeStoredAudioRoute(route);
+    }
     return result.active ?? route;
   } catch {
     return null;
@@ -116,12 +120,19 @@ export const applyStoredAudioRoute = async (): Promise<AudioRouteId | null> => {
 // so ask for the mic named like the headset chosen in "Saída de áudio" (built-in mic for
 // speaker/earpiece). Null when that mic is not listed (caller keeps its own choice).
 export const resolveIOSMicDeviceId = async (): Promise<string | null> => {
-  const { routes } = await AudioRoute.getAvailableRoutes();
-  const route = routes.find((r) => r.id === readStoredAudioRoute());
+  const { routes, active } = await AudioRoute.getAvailableRoutes();
+  const routeId = resolveAudioRouteToApply(routes, active);
+  const route = routes.find((r) => r.id === routeId);
   const inputs = (await navigator.mediaDevices.enumerateDevices()).filter(
     (d) => d.kind === "audioinput"
   );
-  const headsetNames = new Set(routes.map((r) => r.name).filter(Boolean));
+  // Only headset mics: the built-in mic is also listed as a named device route.
+  const headsetNames = new Set(
+    routes
+      .filter((r) => r.type === "headset" || r.type === "bluetooth")
+      .map((r) => r.name)
+      .filter(Boolean)
+  );
   const mic = route?.name
     ? inputs.find((d) => d.label === route.name)
     : inputs.find((d) => !headsetNames.has(d.label));
