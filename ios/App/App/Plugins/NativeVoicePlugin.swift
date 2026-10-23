@@ -70,6 +70,10 @@ public class NativeVoicePlugin: CAPPlugin {
     private var pendingCue: String?
     /// CallKit mode: until when interruptions are our own end/new call after a headset press.
     private var callKitRestartUntil: TimeInterval = 0
+    /// CallKit mode, after a press: the old call the new one waits for (one call group).
+    private var callKitWaitEnd: UUID?
+    /// CallKit mode: start retries after a transient error (at most 5, then fallback).
+    private var callKitRetries: Int = 0
 
     public override func load() {
         NativeVoicePlugin.current = self
@@ -651,13 +655,18 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
         // After the last leave the call lasts until the stop cue played (releaseWork).
         let wanted: Bool = !calls.isEmpty || releaseWork != nil
         if wanted && callKitUUID == nil {
-            startCallKitCall()
+            // After a press the new call waits until the old one ended (callObserver / 1 s timer).
+            if callKitWaitEnd == nil {
+                startCallKitCall()
+            }
         } else if !wanted, let uuid = callKitUUID {
             endCallKitCall(uuid)
         } else if !wanted && !callKitAudioActive {
             // Over: the next first-line join reads the switch again.
             callKitMode = false
             pendingCue = nil
+            callKitWaitEnd = nil
+            callKitRetries = 0
             RTCAudioSession.sharedInstance().useManualAudio = false
             emitDiag("CALLKIT", "modo chamada do iPhone", "encerrado")
         }
@@ -686,13 +695,28 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
                         self.callKitUUID = nil
                     }
                     self.emitDiag("CALLKIT", "iniciar chamada", "falhou: \(error.localizedDescription)")
-                    // No retry (it would loop): lines must not stay silent, so back to the
-                    // app's own activation until they are all closed.
+                    if !self.calls.isEmpty && self.callKitRetries < 5
+                        && NativeVoicePlugin.isTransientStartError(error) {
+                        self.callKitRetries += 1
+                        let now: TimeInterval = ProcessInfo.processInfo.systemUptime
+                        if now < self.callKitRestartUntil {
+                            // The press's interruption window covers the retries too.
+                            self.callKitRestartUntil = max(self.callKitRestartUntil, now + 2)
+                        }
+                        self.emitDiag("CALLKIT", "tentar de novo \(self.callKitRetries)", "em 0,5 s")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                            self?.reconcileCallKit()
+                        }
+                        return
+                    }
+                    // Out of retries (or a lasting error): lines must not stay silent, so back
+                    // to the app's own activation until they are all closed.
                     if !self.calls.isEmpty {
                         self.fallBackFromCallKit()
                     }
                     return
                 }
+                self.callKitRetries = 0
                 if self.callKitUUID == uuid {
                     provider.reportOutgoingCall(with: uuid, connectedAt: nil)
                     let update = CXCallUpdate()
@@ -749,6 +773,15 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
         updateKeepAlive()
     }
 
+    /// Start errors worth a retry: the old call still counted (maximumCallGroupsReached, 7)
+    /// or CallKit's "unknown" (0).
+    private static func isTransientStartError(_ error: Error) -> Bool {
+        let ns: NSError = error as NSError
+        guard ns.domain == CXErrorDomainRequestTransaction else { return false }
+        return ns.code == CXErrorCodeRequestTransactionError.Code.maximumCallGroupsReached.rawValue
+            || ns.code == CXErrorCodeRequestTransactionError.Code.unknown.rawValue
+    }
+
     /// True when CallKit lists a live call that is not ours (a phone or other VoIP call).
     private func otherCallPresent() -> Bool {
         return callKitObserver.calls.contains { (c: CXCall) -> Bool in
@@ -786,6 +819,9 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
     public func callObserver(_ callObserver: CXCallObserver, callChanged call: CXCall) {
         if call.hasEnded {
             callKitMine.remove(call.uuid)
+            if call.uuid == callKitWaitEnd {
+                callKitWaitEnd = nil
+            }
         }
         reconcileCallKit()
         // A phone call came or went: "pausa" in lineSnapshots.
@@ -799,6 +835,7 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
         callKitMine.removeAll()
         callKitAppEnds.removeAll()
         callKitBusy = false
+        callKitWaitEnd = nil
         if callKitAudioActive {
             callKitAudioActive = false
             let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
@@ -836,12 +873,19 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
             return
         }
         // Not asked by the app: the headset button (HFP "hang up"). Failing it made the
-        // headset drop the call link, so end it and start a fresh call right away.
+        // headset drop the call link, so end it and start a fresh call once it has ended:
+        // requesting it before failed with maximumCallGroupsReached (one call group).
         callKitRestartUntil = ProcessInfo.processInfo.systemUptime + 3
+        callKitWaitEnd = uuid
         toggleMicFromHeadset(cueLater: true)
         action.fulfill()
-        emitDiag("CALLKIT", "botão do fone (encerrar)", "nova chamada")
-        reconcileCallKit()
+        emitDiag("CALLKIT", "botão do fone (encerrar)", "nova chamada ao fim da anterior")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self = self, self.callKitWaitEnd == uuid else { return }
+            self.callKitWaitEnd = nil
+            self.emitDiag("CALLKIT", "fim da chamada anterior", "sem aviso em 1 s: nova chamada")
+            self.reconcileCallKit()
+        }
     }
 
     public func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
