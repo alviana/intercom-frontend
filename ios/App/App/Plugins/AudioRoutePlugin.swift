@@ -21,6 +21,8 @@ public class AudioRoutePlugin: CAPPlugin {
     private var preferredRoute: String = "speaker"
     /// Diagnostics: the last failure applying a route ("" after a success), sent in the payload.
     private var lastError: String = ""
+    /// Diagnostics: the applyRoute step running when it threw (rota / categoria / entrada / saída).
+    private var applyStep: String = ""
 
     /// Main queue, right after NativeVoicePlugin activated the session for the first line and
     /// on every line connect: the preferred input and the output override only take on an
@@ -33,16 +35,19 @@ public class AudioRoutePlugin: CAPPlugin {
         if !plugin.rtc.isActive {
             return "sessão inativa: nada pedido (\(route))"
         }
+        // Preferred input / mic before this reapply: proves "set, then undone by WebRTC".
+        let before: String = "\(plugin.session.preferredInput?.portName ?? "nenhum")/\(plugin.session.currentRoute.inputs.first?.portName ?? "?")"
         let outcome: String
         do {
             try plugin.applyRoute(route)
             plugin.lastError = ""
             let asked: String = plugin.session.preferredInput?.portName ?? "nenhum"
+            // iOS moves to HFP asynchronously: the 0.5 s reapply line is the one to judge.
             let mic: String = plugin.session.currentRoute.inputs.first?.portName ?? "?"
-            outcome = "ok: \(route)→\(asked) · mic: \(mic)"
+            outcome = "ok: antes \(before) · \(route)→\(asked) · mic agora: \(mic)"
         } catch {
-            plugin.lastError = "\(route): \(error.localizedDescription)"
-            outcome = "erro: \(plugin.lastError)"
+            plugin.lastError = "\(plugin.applyStep) \(route): \(error.localizedDescription)"
+            outcome = "erro: antes \(before) · \(plugin.lastError)"
         }
         plugin.emitRoutes()
         return outcome
@@ -104,9 +109,10 @@ public class AudioRoutePlugin: CAPPlugin {
                 self.emitRoutes()
             } catch {
                 self.preferredRoute = previous
+                let failed: String = "\(self.applyStep) \(route): \(error.localizedDescription)"
                 // The category may already have changed before the failure: put the old route back.
                 try? self.applyRoute(previous)
-                self.lastError = "\(route): \(error.localizedDescription)"
+                self.lastError = failed
                 call.reject("Failed to set route: \(error.localizedDescription)")
                 self.emitRoutes()
             }
@@ -286,6 +292,7 @@ public class AudioRoutePlugin: CAPPlugin {
     // it configures the session. Never activates: lines (NativeVoicePlugin) and the test tone
     // hold the activation, so the user's music is not stopped while no line is open.
     private func applyRoute(_ route: String) throws {
+        applyStep = "rota"
         guard route.hasPrefix("device:") || ["speaker", "earpiece", "headset", "bluetooth"].contains(route) else {
             throw NSError(
                 domain: "AudioRoutePlugin",
@@ -301,6 +308,7 @@ public class AudioRoutePlugin: CAPPlugin {
         }
         rtc.lockForConfiguration()
         defer { rtc.unlockForConfiguration() }
+        applyStep = "categoria"
         try rtc.setCategory(.playAndRecord, mode: .voiceChat, options: options)
         // Preferred input and override only take on an active session; while none is open they
         // are applied by reapplyRoute when the first line activates it.
@@ -308,6 +316,7 @@ public class AudioRoutePlugin: CAPPlugin {
             return
         }
         // After the category: the inputs on offer (Bluetooth HFP) depend on it.
+        applyStep = "entrada"
         guard let input = preferredInput(for: route) else {
             throw NSError(
                 domain: "AudioRoutePlugin",
@@ -316,6 +325,7 @@ public class AudioRoutePlugin: CAPPlugin {
             )
         }
         try rtc.setPreferredInput(input)
+        applyStep = "saída"
         try rtc.overrideOutputAudioPort(speaker ? AVAudioSession.PortOverride.speaker : .none)
     }
 
