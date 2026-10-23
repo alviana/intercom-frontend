@@ -60,6 +60,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>O Intercom ac24horas usa o microfone para você falar nas linhas.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>O Intercom ac24horas não usa a câmera. Esta permissão só é declarada porque a biblioteca de voz a referencia.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>O Intercom ac24horas usa o Bluetooth para levar o áudio ao seu fone.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
