@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import CallKit
 import UIKit
 import Capacitor
 import WebRTC
@@ -30,6 +31,32 @@ public class NativeVoicePlugin: CAPPlugin {
     /// An interruption .began with no .ended yet (some apps never send it).
     private var interruptedWithoutEnd: Bool = false
 
+    // CallKit mode (experimental switch, off by default): while on, one CallKit call owns the
+    // audio session so a Bluetooth headset in HFP sends its button presses to the app.
+    /// The switch as JS last sent it.
+    private var callKitWanted: Bool = false
+    /// Latched at the join that opens the first line; cleared once the call and its audio end.
+    private var callKitMode: Bool = false
+    private var callKitProvider: CXProvider?
+    private lazy var callKitController: CXCallController = CXCallController()
+    private lazy var callKitObserver: CXCallObserver = {
+        let observer = CXCallObserver()
+        observer.setDelegate(self, queue: nil)
+        return observer
+    }()
+    /// Our current call (set when its start is requested).
+    private var callKitUUID: UUID?
+    /// Every call of ours CallKit may still list; the rest are phone calls.
+    private var callKitMine: Set<UUID> = []
+    /// Ends the app asked for (any other end of our call is the headset button).
+    private var callKitAppEnds: Set<UUID> = []
+    /// A CXTransaction in flight: one at a time (see reconcileCallKit).
+    private var callKitBusy: Bool = false
+    /// Between provider(didActivate:) and provider(didDeactivate:).
+    private var callKitAudioActive: Bool = false
+    /// Cue held until CallKit activates the session (AVAudioPlayer would activate it itself).
+    private var pendingCue: String?
+
     public override func load() {
         NativeVoicePlugin.current = self
         // AudioRoutePlugin starts on the speaker route.
@@ -39,7 +66,7 @@ public class NativeVoicePlugin: CAPPlugin {
             name: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance()
         )
-        // Posted by HeadsetButtonPlugin (remote commands) and the CallKit delegate.
+        // Posted by HeadsetButtonPlugin (remote commands); CallKit presses arrive below.
         NotificationCenter.default.addObserver(
             self, selector: #selector(headsetButton(_:)),
             name: .intercomHeadsetButton, object: nil
@@ -133,9 +160,19 @@ public class NativeVoicePlugin: CAPPlugin {
                 self?.reassertRoute(lineId: lineId)
             }
             AudioRoutePlugin.resetReinforce()
-            self.holdSession()
+            // The switch takes effect when the first line opens with no activation of ours left.
+            if self.calls.isEmpty && !self.holdsSession && !self.callKitMode && self.callKitWanted {
+                self.beginCallKitMode()
+            }
+            if self.callKitMode {
+                self.releaseWork?.cancel()
+                self.releaseWork = nil
+            } else {
+                self.holdSession()
+            }
             self.calls[callId] = voiceCall
             self.callOrder.append(callId)
+            self.reconcileCallKit()
             voiceCall.start()
             // The initial "connecting" is not emitted as a transition.
             self.updateKeepAlive()
@@ -244,6 +281,22 @@ public class NativeVoicePlugin: CAPPlugin {
         }
     }
 
+    /// Experimental. Sent at app start and on every change of the switch; latched at the next
+    /// first-line join so a live session never changes owner.
+    @objc func setCallKitMode(_ call: CAPPluginCall) {
+        let enabled: Bool = call.getBool("enabled") ?? false
+        DispatchQueue.main.async {
+            if self.callKitWanted != enabled {
+                self.callKitWanted = enabled
+                let when: String = self.calls.isEmpty
+                    ? "vale na próxima linha"
+                    : "vale ao sair de todas as linhas e entrar de novo"
+                self.emitDiag("CALLKIT", enabled ? "botão do fone ligado" : "botão do fone desligado", when)
+            }
+            call.resolve()
+        }
+    }
+
     // MARK: - Interruptions (phone call, Siri, alarm, another app's audio)
 
     /// The user stays in every line during the interruption (heartbeats go on). When it ends,
@@ -273,8 +326,24 @@ public class NativeVoicePlugin: CAPPlugin {
     /// Also run from appBecameActive when a .began never got its .ended.
     private func resumeAfterInterruption() {
         interruptedWithoutEnd = false
-        // WebRTC reactivates by itself when its count is > 0 (our hold). Through its wrapper
-        // so isActive and the audio unit restart agree, and balanced: no extra count stays.
+        if callKitMode {
+            // CallKit owns the activation: only make sure our call is back.
+            reconcileCallKit()
+        } else {
+            reactivateHeldSession()
+        }
+        for callId in callOrder {
+            calls[callId]?.setMicEnabled(false, source: "interrupção")
+        }
+        emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
+        playCue("start-connection-451")
+        // The interruption paused the keep-alive loop too.
+        updateKeepAlive()
+    }
+
+    /// WebRTC reactivates by itself when its count is > 0 (our hold). Through its wrapper
+    /// so isActive and the audio unit restart agree, and balanced: no extra count stays.
+    private func reactivateHeldSession() {
         let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
         if !holdsSession {
             // The join-time activation failed (e.g. during a phone call): take it now.
@@ -291,13 +360,6 @@ public class NativeVoicePlugin: CAPPlugin {
             }
             rtc.unlockForConfiguration()
         }
-        for callId in callOrder {
-            calls[callId]?.setMicEnabled(false, source: "interrupção")
-        }
-        emitDiag("INTERRUPÇÃO", "fim da interrupção", "áudio retomado, microfones fechados")
-        playCue("start-connection-451")
-        // The interruption paused the keep-alive loop too.
-        updateKeepAlive()
     }
 
     /// Main queue. Catches an interruption that never ended and a session activation that
@@ -307,6 +369,8 @@ public class NativeVoicePlugin: CAPPlugin {
         if interruptedWithoutEnd {
             emitDiag("INTERRUPÇÃO", "app reaberto", "interrupção sem fim: retomando")
             resumeAfterInterruption()
+        } else if callKitMode {
+            reconcileCallKit()
         } else if !holdsSession {
             holdSession()
             if holdsSession {
@@ -324,8 +388,8 @@ public class NativeVoicePlugin: CAPPlugin {
     }
 
     /// One press toggles the mic of the last line whose mic was opened, else of the first
-    /// line the user may talk on.
-    private func toggleMicFromHeadset() {
+    /// line the user may talk on. `cueLater`: a CallKit press, whose session goes down and up.
+    private func toggleMicFromHeadset(cueLater: Bool = false) {
         let now: TimeInterval = ProcessInfo.processInfo.systemUptime
         if now - lastHeadsetPress < 0.4 {
             emitDiag("FONE", "ignorado", "repetido")
@@ -341,7 +405,12 @@ public class NativeVoicePlugin: CAPPlugin {
         if open {
             lastMicCallId = callId
         }
-        playCue(open ? "start-connection-451" : "stop-connection-451")
+        let cue: String = open ? "start-connection-451" : "stop-connection-451"
+        if cueLater {
+            pendingCue = cue
+        } else {
+            playCue(cue)
+        }
         emitDiag("FONE", open ? "ligou" : "desligou", "linha \(voiceCall.lineId)")
     }
 
@@ -399,6 +468,11 @@ public class NativeVoicePlugin: CAPPlugin {
     /// .notifyOthersOnDeactivation, so the user's music resumes.
     private func releaseSession() {
         releaseWork = nil
+        if callKitMode {
+            // Ending our call makes CallKit deactivate the session (didDeactivate).
+            reconcileCallKit()
+            return
+        }
         guard holdsSession, calls.isEmpty else { return }
         holdsSession = false
         let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
@@ -421,7 +495,9 @@ public class NativeVoicePlugin: CAPPlugin {
     /// Its own player, so cues never cut it; the session hold keeps the session active meanwhile.
     private func updateKeepAlive() {
         let states: [String] = calls.values.map { (c: NativeVoiceCall) -> String in c.state }
-        let needed: Bool = !states.contains("connected")
+        // CallKit mode: nothing plays before CallKit activates the session (see playCue).
+        let audioUp: Bool = !callKitMode || callKitAudioActive
+        let needed: Bool = audioUp && !states.contains("connected")
             && (states.contains("connecting") || states.contains("reconnecting"))
         if !needed {
             if let player = keepAlivePlayer {
@@ -455,6 +531,10 @@ public class NativeVoicePlugin: CAPPlugin {
     }
 
     private func playCue(_ name: String) {
+        if callKitMode && !callKitAudioActive {
+            pendingCue = name
+            return
+        }
         guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
             emitDiag("SOM", "tocar \(name)", "falhou: arquivo não encontrado")
             return
@@ -467,5 +547,253 @@ public class NativeVoicePlugin: CAPPlugin {
         } catch {
             emitDiag("SOM", "tocar \(name)", "falhou: \(error.localizedDescription)")
         }
+    }
+}
+
+// MARK: - CallKit mode (experimental; contract: setCallKitMode)
+
+/// One CallKit call while lines are open, so a Bluetooth headset in HFP sends its button to
+/// the app (iOS routes HFP call control only to a CallKit call). Standard WebRTC + CallKit:
+/// CallKit activates the session and RTCAudioSession is told so (useManualAudio,
+/// audioSessionDidActivate/Deactivate, isAudioEnabled). Delegate queue nil: main queue.
+extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
+
+    private func beginCallKitMode() {
+        callKitMode = true
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        // The audio unit waits for CallKit's activation (provider didActivate).
+        rtc.useManualAudio = true
+        rtc.isAudioEnabled = false
+        emitDiag("CALLKIT", "modo chamada do iPhone", "ativo nestas linhas")
+    }
+
+    /// One CallKit transaction at a time; every completion and CallKit event runs this again,
+    /// so joins, leaves, presses and phone calls converge. Does nothing outside CallKit mode.
+    private func reconcileCallKit() {
+        guard callKitMode, !callKitBusy else { return }
+        // After the last leave the call lasts until the stop cue played (releaseWork).
+        let wanted: Bool = !calls.isEmpty || releaseWork != nil
+        if wanted && callKitUUID == nil {
+            startCallKitCall()
+        } else if !wanted, let uuid = callKitUUID {
+            endCallKitCall(uuid)
+        } else if !wanted && !callKitAudioActive {
+            // Over: the next first-line join reads the switch again.
+            callKitMode = false
+            pendingCue = nil
+            RTCAudioSession.sharedInstance().useManualAudio = false
+            emitDiag("CALLKIT", "modo chamada do iPhone", "encerrado")
+        }
+    }
+
+    private func startCallKitCall() {
+        if otherCallPresent() {
+            // callObserver runs reconcileCallKit again when that call is over.
+            emitDiag("CALLKIT", "iniciar chamada", "aguardando: outra chamada no iPhone")
+            return
+        }
+        let provider: CXProvider = callKitProviderInstance()
+        let uuid = UUID()
+        let handle = CXHandle(type: .generic, value: "Intercom ac24horas")
+        let transaction = CXTransaction(action: CXStartCallAction(call: uuid, handle: handle))
+        callKitUUID = uuid
+        callKitMine.insert(uuid)
+        callKitBusy = true
+        callKitController.request(transaction) { [weak self] (error: Error?) in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.callKitBusy = false
+                if let error = error {
+                    self.callKitMine.remove(uuid)
+                    if self.callKitUUID == uuid {
+                        self.callKitUUID = nil
+                    }
+                    self.emitDiag("CALLKIT", "iniciar chamada", "falhou: \(error.localizedDescription)")
+                    // No retry (it would loop): lines must not stay silent, so back to the
+                    // app's own activation until they are all closed.
+                    if !self.calls.isEmpty {
+                        self.fallBackFromCallKit()
+                    }
+                    return
+                }
+                if self.callKitUUID == uuid {
+                    provider.reportOutgoingCall(with: uuid, connectedAt: nil)
+                    let update = CXCallUpdate()
+                    // No "Hold & Accept": a phone call ends ours (see CXEndCallAction).
+                    update.supportsHolding = false
+                    update.supportsGrouping = false
+                    update.supportsUngrouping = false
+                    update.supportsDTMF = false
+                    provider.reportCall(with: uuid, updated: update)
+                    self.emitDiag("CALLKIT", "iniciar chamada", "ok")
+                    // A press cue waits for didActivate; if iOS kept the session up, play it now.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                        guard let self = self, self.callKitAudioActive else { return }
+                        self.flushPendingCue()
+                    }
+                }
+                self.reconcileCallKit()
+            }
+        }
+    }
+
+    private func endCallKitCall(_ uuid: UUID) {
+        callKitAppEnds.insert(uuid)
+        callKitBusy = true
+        let transaction = CXTransaction(action: CXEndCallAction(call: uuid))
+        callKitController.request(transaction) { [weak self] (error: Error?) in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.callKitBusy = false
+                // Forgotten even on error, so reconcile cannot loop on it.
+                if self.callKitUUID == uuid {
+                    self.callKitUUID = nil
+                }
+                if let error = error {
+                    // The delegate never saw it: a later end of that call is not the app's.
+                    self.callKitAppEnds.remove(uuid)
+                    self.emitDiag("CALLKIT", "encerrar chamada", "falhou: \(error.localizedDescription)")
+                } else {
+                    self.emitDiag("CALLKIT", "encerrar chamada", "ok")
+                }
+                self.reconcileCallKit()
+            }
+        }
+    }
+
+    /// The CallKit call could not start with lines open: the app's own activation (today's
+    /// path) until every line is closed.
+    private func fallBackFromCallKit() {
+        callKitMode = false
+        RTCAudioSession.sharedInstance().useManualAudio = false
+        holdSession()
+        emitDiag("CALLKIT", "voltar ao áudio sem chamada do iPhone", holdsSession ? "ok" : "falhou")
+        flushPendingCue()
+        updateKeepAlive()
+    }
+
+    /// True when CallKit lists a live call that is not ours (a phone or other VoIP call).
+    private func otherCallPresent() -> Bool {
+        return callKitObserver.calls.contains { (c: CXCall) -> Bool in
+            !c.hasEnded && !self.callKitMine.contains(c.uuid)
+        }
+    }
+
+    private func callKitProviderInstance() -> CXProvider {
+        if let existing = callKitProvider {
+            return existing
+        }
+        // Name shown by iOS: CFBundleDisplayName ("Intercom ac24horas"); init(localizedName:)
+        // is deprecated since iOS 14.
+        let config = CXProviderConfiguration()
+        config.supportsVideo = false
+        config.maximumCallsPerCallGroup = 1
+        config.maximumCallGroups = 1
+        config.supportedHandleTypes = [.generic]
+        config.includesCallsInRecents = false
+        let provider = CXProvider(configuration: config)
+        provider.setDelegate(self, queue: nil)
+        callKitProvider = provider
+        return provider
+    }
+
+    private func flushPendingCue() {
+        guard let cue = pendingCue else { return }
+        pendingCue = nil
+        playCue(cue)
+    }
+
+    // MARK: CXCallObserverDelegate
+
+    /// A phone call came or went: our call comes back once no other call is left.
+    public func callObserver(_ callObserver: CXCallObserver, callChanged call: CXCall) {
+        if call.hasEnded {
+            callKitMine.remove(call.uuid)
+        }
+        reconcileCallKit()
+    }
+
+    // MARK: CXProviderDelegate
+
+    public func providerDidReset(_ provider: CXProvider) {
+        callKitUUID = nil
+        callKitMine.removeAll()
+        callKitAppEnds.removeAll()
+        callKitBusy = false
+        if callKitAudioActive {
+            callKitAudioActive = false
+            let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+            rtc.audioSessionDidDeactivate(AVAudioSession.sharedInstance())
+            rtc.isAudioEnabled = false
+        }
+        emitDiag("CALLKIT", "CallKit reiniciado pelo iOS", calls.isEmpty ? "sem linhas" : "nova chamada")
+        reconcileCallKit()
+    }
+
+    public func provider(_ provider: CXProvider, perform action: CXStartCallAction) {
+        provider.reportOutgoingCall(with: action.callUUID, startedConnectingAt: nil)
+        action.fulfill()
+    }
+
+    public func provider(_ provider: CXProvider, perform action: CXEndCallAction) {
+        let uuid: UUID = action.callUUID
+        if callKitAppEnds.remove(uuid) != nil || uuid != callKitUUID {
+            // Asked by the app (last line left), or an older call of ours.
+            if callKitUUID == uuid {
+                callKitUUID = nil
+            }
+            action.fulfill()
+            return
+        }
+        callKitUUID = nil
+        if otherCallPresent() {
+            // "End & Accept" of a phone call: the lines stay, mics closed; callObserver
+            // brings our call back when the phone call is over.
+            for callId in callOrder {
+                calls[callId]?.setMicEnabled(false, source: "interrupção")
+            }
+            emitDiag("CALLKIT", "chamada encerrada por ligação", "linhas mantidas, microfones fechados")
+            action.fulfill()
+            return
+        }
+        // Not asked by the app: the headset button (HFP "hang up"). Failing it made the
+        // headset drop the call link, so end it and start a fresh call right away.
+        toggleMicFromHeadset(cueLater: true)
+        action.fulfill()
+        emitDiag("CALLKIT", "botão do fone (encerrar)", "nova chamada")
+        reconcileCallKit()
+    }
+
+    public func provider(_ provider: CXProvider, perform action: CXSetMutedCallAction) {
+        // AirPods-style headsets ask for mute instead of hanging up: the same toggle.
+        if !otherCallPresent() {
+            emitDiag("CALLKIT", "botão do fone (mudo)", "alternar microfone")
+            toggleMicFromHeadset()
+        }
+        action.fulfill()
+    }
+
+    public func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        rtc.audioSessionDidActivate(audioSession)
+        rtc.isAudioEnabled = true
+        callKitAudioActive = true
+        emitDiag("CALLKIT", "sessão de áudio ativada", calls.isEmpty ? "sem linhas" : "áudio ligado")
+        emitDiag("ROTA", "reaplicar ao ativar sessão (CallKit)", AudioRoutePlugin.reapplyRoute())
+        flushPendingCue()
+        updateKeepAlive()
+    }
+
+    public func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
+        let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+        rtc.audioSessionDidDeactivate(audioSession)
+        rtc.isAudioEnabled = false
+        callKitAudioActive = false
+        emitDiag("CALLKIT", "sessão de áudio desativada", calls.isEmpty ? "ok" : "linhas mantidas")
+        if !callKitMode && holdsSession {
+            // Fell back while CallKit still had the session: take ours up again.
+            reactivateHeldSession()
+        }
+        reconcileCallKit()
     }
 }

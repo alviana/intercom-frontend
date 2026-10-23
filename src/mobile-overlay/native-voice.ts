@@ -37,6 +37,8 @@ export interface NativeVoicePlugin {
   listCalls(): Promise<{ calls: NativeCallInfo[] }>;
   checkMicPermission(): Promise<{ granted: boolean }>;
   requestMicPermission(): Promise<{ granted: boolean }>;
+  /** Experimental: Bluetooth headset button through a CallKit call (iOS); applies at the first line join. */
+  setCallKitMode(o: { enabled: boolean }): Promise<void>;
   addListener(
     eventName: "callState",
     listener: (ev: {

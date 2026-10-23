@@ -11,4 +11,5 @@ CAP_PLUGIN(NativeVoicePlugin, "NativeVoice",
            CAP_PLUGIN_METHOD(listCalls, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(checkMicPermission, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(requestMicPermission, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setCallKitMode, CAPPluginReturnPromise);
 )

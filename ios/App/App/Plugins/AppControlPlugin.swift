@@ -16,17 +16,15 @@ public class AppControlPlugin: CAPPlugin {
 
     @objc func stopServices(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            CallServicePlugin.shared?.stopInternal()
             OverlayBubblePlugin.shared?.hideInternal()
         }
         call.resolve()
     }
 
     @objc func exitApp(_ call: CAPPluginCall) {
-        // iOS does not permit apps to exit programmatically. Just stop services
+        // iOS does not permit apps to exit programmatically. Just hide the bubble
         // and resign — the user can dismiss with the home indicator.
         DispatchQueue.main.async {
-            CallServicePlugin.shared?.stopInternal()
             OverlayBubblePlugin.shared?.hideInternal()
             UIApplication.shared.perform(Selector(("suspend")))
         }

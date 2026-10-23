@@ -20,6 +20,7 @@ import {
 import { Spinner } from "../loader/loader";
 import { MobileAudioRouteSelect } from "./MobileAudioRouteSelect";
 import { DebugPanel } from "./DebugPanel";
+import { CallKitModeSwitch } from "./CallKitModeSwitch";
 import { companionFeatureEnabled } from "../../config";
 import { isIOSApp } from "../../platform";
 
@@ -278,6 +279,7 @@ export const useAndroidSettingsFormAdapter = (): UserSettingsFormAdapter => {
             placeholder="Chave de acesso (opcional)"
           />
         </FormItem>
+        {isIOSApp() && <CallKitModeSwitch />}
         {companionFeatureEnabled && (
           <FormItem label="Companion (Stream Deck)">
             <div style={{ display: "grid", gap: "0.6rem" }}>
