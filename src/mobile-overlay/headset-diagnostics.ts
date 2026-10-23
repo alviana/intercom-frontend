@@ -6,7 +6,7 @@ export type HeadsetLogEntry = {
   result: string;
 };
 
-const MAX_ENTRIES = 30;
+const MAX_ENTRIES = 60;
 let log: HeadsetLogEntry[] = [];
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((cb) => cb());

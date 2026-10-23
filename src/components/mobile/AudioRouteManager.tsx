@@ -18,17 +18,25 @@ export const AudioRouteManager = () => {
 
     applyStoredAudioRoute();
 
+    // iOS sends bursts of identical route events: log a line only when it changes.
+    let lastLine = "";
     const listenerPromise = AudioRoute.addListener(
       "audioRouteChanged",
       (state) => {
         const { active } = state;
-        logHeadsetEvent({
-          at: Date.now(),
-          key: "ROTA",
-          action: String(active ?? "nenhuma"),
-          source: "sistema",
-          result: describeRouteState(state),
-        });
+        const action = String(active ?? "nenhuma");
+        const result = describeRouteState(state);
+        const line = `${action} ${result}`;
+        if (line !== lastLine) {
+          lastLine = line;
+          logHeadsetEvent({
+            at: Date.now(),
+            key: "ROTA",
+            action,
+            source: "sistema",
+            result,
+          });
+        }
         // iOS: changes made by the system/WebKit (e.g. falling back to the speaker) must
         // not overwrite the route the user picked; the picker stores it itself.
         if (active && !isIOSApp()) writeStoredAudioRoute(active);

@@ -23,6 +23,17 @@ public class AudioRoutePlugin: CAPPlugin {
     private var lastError: String = ""
     /// Diagnostics: the applyRoute step running when it threw (rota / categoria / entrada / saída).
     private var applyStep: String = ""
+    /// Headset-mic reinforcement after route changes (see reinforceInput): the one pending
+    /// check, the systemUptime of the attempts in the last minute, and the cap switch.
+    private var reinforceWork: DispatchWorkItem?
+    private var reinforceTimes: [TimeInterval] = []
+    private var reinforceCapped: Bool = false
+
+    /// Main queue, from NativeVoicePlugin.join: a new line lifts the reinforcement cap.
+    static func resetReinforce() {
+        current?.reinforceTimes = []
+        current?.reinforceCapped = false
+    }
 
     /// Main queue, right after NativeVoicePlugin activated the session for the first line and
     /// on every line connect: the preferred input and the output override only take on an
@@ -36,7 +47,7 @@ public class AudioRoutePlugin: CAPPlugin {
             return "sessão inativa: nada pedido (\(route))"
         }
         // Preferred input / mic before this reapply: proves "set, then undone by WebRTC".
-        let before: String = "\(plugin.session.preferredInput?.portName ?? "nenhum")/\(plugin.session.currentRoute.inputs.first?.portName ?? "?")"
+        let before: String = plugin.inputState()
         let outcome: String
         do {
             try plugin.applyRoute(route)
@@ -78,6 +89,65 @@ public class AudioRoutePlugin: CAPPlugin {
 
     @objc private func routeChanged(_ note: Notification) {
         emitRoutes()
+        // Posted on an arbitrary thread; route state is main-only.
+        DispatchQueue.main.async {
+            self.scheduleReinforce(after: 0.3)
+        }
+    }
+
+    /// One pending check at a time: a burst of route changes gets a single trailing check.
+    private func scheduleReinforce(after delay: TimeInterval) {
+        if reinforceWork != nil { return }
+        let work = DispatchWorkItem { [weak self] in
+            self?.reinforceInput()
+        }
+        reinforceWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// iOS drops the headset mic (preferredInput back to nil, built-in mic in use) after our
+    /// reapply while a line is open. Puts back ONLY the preferred input (no category, override
+    /// or activation, so it cannot feed WebRTC's reconfiguration), at most once per second and
+    /// 10 times per minute; past the cap it stops until setRoute or a new line.
+    private func reinforceInput() {
+        reinforceWork = nil
+        let route: String = preferredRoute
+        guard !reinforceCapped, rtc.isActive,
+              route == "bluetooth" || route == "headset" || route.hasPrefix("device:"),
+              let wanted = preferredInput(for: route), wanted.portType != .builtInMic else { return }
+        let inUse: AVAudioSessionPortDescription? = session.currentRoute.inputs.first
+        if inUse?.uid == wanted.uid && session.preferredInput != nil { return }
+        let now: TimeInterval = ProcessInfo.processInfo.systemUptime
+        reinforceTimes = reinforceTimes.filter { (t: TimeInterval) -> Bool in now - t < 60 }
+        if let last = reinforceTimes.last, now - last < 1 {
+            scheduleReinforce(after: 1 - (now - last))
+            return
+        }
+        if reinforceTimes.count >= 10 {
+            reinforceCapped = true
+            NativeVoicePlugin.diag("ROTA", "reforço", "parado: 10 tentativas em 1 min (volta ao escolher a saída ou entrar em linha)")
+            return
+        }
+        reinforceTimes.append(now)
+        let before: String = inputState()
+        let result: String
+        rtc.lockForConfiguration()
+        do {
+            try rtc.setPreferredInput(wanted)
+            // The input switch itself can land later (async): the next ROTA line shows it.
+            result = "antes \(before) → depois \(inputState())"
+        } catch {
+            result = "erro: antes \(before) · \(error.localizedDescription)"
+        }
+        rtc.unlockForConfiguration()
+        NativeVoicePlugin.diag("ROTA", "reforço", result)
+    }
+
+    /// "<preferred input|nenhum>/<input in use>" for the ROTA diagnostics.
+    private func inputState() -> String {
+        let preferred: String = session.preferredInput?.portName ?? "nenhum"
+        let inUse: String = session.currentRoute.inputs.first?.portName ?? "?"
+        return "\(preferred)/\(inUse)"
     }
 
     @objc func hasBluetoothPermission(_ call: CAPPluginCall) {
@@ -105,6 +175,9 @@ public class AudioRoutePlugin: CAPPlugin {
             do {
                 try self.applyRoute(route)
                 self.lastError = ""
+                // The user chose again: lift the reinforcement cap.
+                self.reinforceTimes = []
+                self.reinforceCapped = false
                 call.resolve(["active": self.activeRouteId() as Any])
                 self.emitRoutes()
             } catch {

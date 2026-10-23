@@ -72,6 +72,11 @@ public class NativeVoicePlugin: CAPPlugin {
         _ = group.wait(timeout: .now() + 2)
     }
 
+    /// Main queue: a "diag" event from another plugin (AudioRoutePlugin's mic reinforcement).
+    static func diag(_ key: String, _ action: String, _ result: String) {
+        current?.emitDiag(key, action, result)
+    }
+
     /// WebRTC (re)configures the shared AVAudioSession when audio starts; make it apply the
     /// app's values so it never sets something different.
     static func configureWebRTCAudio(speaker: Bool) {
@@ -122,6 +127,7 @@ public class NativeVoicePlugin: CAPPlugin {
                 self?.playCue("start-connection-451")
                 self?.reassertRoute(lineId: lineId)
             }
+            AudioRoutePlugin.resetReinforce()
             self.holdSession()
             self.calls[callId] = voiceCall
             self.callOrder.append(callId)
