@@ -10,10 +10,13 @@ export const useWakeLock = (enabled: boolean) => {
 
     let sentinel: WakeLockSentinel | null = null;
     let cancelled = false;
+    // A visibilitychange during a pending request must not take a second lock.
+    let pending = false;
 
     const requestWakeLock = async () => {
       if (document.visibilityState !== "visible") return;
-      if (sentinel && !sentinel.released) return;
+      if (pending || (sentinel && !sentinel.released)) return;
+      pending = true;
       try {
         const lock = await navigator.wakeLock.request("screen");
         if (cancelled) {
@@ -23,6 +26,8 @@ export const useWakeLock = (enabled: boolean) => {
         sentinel = lock;
       } catch (e) {
         logger.red(`Failed to acquire screen wake lock: ${e}`);
+      } finally {
+        pending = false;
       }
     };
 

@@ -57,43 +57,98 @@ describe("useMediaSessionMicToggle", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  const call = (enabled: boolean, extra: object = {}) => ({
-    joinProductionOptions: null,
-    mediaStreamInput: {
-      getAudioTracks: () => [{ enabled }],
-    },
-    ...extra,
-  });
-
-  it("headset play/pause toggles the talk line's mic, skipping a listen-only line", () => {
-    const toggleA = vi.fn();
-    const toggleB = vi.fn();
-    const onToggled = vi.fn();
-    const calls = {
-      a: call(true, {
-        joinProductionOptions: { lineUsedForProgramOutput: true },
+  // A line whose toggle flips its own track, like use-mute-input does.
+  const line = (open: boolean, extra: object = {}) => {
+    const track = { enabled: open };
+    return {
+      track,
+      call: {
+        joinProductionOptions: null,
+        mediaStreamInput: { getAudioTracks: () => [track] },
+        ...extra,
+      },
+      toggle: vi.fn(() => {
+        track.enabled = !track.enabled;
       }),
-      b: call(false),
-    } as never;
-    const { unmount } = renderHook(() =>
+    };
+  };
+
+  const setup = (a: ReturnType<typeof line>, b: ReturnType<typeof line>) => {
+    const onToggled = vi.fn();
+    const hook = renderHook(() =>
       useMediaSessionMicToggle({
         enabled: true,
-        calls,
+        calls: { a: a.call, b: b.call } as never,
         callActionHandlers: {
           current: {
-            a: { toggle_input_mute: toggleA },
-            b: { toggle_input_mute: toggleB },
+            a: { toggle_input_mute: a.toggle },
+            b: { toggle_input_mute: b.toggle },
           },
         },
         onToggled,
       })
     );
+    return { onToggled, ...hook };
+  };
+
+  it("pause never opens a closed mic (AirPod out, headset gone)", () => {
+    const a = line(false);
+    const b = line(false);
+    setup(a, b);
     handlers.pause?.();
-    expect(toggleA).not.toHaveBeenCalled();
-    expect(toggleB).toHaveBeenCalledTimes(1);
-    expect(onToggled).toHaveBeenCalledWith(true);
+    expect(a.toggle).not.toHaveBeenCalled();
+    expect(b.toggle).not.toHaveBeenCalled();
+  });
+
+  it("play opens the first talk line, skipping a listen-only line; pause closes it", () => {
+    vi.useFakeTimers();
+    const prog = line(false, {
+      joinProductionOptions: { lineUsedForProgramOutput: true },
+    });
+    const talk = line(false);
+    const { onToggled, unmount } = setup(prog, talk);
+    handlers.play?.();
+    expect(prog.toggle).not.toHaveBeenCalled();
+    expect(talk.track.enabled).toBe(true);
+    expect(onToggled).toHaveBeenLastCalledWith(true);
+    vi.advanceTimersByTime(500);
+    handlers.play?.();
+    expect(talk.toggle).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(500);
+    handlers.pause?.();
+    expect(talk.track.enabled).toBe(false);
+    expect(onToggled).toHaveBeenLastCalledWith(false);
     unmount();
     expect(handlers.pause).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("closes the line that is open, not the first one", () => {
+    const a = line(false);
+    const b = line(true);
+    setup(a, b);
+    handlers.pause?.();
+    expect(a.toggle).not.toHaveBeenCalled();
+    expect(b.track.enabled).toBe(false);
+  });
+
+  it("ignores presses right after a headset connects or disconnects", () => {
+    const listeners: Record<string, () => void> = {};
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        addEventListener: (e: string, h: () => void) => {
+          listeners[e] = h;
+        },
+        removeEventListener: vi.fn(),
+      },
+    });
+    const a = line(false);
+    const b = line(false);
+    setup(a, b);
+    listeners.devicechange?.();
+    handlers.play?.();
+    expect(a.toggle).not.toHaveBeenCalled();
   });
 
   it("does nothing when disabled", () => {

@@ -1,17 +1,21 @@
 import { useEffect, useRef } from "react";
 import { CallState } from "../../global-state/types";
-import { resolveHeadsetCallId } from "../../mobile-overlay/headset-target";
 import {
   canTalkOnCall,
   getSortedCallIds,
 } from "../../mobile-overlay/overlay-call-state";
 
-// Headset play/pause and the mic key of the media controls, when the browser forwards them.
-const ACTIONS = ["play", "pause", "togglemicrophone"] as const;
 const DEBOUNCE_MS = 400;
+// A headset (dis)connecting sends play/pause too: ignore them for a while.
+const DEVICE_CHANGE_QUIET_MS = 2000;
+
+/** The web mic mute is the track's enabled flag (see use-mute-input). */
+const micOpen = (call: CallState | undefined): boolean =>
+  !!call?.mediaStreamInput?.getAudioTracks()[0]?.enabled;
 
 /**
- * Phone browser (PWA) only: the headset button toggles the mic of the line the user talks on.
+ * Phone browser (PWA) only: the headset button opens and closes the mic. "pause" only closes and
+ * "play" only opens, so a system pause (AirPod out of the ear, headset gone) never opens the mic.
  * Best effort — browsers only forward the button while the page plays audio.
  */
 export const useMediaSessionMicToggle = ({
@@ -25,7 +29,7 @@ export const useMediaSessionMicToggle = ({
   callActionHandlers: React.MutableRefObject<
     Record<string, Record<string, () => void>>
   >;
-  onToggled: (wasMuted: boolean) => void;
+  onToggled: (open: boolean) => void;
 }) => {
   const callsRef = useRef(calls);
   callsRef.current = calls;
@@ -33,44 +37,80 @@ export const useMediaSessionMicToggle = ({
   onToggledRef.current = onToggled;
 
   useEffect(() => {
-    if (!enabled || !("mediaSession" in navigator)) return undefined;
+    if (
+      !enabled ||
+      !("mediaSession" in navigator) ||
+      !("MediaMetadata" in window)
+    )
+      return undefined;
     const session = navigator.mediaSession;
     let last = -Infinity;
-    const toggle = () => {
+    let lastDeviceChange = -Infinity;
+
+    const talkIds = () =>
+      getSortedCallIds(callsRef.current).filter((id) =>
+        canTalkOnCall(callsRef.current[id])
+      );
+    const anyOpen = () => talkIds().some((id) => micOpen(callsRef.current[id]));
+    // The headset button sends "pause" while playing and "play" while paused.
+    const showState = () => {
+      session.playbackState = anyOpen() ? "playing" : "paused";
+    };
+
+    const act = (want: "open" | "close" | "toggle") => {
       const now = Date.now();
       if (now - last < DEBOUNCE_MS) return;
+      if (now - lastDeviceChange < DEVICE_CHANGE_QUIET_MS) return;
       last = now;
-      const all = callsRef.current;
-      const id = resolveHeadsetCallId(getSortedCallIds(all), (c) =>
-        canTalkOnCall(all[c])
+      const open = anyOpen();
+      const close = want === "close" || (want === "toggle" && open);
+      const ids = talkIds();
+      let toFlip: string[] = [];
+      if (close) toFlip = ids.filter((id) => micOpen(callsRef.current[id]));
+      else if (!open) toFlip = ids.slice(0, 1);
+      toFlip.forEach((id) =>
+        callActionHandlers.current[id]?.toggle_input_mute?.()
       );
-      const handler = id && callActionHandlers.current[id]?.toggle_input_mute;
-      if (!id || !handler) return;
-      // The web mic mute is the track's enabled flag.
-      const track = all[id]?.mediaStreamInput?.getAudioTracks()[0];
-      const wasMuted = !track?.enabled;
-      handler();
-      onToggledRef.current(wasMuted);
-      // Keeps the system controls on "playing", so the next press arrives too.
-      session.playbackState = "playing";
+      if (toFlip.length > 0) onToggledRef.current(anyOpen());
+      showState();
     };
+
+    const onDeviceChange = () => {
+      lastDeviceChange = Date.now();
+    };
+    navigator.mediaDevices?.addEventListener?.("devicechange", onDeviceChange);
+
+    const handlers: [MediaSessionAction, () => void][] = [
+      ["play", () => act("open")],
+      ["pause", () => act("close")],
+      ["togglemicrophone" as MediaSessionAction, () => act("toggle")],
+    ];
     session.metadata = new MediaMetadata({ title: "Intercom ac24horas" });
-    session.playbackState = "playing";
-    ACTIONS.forEach((a) => {
+    showState();
+    // The mic also changes from the screen: keep the button's direction current.
+    const sync = window.setInterval(showState, 1000);
+    handlers.forEach(([a, h]) => {
       try {
-        session.setActionHandler(a as MediaSessionAction, toggle);
+        session.setActionHandler(a, h);
       } catch {
         // Action not supported by this browser.
       }
     });
     return () => {
-      ACTIONS.forEach((a) => {
+      window.clearInterval(sync);
+      navigator.mediaDevices?.removeEventListener?.(
+        "devicechange",
+        onDeviceChange
+      );
+      handlers.forEach(([a]) => {
         try {
-          session.setActionHandler(a as MediaSessionAction, null);
+          session.setActionHandler(a, null);
         } catch {
           // ignore
         }
       });
+      session.metadata = null;
+      session.playbackState = "none";
     };
   }, [enabled, callActionHandlers]);
 };

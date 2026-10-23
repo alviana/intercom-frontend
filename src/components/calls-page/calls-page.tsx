@@ -185,6 +185,8 @@ export const CallsPage = () => {
 
   const isEmpty = Object.values(calls).length === 0;
   const isSingleCall = Object.values(calls).length === 1;
+  // Phone web app (PWA): Safari cuts the mic when the screen locks.
+  const phoneBrowser = isMobile && !isMobileApp();
 
   const isFirstConnection = isEmpty && paramProductionId && paramLineId;
 
@@ -329,8 +331,8 @@ export const CallsPage = () => {
   }, [pendingCallRefs]);
 
   usePreventPullToRefresh();
-  // Installed app: native audio runs with the screen locked, so the screen may sleep.
-  useWakeLock(!isEmpty && !isMobileApp());
+  // Only the phone web app: PC and tablet keep their screen behaviour, the installed app may lock.
+  useWakeLock(!isEmpty && phoneBrowser);
 
   const nativeRestoreDone = useNativeRestoreDone();
 
@@ -443,14 +445,13 @@ export const CallsPage = () => {
   });
 
   const { playEnterSound, playExitSound } = useAudioCue();
-  const phoneBrowser = isMobile && !isMobileApp();
 
   useMediaSessionMicToggle({
     enabled: phoneBrowser && !isEmpty,
     calls,
     callActionHandlers,
     // Audible confirmation: the phone is usually in a pocket.
-    onToggled: (wasMuted) => (wasMuted ? playEnterSound() : playExitSound()),
+    onToggled: (open) => (open ? playEnterSound(true) : playExitSound()),
   });
 
   const runExitAllCalls = async () => {

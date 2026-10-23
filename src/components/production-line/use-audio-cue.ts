@@ -34,10 +34,11 @@ const playAudioElement = (audio: HTMLAudioElement) => {
 };
 
 export const useAudioCue = () => {
-  const playEnterSound = useCallback(() => {
+  // force: a mic cue that must sound even right after another one (headset presses).
+  const playEnterSound = useCallback((force = false) => {
     if (isIOSApp()) return; // native plays the cues
     const now = Date.now();
-    if (now - lastEnterCueAt < ENTER_CUE_DEBOUNCE_MS) {
+    if (!force && now - lastEnterCueAt < ENTER_CUE_DEBOUNCE_MS) {
       return;
     }
 

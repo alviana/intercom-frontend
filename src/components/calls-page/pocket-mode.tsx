@@ -1,8 +1,13 @@
 import styled from "@emotion/styled";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SecondaryButton } from "../form-elements/form-elements";
 
 const HOLD_MS = 1500;
+
+// iOS home-screen web app: no Safari toolbar or swipe-back outside the overlay.
+const standalone =
+  (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+  window.matchMedia?.("(display-mode: standalone)").matches === true;
 
 const Overlay = styled.div`
   position: fixed;
@@ -50,6 +55,8 @@ export const PocketMode = () => {
   const [holding, setHolding] = useState(false);
   const timer = useRef<number | undefined>(undefined);
 
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
   const cancel = () => {
     window.clearTimeout(timer.current);
     setHolding(false);
@@ -68,11 +75,20 @@ export const PocketMode = () => {
       <div>
         Modo bolso: a tela fica escura e não responde a toques.
         <br />O áudio e o microfone continuam.
+        {!standalone && (
+          <>
+            <br />
+            <br />
+            Use pelo ícone na tela de início: no Safari, os botões do navegador
+            continuam ativos.
+          </>
+        )}
       </div>
       <Hold
         type="button"
         className={holding ? "holding" : ""}
         onPointerDown={() => {
+          window.clearTimeout(timer.current);
           setHolding(true);
           timer.current = window.setTimeout(() => {
             setHolding(false);
