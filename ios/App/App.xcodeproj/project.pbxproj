@@ -27,6 +27,7 @@
 		A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */; };
 		A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */; };
 		A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */; };
+		A1A1A1A1A1A1A1A100000029 /* LineActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */; };
 		A1A1A1A1A1A1A1A10000001A /* start-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */; };
 		A1A1A1A1A1A1A1A10000001C /* stop-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */; };
 		A2B000000000000000000001 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
@@ -87,6 +88,7 @@
 		A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoicePlugin.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeVoicePlugin.m; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoiceCall.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineActivityController.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "start-connection-451.wav"; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "stop-connection-451.wav"; sourceTree = "<group>"; };
 		A2B000000000000000000005 /* IntercomOverlayAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomOverlayAttributes.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 				A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */,
 				A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */,
 				A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */,
+				A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */,
 			);
 			path = Plugins;
 			sourceTree = "<group>";
@@ -379,6 +382,7 @@
 				A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */,
 				A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */,
 				A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */,
+				A1A1A1A1A1A1A1A100000029 /* LineActivityController.swift in Sources */,
 				A1A1A1A1A1A1A1A100000021 /* IntercomLineActivityAttributes.swift in Sources */,
 				A1A1A1A1A1A1A1A100000024 /* IntercomLineIntents.swift in Sources */,
 			);

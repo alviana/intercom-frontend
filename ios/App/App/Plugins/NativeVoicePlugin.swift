@@ -18,6 +18,10 @@ public class NativeVoicePlugin: CAPPlugin {
     private var callOrder: [String] = []
     /// Main queue: fired on any change of `lineSnapshots()` (set by the widget controller).
     var onLinesChanged: (() -> Void)?
+    /// True while a headset press or a widget tap changes a line: the widget shows it at once.
+    private(set) var linesChangeIsUserAction: Bool = false
+    /// The lock-screen Live Activity (created at load).
+    private var lineActivity: LineActivityController?
     /// Last line whose mic was opened: the headset toggle's target.
     private(set) var lastMicCallId: String? {
         didSet {
@@ -77,6 +81,7 @@ public class NativeVoicePlugin: CAPPlugin {
 
     public override func load() {
         NativeVoicePlugin.current = self
+        lineActivity = LineActivityController(plugin: self)
         // AudioRoutePlugin starts on the speaker route.
         NativeVoicePlugin.configureWebRTCAudio(speaker: true)
         NotificationCenter.default.addObserver(
@@ -436,6 +441,8 @@ public class NativeVoicePlugin: CAPPlugin {
     /// Toggles one line's mic with its cue (reported to JS as micChanged `source`); returns
     /// whether it is now open. An opened line becomes the headset target.
     private func flipMic(_ callId: String, _ voiceCall: NativeVoiceCall, source: String, cueLater: Bool) -> Bool {
+        linesChangeIsUserAction = true
+        defer { linesChangeIsUserAction = false }
         let open: Bool = !voiceCall.micEnabled
         if open {
             // Before the change, so the snapshot it triggers already has the new headset line.
@@ -491,7 +498,9 @@ public class NativeVoicePlugin: CAPPlugin {
             return
         }
         let muted: Bool = !voiceCall.outputMuted
+        linesChangeIsUserAction = true
         voiceCall.setOutputMuted(muted, report: true)
+        linesChangeIsUserAction = false
         emitDiag("WIDGET", muted ? "som desligado" : "som ligado", "linha \(voiceCall.lineId)")
     }
 
