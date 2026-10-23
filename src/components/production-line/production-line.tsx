@@ -30,6 +30,7 @@ import {
   LongPressWrapper,
 } from "./production-line-components.ts";
 import { SelectDevices } from "./select-devices.tsx";
+import { canTalkOnCall } from "../../mobile-overlay/overlay-call-state";
 import { isIOSApp } from "../../platform";
 import { createNativeMicStream } from "../../mobile-overlay/native-voice-stubs";
 import { NativeVoiceConnection } from "./native-voice-connection.tsx";
@@ -123,7 +124,10 @@ export const ProductionLine = ({
     [ios, id]
   );
   const nativeInput =
-    joinProductionOptions?.audioinput === "no-device" ? "no-device" : nativeMic;
+    joinProductionOptions?.audioinput === "no-device" ||
+    !canTalkOnCall({ joinProductionOptions })
+      ? "no-device"
+      : nativeMic;
   const inputAudioStream = ios ? nativeInput : webInputStream;
 
   useEffect(() => {

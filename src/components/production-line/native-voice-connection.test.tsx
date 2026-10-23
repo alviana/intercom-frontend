@@ -197,6 +197,39 @@ describe("NativeVoiceConnection", () => {
     await waitFor(() => expect(h.remove).toHaveBeenCalled());
   });
 
+  it("does nothing after unmount, even if join resolves or events arrive late", async () => {
+    let resolveJoin: (v: unknown) => void = () => {};
+    h.join.mockReturnValue(
+      new Promise((r) => {
+        resolveJoin = r;
+      })
+    );
+    const { dispatch, muteInput, unmount } = setup();
+    await waitFor(() => expect(h.listeners.activity).toBeDefined());
+    unmount();
+    dispatch.mockClear();
+    await act(async () => {
+      resolveJoin({
+        callId: "c1",
+        meta: "",
+        sessionId: "s",
+        state: "connected",
+        micEnabled: true,
+      });
+    });
+    act(() => {
+      h.listeners.activity({ callId: "c1", active: true });
+      h.listeners.callState({
+        callId: "c1",
+        state: "connected",
+        sessionId: "s",
+      });
+      h.listeners.micChanged({ callId: "c1", enabled: true, source: "fone" });
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(muteInput).not.toHaveBeenCalled();
+  });
+
   it("dispatches null mediaStreamInput when it cannot talk", async () => {
     const { dispatch } = setup(false);
     await waitFor(() => expect(h.join).toHaveBeenCalled());

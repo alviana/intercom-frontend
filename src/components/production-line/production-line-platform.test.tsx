@@ -6,6 +6,7 @@ import { CallState } from "../../global-state/types";
 const h = vi.hoisted(() => ({
   ios: false,
   getUserMedia: vi.fn(),
+  nativeProps: [] as { canTalk: boolean }[],
   audioInputArgs: [] as { audioInputId: string | null }[],
 }));
 
@@ -27,7 +28,10 @@ vi.mock("../../global-state/context-provider.tsx", () => ({
   useGlobalState: () => [{}, vi.fn()],
 }));
 vi.mock("./native-voice-connection", () => ({
-  NativeVoiceConnection: () => <div data-testid="native" />,
+  NativeVoiceConnection: (p: { canTalk: boolean }) => {
+    h.nativeProps.push(p);
+    return <div data-testid="native" />;
+  },
 }));
 vi.mock("./symphony-rtc-connection-component.tsx", () => ({
   SymphonyRtcConnectionComponent: () => <div data-testid="symphony" />,
@@ -144,6 +148,19 @@ describe("ProductionLine platform", () => {
     h.ios = true;
     const { queryByText } = renderLine({ ...callState, reconnecting: true });
     expect(queryByText("Reconectando…")).not.toBeNull();
+  });
+
+  it("iOS never opens a program-output line for a non-program user", () => {
+    h.ios = true;
+    renderLine({
+      ...callState,
+      joinProductionOptions: {
+        ...callState.joinProductionOptions!,
+        lineUsedForProgramOutput: true,
+        isProgramUser: false,
+      },
+    });
+    expect(h.nativeProps.at(-1)?.canTalk).toBe(false);
   });
 
   it("Android renders SymphonyRtcConnectionComponent with useAudioInput", () => {

@@ -42,7 +42,9 @@ export const NativeVoiceConnection = ({
 
     let state: NativeCallState = "connecting";
     let gotEvent = false;
+    let cancelled = false;
     const update = (updates: Record<string, unknown>) =>
+      !cancelled &&
       dispatch({ type: "UPDATE_CALL", payload: { id: callId, updates } });
 
     update({
@@ -55,7 +57,7 @@ export const NativeVoiceConnection = ({
 
     const handles = [
       NativeVoice.addListener("callState", (ev) => {
-        if (ev.callId !== callId) return;
+        if (cancelled || ev.callId !== callId) return;
         gotEvent = true;
         state = ev.state;
         update({
@@ -65,14 +67,16 @@ export const NativeVoiceConnection = ({
         });
       }),
       NativeVoice.addListener("micChanged", (ev) => {
-        if (ev.callId === callId) muteRef.current(!ev.enabled, ev.source);
+        if (!cancelled && ev.callId === callId)
+          muteRef.current(!ev.enabled, ev.source);
       }),
       NativeVoice.addListener("activity", (ev) => {
-        if (ev.callId === callId)
+        if (!cancelled && ev.callId === callId)
           update({ audioLevelAboveThreshold: ev.active });
       }),
       NativeVoice.addListener("dominantSpeaker", (ev) => {
-        if (ev.callId === callId) update({ dominantSpeaker: ev.endpoint });
+        if (!cancelled && ev.callId === callId)
+          update({ dominantSpeaker: ev.endpoint });
       }),
     ];
 
@@ -87,6 +91,7 @@ export const NativeVoiceConnection = ({
       meta: JSON.stringify(joinProductionOptions),
     })
       .then((info) => {
+        if (cancelled) return;
         if (!gotEvent) {
           state = info.state;
           update({
@@ -100,6 +105,7 @@ export const NativeVoiceConnection = ({
       .catch(() => update({ connectionState: "failed" }));
 
     return () => {
+      cancelled = true;
       handles.forEach((p) => p.then((h) => h.remove()).catch(() => {}));
       NativeVoice.leave({ callId }).catch(() => {});
     };
