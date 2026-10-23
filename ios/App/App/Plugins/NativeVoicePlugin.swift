@@ -56,6 +56,8 @@ public class NativeVoicePlugin: CAPPlugin {
     private var callKitAudioActive: Bool = false
     /// Cue held until CallKit activates the session (AVAudioPlayer would activate it itself).
     private var pendingCue: String?
+    /// CallKit mode: until when interruptions are our own end/new call after a headset press.
+    private var callKitRestartUntil: TimeInterval = 0
 
     public override func load() {
         NativeVoicePlugin.current = self
@@ -312,6 +314,11 @@ public class NativeVoicePlugin: CAPPlugin {
 
     private func handleInterruption(_ type: AVAudioSession.InterruptionType) {
         if calls.isEmpty { return }
+        // Before the switch: an ignored .began must not set interruptedWithoutEnd.
+        if callKitMode && ProcessInfo.processInfo.systemUptime < callKitRestartUntil {
+            emitDiag("INTERRUPÇÃO", type == .began ? "início" : "fim", "ignorada: nova chamada do botão do fone")
+            return
+        }
         switch type {
         case .began:
             interruptedWithoutEnd = true
@@ -758,6 +765,7 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
         }
         // Not asked by the app: the headset button (HFP "hang up"). Failing it made the
         // headset drop the call link, so end it and start a fresh call right away.
+        callKitRestartUntil = ProcessInfo.processInfo.systemUptime + 3
         toggleMicFromHeadset(cueLater: true)
         action.fulfill()
         emitDiag("CALLKIT", "botão do fone (encerrar)", "nova chamada")
