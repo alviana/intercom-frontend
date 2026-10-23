@@ -72,6 +72,11 @@ public class NativeVoicePlugin: CAPPlugin {
         _ = group.wait(timeout: .now() + 2)
     }
 
+    /// Main queue: whether some line is open (AudioRoutePlugin reinforces the mic only then).
+    static var hasCalls: Bool {
+        return current?.calls.isEmpty == false
+    }
+
     /// Main queue: a "diag" event from another plugin (AudioRoutePlugin's mic reinforcement).
     static func diag(_ key: String, _ action: String, _ result: String) {
         current?.emitDiag(key, action, result)

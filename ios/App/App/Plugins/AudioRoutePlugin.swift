@@ -61,6 +61,8 @@ public class AudioRoutePlugin: CAPPlugin {
             outcome = "erro: antes \(before) · \(plugin.lastError)"
         }
         plugin.emitRoutes()
+        // iOS may post no route change afterwards (steady HFP out + built-in mic): check anyway.
+        plugin.scheduleReinforce(after: 1)
         return outcome
     }
 
@@ -112,7 +114,7 @@ public class AudioRoutePlugin: CAPPlugin {
     private func reinforceInput() {
         reinforceWork = nil
         let route: String = preferredRoute
-        guard !reinforceCapped, rtc.isActive,
+        guard !reinforceCapped, rtc.isActive, NativeVoicePlugin.hasCalls,
               route == "bluetooth" || route == "headset" || route.hasPrefix("device:"),
               let wanted = preferredInput(for: route), wanted.portType != .builtInMic else { return }
         let inUse: AVAudioSessionPortDescription? = session.currentRoute.inputs.first
