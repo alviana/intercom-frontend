@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { AudioRoute } from "../../mobile-overlay/audio-route";
-import { isMobileApp } from "../../platform";
+import { isIOSApp, isMobileApp } from "../../platform";
 import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import {
   applyStoredAudioRoute,
@@ -25,7 +25,9 @@ export const AudioRouteManager = () => {
           source: "sistema",
           result: "rota de áudio mudou",
         });
-        if (active) writeStoredAudioRoute(active);
+        // iOS: changes made by the system/WebKit (e.g. falling back to the speaker) must
+        // not overwrite the route the user picked; the picker stores it itself.
+        if (active && !isIOSApp()) writeStoredAudioRoute(active);
       }
     );
 
