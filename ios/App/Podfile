@@ -16,7 +16,8 @@ end
 
 target 'App' do
   capacitor_pods
-  # Add your Pods here
+  # Google WebRTC, unmodified binaries: https://github.com/stasel/WebRTC (154+ needs iOS 15)
+  pod 'WebRTC-lib', '153.0.0'
 end
 
 post_install do |installer|

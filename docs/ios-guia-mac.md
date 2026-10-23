@@ -50,9 +50,10 @@ Abra sempre o **.xcworkspace** (não o .xcodeproj).
 cd intercom-frontend
 git pull
 VITE_BACKEND_URL=https://intercom.ac24horas.com/manager npm run ios:build
+cd ios/App && pod install && cd ../..
 ```
 
-Depois **▶ (Run)** no Xcode. (`pod install` só se eu avisar.)
+Depois **▶ (Run)** no Xcode. O `pod install` agora é obrigatório depois de cada `git pull`: o app usa a biblioteca WebRTC nativa (pod `WebRTC-lib`); sem ele o Xcode acusa `No such module 'WebRTC'`.
 
 ## 5. Antes de testar
 

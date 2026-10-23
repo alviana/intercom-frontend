@@ -24,6 +24,11 @@
 		A1A1A1A1A1A1A1A10000000C /* CallServicePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000B /* CallServicePlugin.m */; };
 		A1A1A1A1A1A1A1A10000000E /* OverlayBubblePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000D /* OverlayBubblePlugin.swift */; };
 		A1A1A1A1A1A1A1A100000010 /* OverlayBubblePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000F /* OverlayBubblePlugin.m */; };
+		A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */; };
+		A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */; };
+		A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */; };
+		A1A1A1A1A1A1A1A10000001A /* start-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */; };
+		A1A1A1A1A1A1A1A10000001C /* stop-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */; };
 		A2B000000000000000000001 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
 		A2B000000000000000000002 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
 		A2B000000000000000000003 /* IntercomLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */; };
@@ -74,6 +79,11 @@
 		A1A1A1A1A1A1A1A10000000B /* CallServicePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CallServicePlugin.m; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000000D /* OverlayBubblePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayBubblePlugin.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000000F /* OverlayBubblePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OverlayBubblePlugin.m; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoicePlugin.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeVoicePlugin.m; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoiceCall.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "start-connection-451.wav"; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "stop-connection-451.wav"; sourceTree = "<group>"; };
 		A2B000000000000000000005 /* IntercomOverlayAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomOverlayAttributes.swift; sourceTree = "<group>"; };
 		A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLiveActivityWidget.swift; sourceTree = "<group>"; };
 		A2B000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -138,6 +148,7 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				A1A1A1A1A1A1A1A100000011 /* BridgeViewController.swift */,
 				A1A1A1A1A1A1A1A100000100 /* Plugins */,
+				A1A1A1A1A1A1A1A100000101 /* Sounds */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -168,8 +179,20 @@
 				A1A1A1A1A1A1A1A10000000B /* CallServicePlugin.m */,
 				A1A1A1A1A1A1A1A10000000D /* OverlayBubblePlugin.swift */,
 				A1A1A1A1A1A1A1A10000000F /* OverlayBubblePlugin.m */,
+				A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */,
+				A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */,
+				A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */,
 			);
 			path = Plugins;
+			sourceTree = "<group>";
+		};
+		A1A1A1A1A1A1A1A100000101 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */,
+				A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */,
+			);
+			path = Sounds;
 			sourceTree = "<group>";
 		};
 		A2B000000000000000000011 /* IntercomLiveActivity */ = {
@@ -276,6 +299,8 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				A1A1A1A1A1A1A1A10000001A /* start-connection-451.wav in Resources */,
+				A1A1A1A1A1A1A1A10000001C /* stop-connection-451.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -340,6 +365,9 @@
 				A1A1A1A1A1A1A1A10000000C /* CallServicePlugin.m in Sources */,
 				A1A1A1A1A1A1A1A10000000E /* OverlayBubblePlugin.swift in Sources */,
 				A1A1A1A1A1A1A1A100000010 /* OverlayBubblePlugin.m in Sources */,
+				A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */,
+				A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */,
+				A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
