@@ -4,6 +4,7 @@ import { applyStoredAudioRoute } from "./android-audio-route";
 
 const mocks = vi.hoisted(() => ({
   getAvailableRoutes: vi.fn(),
+  isIOSApp: vi.fn(),
   isMobileApp: vi.fn(),
   isPluginAvailable: vi.fn(),
   setRoute: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock("../mobile-overlay/audio-route", () => ({
 }));
 
 vi.mock("../platform", () => ({
+  isIOSApp: mocks.isIOSApp,
   isMobileApp: mocks.isMobileApp,
 }));
 
@@ -74,6 +76,18 @@ describe("applyStoredAudioRoute", () => {
     await expect(applyStoredAudioRoute()).resolves.toBe("speaker");
 
     expect(mocks.setRoute).not.toHaveBeenCalled();
+  });
+
+  it("on iOS sets the route even when already active (native guards the headset mic for it)", async () => {
+    mocks.isIOSApp.mockReturnValue(true);
+    window.localStorage.setItem("id.audioRoute", JSON.stringify("speaker"));
+    mocks.getAvailableRoutes.mockResolvedValue({ routes, active: "speaker" });
+    mocks.setRoute.mockResolvedValue({ active: "speaker" });
+
+    await applyStoredAudioRoute();
+
+    expect(mocks.setRoute).toHaveBeenCalledWith({ route: "speaker" });
+    mocks.isIOSApp.mockReturnValue(false);
   });
 
   it("coalesces concurrent route applies", async () => {

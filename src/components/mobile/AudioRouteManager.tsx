@@ -17,13 +17,16 @@ export const AudioRouteManager = () => {
 
     const listenerPromise = AudioRoute.addListener(
       "audioRouteChanged",
-      ({ active }) => {
+      ({ active, input, hfp }) => {
         logHeadsetEvent({
           at: Date.now(),
           key: "ROTA",
           action: String(active ?? "nenhuma"),
           source: "sistema",
-          result: "rota de áudio mudou",
+          result:
+            input === undefined
+              ? "rota de áudio mudou"
+              : `mic: ${input || "?"} · bluetooth-mic: ${hfp ? "sim" : "não"}`,
         });
         // iOS: changes made by the system/WebKit (e.g. falling back to the speaker) must
         // not overwrite the route the user picked; the picker stores it itself.

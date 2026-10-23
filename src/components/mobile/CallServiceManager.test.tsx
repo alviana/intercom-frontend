@@ -12,6 +12,7 @@ const platform = vi.hoisted(() => ({ ios: false }));
 vi.mock("../../platform", () => ({
   isAndroidApp: () => !platform.ios,
   isIOSApp: () => platform.ios,
+  isMobileApp: () => true,
 }));
 
 vi.mock("../../config", () => ({
@@ -78,14 +79,17 @@ describe("CallServiceManager iOS (no CallKit call)", () => {
     platform.ios = true;
   });
 
-  it("never starts a CallKit call, even in a line, and skips Android-only setup", () => {
+  it("never starts a CallKit call, hands sessions to native, skips Android-only setup", () => {
     withCalls({ a: { sessionId: "s1" } });
     const { rerender } = render(<CallServiceManager />);
     withCalls({ a: { sessionId: "s1" }, b: { sessionId: "s2" } });
     rerender(<CallServiceManager />);
     expect(CallService.start).not.toHaveBeenCalled();
     expect(CallService.requestNotificationPermission).not.toHaveBeenCalled();
-    expect(CallService.setSessions).not.toHaveBeenCalled();
+    // so native can leave them when the app is swiped away (no ghost user)
+    expect(CallService.setSessions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sessionIds: ["s1", "s2"] })
+    );
   });
 
   it("ends a call left by an older build when mounted", () => {

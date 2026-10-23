@@ -10,6 +10,7 @@ public class AudioRoutePlugin: CAPPlugin {
     private var toneNode: AVAudioPlayerNode?
     private var toneEngine: AVAudioEngine?
     private var preferredRoute: String = "speaker"
+    private var lastReassert = Date.distantPast
 
     public override func load() {
         do {
@@ -31,7 +32,24 @@ public class AudioRoutePlugin: CAPPlugin {
     }
 
     @objc private func routeChanged(_ note: Notification) {
+        reassertHeadsetInputIfNeeded()
         emitRoutes()
+    }
+
+    // WebKit reconfigures the shared audio session whenever capture starts/stops and leaves
+    // the headset as output only with the iPhone mic; put the chosen headset mic back.
+    private func reassertHeadsetInputIfNeeded() {
+        guard preferredRoute == "bluetooth" || preferredRoute == "headset" else { return }
+        let wanted: [AVAudioSession.Port] = preferredRoute == "bluetooth"
+            ? [.bluetoothHFP, .bluetoothLE]
+            : [.headsetMic, .usbAudio, .lineIn]
+        if let current = session.currentRoute.inputs.first?.portType, wanted.contains(current) { return }
+        guard Date().timeIntervalSince(lastReassert) > 1 else { return } // no fight loop with WebKit
+        lastReassert = Date()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            try? self.applyRoute(self.preferredRoute)
+        }
     }
 
     @objc func hasBluetoothPermission(_ call: CAPPluginCall) {
@@ -144,6 +162,9 @@ public class AudioRoutePlugin: CAPPlugin {
         return [
             "routes": routes,
             "active": activeRouteId(outputTypes: outputTypes) as Any,
+            // Diagnostics: the mic actually in use and whether Bluetooth mics are allowed now.
+            "input": session.currentRoute.inputs.first?.portName ?? "",
+            "hfp": session.categoryOptions.contains(.allowBluetoothHFP),
         ]
     }
 

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { isAndroidApp, isIOSApp } from "../../platform";
+import { isAndroidApp, isIOSApp, isMobileApp } from "../../platform";
 import { useGlobalState } from "../../global-state/context-provider";
 import { CallService } from "../../mobile-overlay/call-service";
 import { getApiBaseUrl, getApiKey } from "../../config";
@@ -64,8 +64,9 @@ export const CallServiceManager = () => {
     .filter((id): id is string => !!id)
     .sort()
     .join(",");
+  // Android heartbeats them natively; iOS leaves them when the app is swiped away.
   useEffect(() => {
-    if (!isAndroidApp() || !Capacitor.isPluginAvailable("CallService")) return;
+    if (!isMobileApp() || !Capacitor.isPluginAvailable("CallService")) return;
     CallService.setSessions({
       baseUrl: getApiBaseUrl(),
       apiKey: getApiKey() ?? "",

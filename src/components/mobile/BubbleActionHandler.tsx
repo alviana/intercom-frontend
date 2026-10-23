@@ -187,9 +187,9 @@ export const BubbleActionHandler = () => {
         return;
       }
       if (isIOSApp()) {
-        await pushOverlayState({ requireRunning: false });
-        await OverlayBubble.show();
-        await pushOverlayState({ requireRunning: false });
+        // iOS v1 ships without the lock-screen widget (its mic state went stale); hide()
+        // also ends a Live Activity left by an older build.
+        await OverlayBubble.hide();
         return;
       }
       if (isAndroidApp() && (document.hidden || !document.hasFocus())) {

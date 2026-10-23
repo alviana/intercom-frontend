@@ -12,6 +12,9 @@ export interface AudioRouteItem {
 export interface GetRoutesResult {
   routes: AudioRouteItem[];
   active?: AudioRouteId | null;
+  /** iOS diagnostics: name of the mic in use and whether Bluetooth mics are allowed. */
+  input?: string;
+  hfp?: boolean;
 }
 
 export interface SetRouteResult {

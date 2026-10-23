@@ -3,14 +3,13 @@ import {
   type AudioRouteId,
   type AudioRouteItem,
 } from "../mobile-overlay/audio-route";
-import { isMobileApp } from "../platform";
+import { isIOSApp, isMobileApp } from "../platform";
 
 const STORAGE_KEY = "audioRoute";
 
 const ROUTE_TYPE_ORDER = ["headset", "earpiece", "bluetooth", "speaker"];
 
-export const isAudioRouteAvailable = (): boolean =>
-  isMobileApp();
+export const isAudioRouteAvailable = (): boolean => isMobileApp();
 
 export const readStoredAudioRoute = (): AudioRouteId | null => {
   if (typeof window === "undefined") return null;
@@ -82,7 +81,8 @@ const applyStoredAudioRouteNow = async (): Promise<AudioRouteId | null> => {
   const route = resolveAudioRouteToApply(routes, active);
   if (!route) return null;
 
-  if (route === active) {
+  // iOS still applies it: native keeps the chosen headset mic only for a route set through it.
+  if (route === active && !isIOSApp()) {
     writeStoredAudioRoute(route);
     return active;
   }

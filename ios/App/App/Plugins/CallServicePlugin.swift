@@ -71,6 +71,38 @@ public class CallServicePlugin: CAPPlugin, CXCallObserverDelegate {
         }
     }
 
+    private var leaveBaseUrl = ""
+    private var leaveApiKey = ""
+    private var leaveSessionIds: [String] = []
+
+    @objc func setSessions(_ call: CAPPluginCall) {
+        leaveBaseUrl = call.getString("baseUrl") ?? ""
+        leaveApiKey = call.getString("apiKey") ?? ""
+        leaveSessionIds = call.getArray("sessionIds", String.self) ?? []
+        call.resolve()
+    }
+
+    // Swiping the app away kills it without running JS: leave the sessions so the user does
+    // not linger as a ghost in the line until the server times out.
+    public func leaveSessionsOnTerminate() {
+        var base = leaveBaseUrl
+        guard !base.isEmpty, !leaveSessionIds.isEmpty else { return }
+        if !base.hasSuffix("/") { base += "/" }
+        let group = DispatchGroup()
+        for id in leaveSessionIds {
+            guard let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+                  let url = URL(string: base + "session/" + encoded) else { continue }
+            var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 2)
+            request.httpMethod = "DELETE"
+            if !leaveApiKey.isEmpty {
+                request.setValue("Bearer \(leaveApiKey)", forHTTPHeaderField: "Authorization")
+            }
+            group.enter()
+            URLSession.shared.dataTask(with: request) { _, _, _ in group.leave() }.resume()
+        }
+        _ = group.wait(timeout: .now() + 2)
+    }
+
     @objc func isRunning(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             call.resolve(["running": self.running])
