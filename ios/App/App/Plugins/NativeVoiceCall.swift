@@ -16,6 +16,7 @@ final class NativeVoiceCall: NSObject {
     private static let statsInterval: TimeInterval = 0.1
     private static let heartbeatInterval: TimeInterval = 10.0
     private static let disconnectGrace: TimeInterval = 5.0
+    private static let connectTimeout: TimeInterval = 30.0
     /// Wait before reconnect attempt n (1-based); after the list, every `steadyBackoff`.
     private static let backoff: [TimeInterval] = [2.0, 4.0, 8.0]
     private static let steadyBackoff: TimeInterval = 15.0
@@ -56,6 +57,8 @@ final class NativeVoiceCall: NSObject {
     private var heartbeatTimer: Timer?
     /// PC `disconnected`: reconnect if it is not back within `disconnectGrace`.
     private var disconnectWork: DispatchWorkItem?
+    /// Attempt watchdog: a PC that is not connected within `connectTimeout` is retried.
+    private var connectWork: DispatchWorkItem?
     /// The next reconnect attempt (backoff); cancelled by teardown, so `leave` stops retries.
     private var retryWork: DispatchWorkItem?
     /// Reconnect attempts since the line was last connected.
@@ -127,8 +130,9 @@ final class NativeVoiceCall: NSObject {
             }
             let reason: String = "POST session: \(NativeVoiceCall.describe(status: status, error: error))"
             guard (200..<300).contains(status), let id = newId else {
-                // 4xx: the line or production is gone (or the key is refused); retrying cannot help.
-                if (400..<500).contains(status) {
+                // 4xx: the line or production is gone (or the key is refused); retrying cannot
+                // help. 408 (timeout) and 429 (rate limit) are transient and retried.
+                if (400..<500).contains(status) && status != 408 && status != 429 {
                     self.fail(reason)
                 } else {
                     self.reconnect(reason)
@@ -160,6 +164,14 @@ final class NativeVoiceCall: NSObject {
             return
         }
         peerConnection = pc
+        // Covers every attempt, the first join included (ICE stuck in new/checking).
+        let watchdog = DispatchWorkItem { [weak self] in
+            guard let self = self, self.isCurrent(pc) else { return }
+            self.connectWork = nil
+            self.reconnect("sem conexão em 30 s")
+        }
+        connectWork = watchdog
+        DispatchQueue.main.asyncAfter(deadline: .now() + NativeVoiceCall.connectTimeout, execute: watchdog)
 
         if canTalk {
             let source: RTCAudioSource = NativeVoiceCall.factory.audioSource(with: constraints)
@@ -252,6 +264,8 @@ final class NativeVoiceCall: NSObject {
     private func handlePeerState(_ newState: RTCPeerConnectionState) {
         switch newState {
         case .connected:
+            connectWork?.cancel()
+            connectWork = nil
             disconnectWork?.cancel()
             disconnectWork = nil
             setState("connected")
@@ -316,6 +330,8 @@ final class NativeVoiceCall: NSObject {
     private func teardownPeer() {
         stopStats()
         stopHeartbeat()
+        connectWork?.cancel()
+        connectWork = nil
         disconnectWork?.cancel()
         disconnectWork = nil
         retryWork?.cancel()
@@ -347,6 +363,8 @@ final class NativeVoiceCall: NSObject {
                 diag?("LINHA", "conectar linha \(lineId)", "conectado")
             }
             attempt = 0
+            // A drop-DELETE that got no answer is retried now that the network is back.
+            flushStaleSessions()
             startStats()
             startHeartbeat()
             onConnected?()

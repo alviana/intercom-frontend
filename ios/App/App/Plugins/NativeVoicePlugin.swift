@@ -220,11 +220,15 @@ public class NativeVoicePlugin: CAPPlugin {
         case .began:
             emitDiag("INTERRUPÇÃO", "áudio interrompido", "linhas mantidas")
         case .ended:
+            // Through WebRTC's wrapper so its isActive bookkeeping and audio unit restart agree.
+            let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
+            rtc.lockForConfiguration()
             do {
-                try AVAudioSession.sharedInstance().setActive(true)
+                try rtc.setActive(true)
             } catch {
                 emitDiag("INTERRUPÇÃO", "retomar áudio", "falhou: \(error.localizedDescription)")
             }
+            rtc.unlockForConfiguration()
             for callId in callOrder {
                 calls[callId]?.setMicEnabled(false, source: "interrupção")
             }
