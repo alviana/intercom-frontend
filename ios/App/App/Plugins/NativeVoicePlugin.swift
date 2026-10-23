@@ -641,6 +641,9 @@ extension NativeVoicePlugin: CXProviderDelegate, CXCallObserverDelegate {
 
     private func beginCallKitMode() {
         callKitMode = true
+        // A fallback ends the mode without the reset in reconcileCallKit.
+        callKitRetries = 0
+        callKitWaitEnd = nil
         let rtc: RTCAudioSession = RTCAudioSession.sharedInstance()
         // The audio unit waits for CallKit's activation (provider didActivate).
         rtc.useManualAudio = true
