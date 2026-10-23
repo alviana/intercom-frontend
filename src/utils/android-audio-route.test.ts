@@ -159,6 +159,17 @@ describe("iOS routing rules", () => {
     expect(window.localStorage.getItem("id.audioRoute")).toBe('"bluetooth"');
   });
 
+  it("leaves native untouched when the stored route is not available yet", async () => {
+    window.localStorage.setItem("id.audioRoute", '"bluetooth"');
+    mocks.getAvailableRoutes.mockResolvedValue({
+      routes: [iosRoutes[0]],
+      active: "speaker",
+    });
+    mocks.setRoute.mockClear();
+    await expect(applyStoredAudioRoute()).resolves.toBeNull();
+    expect(mocks.setRoute).not.toHaveBeenCalled();
+  });
+
   it("prefers a connected headset when nothing was chosen yet", () => {
     expect(resolveAudioRouteToApply(iosRoutes, "speaker")).toBe("bluetooth");
   });

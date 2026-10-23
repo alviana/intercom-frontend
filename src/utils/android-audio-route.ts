@@ -89,6 +89,16 @@ let pendingStoredRouteApply: Promise<AudioRouteId | null> | null = null;
 
 const applyStoredAudioRouteNow = async (): Promise<AudioRouteId | null> => {
   const { routes, active } = await AudioRoute.getAvailableRoutes();
+  // iOS: the headset mic is often missing from the list before the session is active; keep
+  // native as is and let the route event re-apply the stored choice once it shows up.
+  const stored = readStoredAudioRoute();
+  if (
+    isIOSApp() &&
+    stored &&
+    !routes.some((r) => r.id === stored && r.available)
+  ) {
+    return null;
+  }
   const route = resolveAudioRouteToApply(routes, active);
   if (!route) return null;
 

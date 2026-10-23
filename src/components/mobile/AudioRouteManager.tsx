@@ -8,6 +8,7 @@ import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import {
   applyStoredAudioRoute,
   isAudioRouteAvailable,
+  readStoredAudioRoute,
   writeStoredAudioRoute,
 } from "../../utils/android-audio-route";
 
@@ -40,6 +41,21 @@ export const AudioRouteManager = () => {
         // iOS: changes made by the system/WebKit (e.g. falling back to the speaker) must
         // not overwrite the route the user picked; the picker stores it itself.
         if (active && !isIOSApp()) writeStoredAudioRoute(active);
+        // iOS: the stored headset appeared (or native dropped it): re-apply; it stops once
+        // native's `preferred` matches.
+        if (isIOSApp()) {
+          const stored = readStoredAudioRoute();
+          if (
+            stored &&
+            stored !== state.preferred &&
+            (stored === "bluetooth" ||
+              stored === "headset" ||
+              stored.startsWith("device:")) &&
+            state.routes?.some((r) => r.id === stored && r.available)
+          ) {
+            applyStoredAudioRoute();
+          }
+        }
       }
     );
 
