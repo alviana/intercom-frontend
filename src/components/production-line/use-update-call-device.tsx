@@ -10,7 +10,7 @@ type TUpdateCallDevice = {
   audioElements: HTMLAudioElement[] | null;
   resetAudioInput: () => void;
   setConnectionActive: (input: boolean) => void;
-  muteInput: (input: boolean) => void;
+  muteInput: (input: boolean, source?: string) => void;
 };
 
 export const useUpdateCallDevice = ({
@@ -64,7 +64,7 @@ export const useUpdateCallDevice = ({
         } else if (allPropertiesDefined) {
           setConnectionActive(false);
           resetAudioInput();
-          muteInput(true);
+          muteInput(true, "troca de dispositivo");
 
           // Create a non-nullable version of the payload for TypeScript
           const safePayload = {

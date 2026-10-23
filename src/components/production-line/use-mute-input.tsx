@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import { useGlobalState } from "../../global-state/context-provider";
 import { TUseAudioInputValues } from "./use-audio-input";
 
@@ -17,7 +18,14 @@ export const useMuteInput = ({
   const [, dispatch] = useGlobalState();
 
   const muteInput = useCallback(
-    (mute: boolean) => {
+    (mute: boolean, source = "tela") => {
+      logHeadsetEvent({
+        at: Date.now(),
+        key: "MUTE",
+        action: mute ? "desligar" : "ligar",
+        source,
+        result: `pedido por: ${source}`,
+      });
       setIsInputMuted(mute);
       if (inputAudioStream && inputAudioStream !== "no-device") {
         inputAudioStream.getTracks().forEach((t) => {
@@ -44,5 +52,27 @@ export const useMuteInput = ({
     },
     [dispatch, id, inputAudioStream, isProgramOutputLine, isProgramUser]
   );
+  // Diagnostics: the system muting/ending the capture (e.g. iOS audio interruptions) and new captures.
+  useEffect(() => {
+    if (!inputAudioStream || inputAudioStream === "no-device") return undefined;
+    const tracks = inputAudioStream.getTracks();
+    const log = (type: string) =>
+      logHeadsetEvent({
+        at: Date.now(),
+        key: "TRACK",
+        action: type,
+        source: "sistema",
+        result: id,
+      });
+    const onEvent = (e: Event) => log(e.type);
+    const names = ["mute", "unmute", "ended"];
+    log("novo");
+    tracks.forEach((t) => names.forEach((n) => t.addEventListener(n, onEvent)));
+    return () =>
+      tracks.forEach((t) =>
+        names.forEach((n) => t.removeEventListener(n, onEvent))
+      );
+  }, [inputAudioStream, id]);
+
   return { muteInput, isInputMuted };
 };

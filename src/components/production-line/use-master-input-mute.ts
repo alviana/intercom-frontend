@@ -7,7 +7,7 @@ interface UseMasterInputMuteProps {
   masterInputMute: boolean;
   dispatch: React.Dispatch<TGlobalStateAction>;
   id: string;
-  muteInput: (mute: boolean) => void;
+  muteInput: (mute: boolean, source?: string) => void;
 }
 
 export const useMasterInputMute = ({
@@ -35,7 +35,7 @@ export const useMasterInputMute = ({
         t.enabled = !masterInputMute;
       });
 
-      muteInput(masterInputMute);
+      muteInput(masterInputMute, "mudo geral");
 
       if (masterInputMute && !isProgramOutputLine) {
         dispatch({

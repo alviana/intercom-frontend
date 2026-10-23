@@ -7,7 +7,7 @@ interface UseCallActionHandlersProps {
   isProgramOutputLine: boolean | null | undefined;
   isProgramUser: boolean | null | undefined;
   setValue: (value: number) => void;
-  muteInput: (mute: boolean) => void;
+  muteInput: (mute: boolean, source?: string) => void;
   muteOutput: () => void;
   startTalking: () => void;
   stopTalking: () => void;
@@ -36,7 +36,7 @@ export function useCallActionHandlers({
         return;
       }
 
-      muteInput(!isInputMutedRef.current);
+      muteInput(!isInputMutedRef.current, "controle (fone/widget)");
     });
     setActionHandler("toggle_output_mute", () => {
       muteOutput();

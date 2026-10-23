@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AudioRoute } from "../../mobile-overlay/audio-route";
 import { isMobileApp } from "../../platform";
+import { logHeadsetEvent } from "../../mobile-overlay/headset-diagnostics";
 import {
   applyStoredAudioRoute,
   isAudioRouteAvailable,
@@ -17,6 +18,13 @@ export const AudioRouteManager = () => {
     const listenerPromise = AudioRoute.addListener(
       "audioRouteChanged",
       ({ active }) => {
+        logHeadsetEvent({
+          at: Date.now(),
+          key: "ROTA",
+          action: String(active ?? "nenhuma"),
+          source: "sistema",
+          result: "rota de áudio mudou",
+        });
         if (active) writeStoredAudioRoute(active);
       }
     );

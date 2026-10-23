@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type UsePushToTalkOptions = {
-  muteInput: (mute: boolean) => void;
+  muteInput: (mute: boolean, source?: string) => void;
 };
 
 export function usePushToTalk({ muteInput }: UsePushToTalkOptions) {
@@ -9,12 +9,12 @@ export function usePushToTalk({ muteInput }: UsePushToTalkOptions) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startTalking = useCallback(() => {
-    muteInput(false);
+    muteInput(false, "segurar p/ falar");
     setIsTalking(true);
   }, [muteInput]);
 
   const stopTalking = useCallback(() => {
-    muteInput(true);
+    muteInput(true, "segurar p/ falar");
     setIsTalking(false);
   }, [muteInput]);
 

@@ -39,7 +39,7 @@ describe("usePushToTalk", () => {
         result.current.startTalking();
       });
 
-      expect(muteInput).toHaveBeenCalledWith(false);
+      expect(muteInput).toHaveBeenCalledWith(false, "segurar p/ falar");
       expect(result.current.isTalking).toBe(true);
     });
 
@@ -53,7 +53,7 @@ describe("usePushToTalk", () => {
         result.current.stopTalking();
       });
 
-      expect(muteInput).toHaveBeenLastCalledWith(true);
+      expect(muteInput).toHaveBeenLastCalledWith(true, "segurar p/ falar");
       expect(result.current.isTalking).toBe(false);
     });
   });
@@ -69,7 +69,7 @@ describe("usePushToTalk", () => {
       });
 
       // Before 300ms: muteInput should not have been called with false
-      expect(muteInput).not.toHaveBeenCalledWith(false);
+      expect(muteInput).not.toHaveBeenCalledWith(false, "segurar p/ falar");
       expect(result.current.isTalking).toBe(false);
     });
 
@@ -84,7 +84,7 @@ describe("usePushToTalk", () => {
         vi.advanceTimersByTime(300);
       });
 
-      expect(muteInput).toHaveBeenCalledWith(false);
+      expect(muteInput).toHaveBeenCalledWith(false, "segurar p/ falar");
       expect(result.current.isTalking).toBe(true);
     });
 
@@ -103,7 +103,7 @@ describe("usePushToTalk", () => {
         result.current.handleLongPressEnd();
       });
 
-      expect(muteInput).toHaveBeenLastCalledWith(true);
+      expect(muteInput).toHaveBeenLastCalledWith(true, "segurar p/ falar");
       expect(result.current.isTalking).toBe(false);
     });
 
@@ -124,7 +124,7 @@ describe("usePushToTalk", () => {
       });
 
       // The startTalking should never have fired
-      expect(muteInput).not.toHaveBeenCalledWith(false);
+      expect(muteInput).not.toHaveBeenCalledWith(false, "segurar p/ falar");
 
       // Advance past 300ms - should not trigger now
       act(() => {
@@ -155,7 +155,7 @@ describe("usePushToTalk", () => {
       });
 
       // muteInput(false) should never have been called since we unmounted before 300ms
-      expect(muteInput).not.toHaveBeenCalledWith(false);
+      expect(muteInput).not.toHaveBeenCalledWith(false, "segurar p/ falar");
     });
   });
 });

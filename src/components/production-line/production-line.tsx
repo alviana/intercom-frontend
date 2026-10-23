@@ -284,7 +284,7 @@ export const ProductionLine = ({
 
   useEffect(() => {
     if (isRemotelyMuted && !isProgramOutputLine) {
-      muteInput(true);
+      muteInput(true, "remoto");
     }
   }, [isProgramOutputLine, isRemotelyMuted, muteInput]);
 

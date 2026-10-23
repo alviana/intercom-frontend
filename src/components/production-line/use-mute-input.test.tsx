@@ -48,7 +48,11 @@ describe("useMuteInput", () => {
   });
 
   it("toggles available audio tracks", () => {
-    const track = { enabled: false };
+    const track = {
+      enabled: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
     const stream = {
       getTracks: () => [track],
     } as unknown as MediaStream;

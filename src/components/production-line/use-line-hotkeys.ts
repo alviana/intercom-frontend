@@ -1,7 +1,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 
 type TuseLineHotkeys = {
-  muteInput: (mute: boolean) => void;
+  muteInput: (mute: boolean, source?: string) => void;
   isInputMuted: boolean;
   customKeyMute?: string;
   customKeyPress?: string;
@@ -16,7 +16,7 @@ type TuseSpeakerHotkeys = {
 };
 
 type TuseGlobalHotkeys = {
-  muteInput: (mute: boolean) => void;
+  muteInput: (mute: boolean, source?: string) => void;
   isInputMuted: boolean;
   customKey?: string;
 };
@@ -33,7 +33,7 @@ export const useLineHotkeys = ({
   const pttKey = customKeyPress || "t";
 
   useHotkeys(muteInputKey, () => {
-    muteInput(!isInputMuted);
+    muteInput(!isInputMuted, "atalho");
   });
 
   useHotkeys(
@@ -44,12 +44,12 @@ export const useLineHotkeys = ({
         if (startTalking) {
           startTalking();
         } else {
-          muteInput(false);
+          muteInput(false, "atalho");
         }
       } else if (stopTalking) {
         stopTalking();
       } else {
-        muteInput(true);
+        muteInput(true, "atalho");
       }
       e.preventDefault();
     },
@@ -77,6 +77,6 @@ export const useGlobalHotkeys = ({
   const muteInputKey = customKey || "p";
 
   useHotkeys(muteInputKey, () => {
-    muteInput(!isInputMuted);
+    muteInput(!isInputMuted, "atalho");
   });
 };
