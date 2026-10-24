@@ -10,7 +10,6 @@
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
-		A1A1A1A1A1A1A1A100000012 /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000011 /* BridgeViewController.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
@@ -24,22 +23,23 @@
 		A1A1A1A1A1A1A1A10000000C /* CallServicePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000B /* CallServicePlugin.m */; };
 		A1A1A1A1A1A1A1A10000000E /* OverlayBubblePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000D /* OverlayBubblePlugin.swift */; };
 		A1A1A1A1A1A1A1A100000010 /* OverlayBubblePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000000F /* OverlayBubblePlugin.m */; };
+		A1A1A1A1A1A1A1A100000012 /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000011 /* BridgeViewController.swift */; };
 		A1A1A1A1A1A1A1A100000014 /* NativeVoicePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */; };
 		A1A1A1A1A1A1A1A100000016 /* NativeVoicePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */; };
 		A1A1A1A1A1A1A1A100000018 /* NativeVoiceCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */; };
-		A1A1A1A1A1A1A1A100000029 /* LineActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */; };
 		A1A1A1A1A1A1A1A10000001A /* start-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */; };
 		A1A1A1A1A1A1A1A10000001C /* stop-connection-451.wav in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */; };
-		A2B000000000000000000001 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
-		A2B000000000000000000002 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
-		A2B000000000000000000003 /* IntercomLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */; };
-		A2B000000000000000000004 /* IntercomLiveActivityExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000008 /* IntercomLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		A2B000000000000000000014 /* IntercomOverlayActionIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */; };
 		A1A1A1A1A1A1A1A100000021 /* IntercomLineActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */; };
 		A1A1A1A1A1A1A1A100000022 /* IntercomLineActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */; };
 		A1A1A1A1A1A1A1A100000024 /* IntercomLineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */; };
 		A1A1A1A1A1A1A1A100000025 /* IntercomLineIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */; };
 		A1A1A1A1A1A1A1A100000027 /* IntercomLineActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */; };
+		A1A1A1A1A1A1A1A100000029 /* LineActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */; };
+		A2B000000000000000000001 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
+		A2B000000000000000000002 /* IntercomOverlayAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000005 /* IntercomOverlayAttributes.swift */; };
+		A2B000000000000000000003 /* IntercomLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */; };
+		A2B000000000000000000004 /* IntercomLiveActivityExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000008 /* IntercomLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A2B000000000000000000014 /* IntercomOverlayActionIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,7 +71,6 @@
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		A1A1A1A1A1A1A1A100000011 /* BridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeViewController.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -85,20 +84,21 @@
 		A1A1A1A1A1A1A1A10000000B /* CallServicePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CallServicePlugin.m; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000000D /* OverlayBubblePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayBubblePlugin.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000000F /* OverlayBubblePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OverlayBubblePlugin.m; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000011 /* BridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeViewController.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000013 /* NativeVoicePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoicePlugin.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000015 /* NativeVoicePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeVoicePlugin.m; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000017 /* NativeVoiceCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVoiceCall.swift; sourceTree = "<group>"; };
-		A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineActivityController.swift; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A100000019 /* start-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "start-connection-451.wav"; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A10000001B /* stop-connection-451.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "stop-connection-451.wav"; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityAttributes.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineIntents.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityWidget.swift; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A100000028 /* LineActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineActivityController.swift; sourceTree = "<group>"; };
 		A2B000000000000000000005 /* IntercomOverlayAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomOverlayAttributes.swift; sourceTree = "<group>"; };
 		A2B000000000000000000006 /* IntercomLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLiveActivityWidget.swift; sourceTree = "<group>"; };
 		A2B000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2B000000000000000000008 /* IntercomLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IntercomLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2B000000000000000000015 /* IntercomOverlayActionIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomOverlayActionIntent.swift; sourceTree = "<group>"; };
-		A1A1A1A1A1A1A1A100000020 /* IntercomLineActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityAttributes.swift; sourceTree = "<group>"; };
-		A1A1A1A1A1A1A1A100000023 /* IntercomLineIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineIntents.swift; sourceTree = "<group>"; };
-		A1A1A1A1A1A1A1A100000026 /* IntercomLineActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntercomLineActivityWidget.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
@@ -544,8 +544,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S296W948YR;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VVER8JCZVV;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
@@ -566,8 +566,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S296W948YR;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VVER8JCZVV;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
@@ -586,8 +586,8 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S296W948YR;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VVER8JCZVV;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = IntercomLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
@@ -607,8 +607,8 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S296W948YR;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VVER8JCZVV;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = IntercomLiveActivity/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
