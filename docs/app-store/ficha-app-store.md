@@ -56,7 +56,7 @@ Tudo o que o App Store Connect pede, pronto para copiar. Campos marcados **(voc�
 **URL de marketing**: (deixe em branco)
 **Copyright**: 2026 ac24horas
 
-**Capturas de tela (iPhone 6,9")**: 3 a 5 imagens 1320 × 2868. Mande os prints do iPhone que eu redimensiono (ver seção 7).
+**Capturas de tela (iPhone com Dynamic Island, tela média)**: 1206 × 2622, em `docs/app-store/capturas/`.
 
 **Build**: escolha o último enviado pelo Xcode.
 
